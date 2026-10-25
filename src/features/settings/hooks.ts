@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/AuthProvider'
 import type { Database, UserSettings } from '@/lib/database.types'
 import { fetchUserSettings, upsertUserSettings } from './api'
+import { applyTheme, readTheme } from '@/lib/theme'
 
 type SettingsUpdate = Database['public']['Tables']['user_settings']['Update']
 
@@ -30,6 +31,12 @@ export function useUserSettings() {
     const locale = query.data?.locale
     if (locale && locale !== i18n.resolvedLanguage) void i18n.changeLanguage(locale)
   }, [query.data?.locale, i18n])
+
+  // Same for the theme: the account's choice follows the user across devices.
+  useEffect(() => {
+    const theme = query.data?.theme
+    if (theme && theme !== readTheme()) applyTheme(theme)
+  }, [query.data?.theme])
 
   const updateSettings = useMutation({
     mutationFn: (patch: SettingsUpdate) => upsertUserSettings(userId, patch),

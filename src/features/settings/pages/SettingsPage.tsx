@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Bug, ChevronRight, LogOut, Sparkles, UserCheck } from 'lucide-react'
@@ -10,6 +11,7 @@ import { avatarUrl } from '@/features/profile/api'
 import { StreakAvatar } from '@/features/gamification/StreakAvatar'
 import { effectiveStreak } from '@/features/gamification/streak'
 import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
+import { THEMES, applyTheme, readTheme, type ThemePref } from '@/lib/theme'
 import { useUserSettings } from '../hooks'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +25,15 @@ export function SettingsPage() {
   const aiToday = (aiLive.data ?? []).reduce((s, m) => s + m.requests_today, 0)
   const avatar = avatarUrl(profile?.avatar_path, profile?.updated_at)
 
+  // the account setting is the source of truth (optimistically updated on change); the device copy covers first paint
+  const [localTheme, setLocalTheme] = useState<ThemePref>(readTheme)
+  const theme: ThemePref = settings?.theme ?? localTheme
+  const changeTheme = (next: ThemePref) => {
+    setLocalTheme(next)
+    applyTheme(next)
+    updateSettings.mutate({ theme: next })
+  }
+
   const changeLocale = (locale: Locale) => {
     void i18n.changeLanguage(locale)
     updateSettings.mutate({ locale })
@@ -32,14 +43,21 @@ export function SettingsPage() {
     <PageShell title={t('settings:title')}>
       <div className="space-y-6">
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:profile')}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            {t('settings:profile')}
+          </h2>
           <div className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4">
-            <StreakAvatar src={avatar} streak={effectiveStreak(profile?.current_streak, profile?.last_active_on)} size={64} />
+            <StreakAvatar
+              src={avatar}
+              streak={effectiveStreak(profile?.current_streak, profile?.last_active_on)}
+              size={64}
+            />
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile?.display_name}</p>
               <p className="truncate text-sm text-ink-muted">@{profile?.username}</p>
               <p className="text-xs text-ink-faint">
-                {t('common:level', { n: profile?.level ?? 1 })} · {t('common:points', { n: profile?.total_points ?? 0 })}
+                {t('common:level', { n: profile?.level ?? 1 })} ·{' '}
+                {t('common:points', { n: profile?.total_points ?? 0 })}
                 {profile?.role === 'admin' && <> · {t('settings:admin')}</>}
               </p>
             </div>
@@ -48,7 +66,9 @@ export function SettingsPage() {
 
         {profile?.role === 'admin' && (
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('admin:section')}</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+              {t('admin:section')}
+            </h2>
             <Link
               to="/admin/requests"
               className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
@@ -56,7 +76,9 @@ export function SettingsPage() {
               <UserCheck className="size-5 text-ink-muted" aria-hidden />
               <span className="flex-1 text-[15px]">{t('admin:requests.link')}</span>
               {(pending.data ?? 0) > 0 && (
-                <span className="tabular rounded-full bg-volt px-2 py-0.5 text-xs font-semibold text-volt-ink">{pending.data}</span>
+                <span className="tabular rounded-full bg-volt px-2 py-0.5 text-xs font-semibold text-volt-ink">
+                  {pending.data}
+                </span>
               )}
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>
@@ -67,7 +89,9 @@ export function SettingsPage() {
               <Bug className="size-5 text-ink-muted" aria-hidden />
               <span className="flex-1 text-[15px]">{t('admin:reports.link')}</span>
               {(openReports.data?.length ?? 0) > 0 && (
-                <span className="tabular rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-ink">{openReports.data?.length}</span>
+                <span className="tabular rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-ink">
+                  {openReports.data?.length}
+                </span>
               )}
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>
@@ -77,7 +101,11 @@ export function SettingsPage() {
             >
               <Sparkles className="size-5 text-ink-muted" aria-hidden />
               <span className="flex-1 text-[15px]">{t('admin:ai.link')}</span>
-              {aiLive.data && <span className="tabular text-xs text-ink-faint">{t('admin:ai.linkToday', { count: aiToday })}</span>}
+              {aiLive.data && (
+                <span className="tabular text-xs text-ink-faint">
+                  {t('admin:ai.linkToday', { count: aiToday })}
+                </span>
+              )}
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>
           </section>
@@ -86,7 +114,9 @@ export function SettingsPage() {
         <ErrorNote error={updateSettings.error} />
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:language')}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            {t('settings:language')}
+          </h2>
           <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('settings:language')}>
             {SUPPORTED_LOCALES.map((loc) => {
               const active = (settings?.locale ?? i18n.resolvedLanguage) === loc
@@ -110,7 +140,37 @@ export function SettingsPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:account')}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            {t('settings:theme.title')}
+          </h2>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('settings:theme.title')}>
+            {THEMES.map((th) => {
+              const active = theme === th
+              return (
+                <button
+                  key={th}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => changeTheme(th)}
+                  className={cn(
+                    'touch-target flex flex-col items-start gap-2 rounded-xl border px-3 py-3 text-left font-medium transition-colors',
+                    active ? 'border-volt bg-volt/10 text-volt' : 'border-line bg-surface text-ink',
+                  )}
+                >
+                  <ThemeSwatch kind={th} />
+                  <span className="text-[14px]">{t(`settings:theme.${th}`)}</span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[12px] text-ink-faint">{t('settings:theme.hint')}</p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            {t('settings:account')}
+          </h2>
           <div className="rounded-xl border border-line bg-surface p-4">
             <p className="text-xs text-ink-muted">{t('settings:signedInAs')}</p>
             <p className="truncate font-medium">{user?.email}</p>
@@ -122,7 +182,9 @@ export function SettingsPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:about')}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            {t('settings:about')}
+          </h2>
           <p className="text-sm text-ink-muted">{t('settings:attribution')}</p>
           <p className="tabular text-xs text-ink-faint">
             {t('settings:version', { version: __APP_VERSION__ })}
@@ -140,5 +202,31 @@ export function SettingsPage() {
         </section>
       </div>
     </PageShell>
+  )
+}
+
+/** Tiny preview chip: a page with a line of text and an accent dot, in each theme's own colours. */
+function ThemeSwatch({ kind }: { kind: ThemePref }) {
+  const dark = { bg: '#111309', ink: '#eceee6', accent: '#c6f432' }
+  const light = { bg: '#f5f6f0', ink: '#22261c', accent: '#4f8a12' }
+  const half = (c: typeof dark) => (
+    <span className="flex flex-1 flex-col justify-center gap-1 px-1.5" style={{ background: c.bg }}>
+      <span className="h-1 w-6 rounded-full" style={{ background: c.ink, opacity: 0.85 }} />
+      <span className="size-1.5 rounded-full" style={{ background: c.accent }} />
+    </span>
+  )
+  return (
+    <span aria-hidden className="hairline flex h-9 w-full overflow-hidden rounded-md">
+      {kind === 'light' ? (
+        half(light)
+      ) : kind === 'dark' ? (
+        half(dark)
+      ) : (
+        <>
+          {half(light)}
+          {half(dark)}
+        </>
+      )}
+    </span>
   )
 }

@@ -1,7 +1,10 @@
 {
   "title": "Profil",
   "language": "Dil",
-  "languages": { "tr": "Türkçe", "en": "English" },
+  "languages": {
+    "tr": "Türkçe",
+    "en": "English"
+  },
   "profile": "Profil",
   "account": "Hesap",
   "signedInAs": "Giriş yapılan hesap",
@@ -10,5 +13,12 @@
   "version": "Sürüm {{version}}",
   "commit": "Bu sürümün kaynak kodu (commit)",
   "saved": "Kaydedildi",
-  "admin": "Yönetici"
+  "admin": "Yönetici",
+  "theme": {
+    "title": "Görünüm",
+    "dark": "Koyu",
+    "light": "Aydınlık",
+    "system": "Sistem",
+    "hint": "Sistem seçilirse telefonunun koyu/açık ayarını izler. Seçimin hesabına kaydedilir."
+  }
 }

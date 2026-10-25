@@ -5,6 +5,17 @@
     <!-- viewport-fit=cover lets us use env(safe-area-inset-*) on iPhone (Dynamic Island / home bar) -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
     <meta name="theme-color" content="#111309" />
+    <script>
+      // Apply the saved theme before first paint (no flash). Kept in sync with src/lib/theme.ts.
+      try {
+        var p = localStorage.getItem('mt.theme') || 'dark'
+        var light = p === 'light' || (p === 'system' && matchMedia('(prefers-color-scheme: light)').matches)
+        if (light) {
+          document.documentElement.dataset.theme = 'light'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f6f0')
+        }
+      } catch (e) {}
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="My Trainer" />

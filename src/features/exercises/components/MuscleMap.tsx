@@ -34,7 +34,7 @@ export function MuscleMap({ target, secondary, className }: Props) {
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-2/3"
-            style={{ background: 'radial-gradient(60% 55% at 50% 30%, oklch(91% 0.21 125 / 7%), transparent 75%)' }}
+            style={{ background: 'radial-gradient(60% 55% at 50% 30%, color-mix(in oklch, var(--color-volt) 7%, transparent), transparent 75%)' }}
           />
           <Figure side="front" caption={t('detail.muscles.front')} silhouette={u[SILHOUETTE_FRONT]} muscles={map} urls={u} ready={ready} />
           <Figure side="back" caption={t('detail.muscles.back')} silhouette={u[SILHOUETTE_BACK]} muscles={map} urls={u} ready={ready} />
