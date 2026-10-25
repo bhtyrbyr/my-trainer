@@ -3,6 +3,7 @@ import { AppShell } from './AppShell'
 import { UpdatePrompt } from './UpdatePrompt'
 import { DevStreakPreview } from './DevStreakPreview'
 import { DevLeaderboardPreview } from './DevLeaderboardPreview'
+import { DevExerciseDetailPreview, DevExerciseLibraryPreview } from './DevExercisePreview'
 import { RequireAdmin, RequireAuth, RequireOnboarding, RequirePending } from '@/features/auth/RequireAuth'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
@@ -16,6 +17,8 @@ import { TrackPage } from '@/features/track/pages/TrackPage'
 import { TodayPage } from '@/features/today/pages/TodayPage'
 import { LeaderboardPage } from '@/features/leaderboard/pages/LeaderboardPage'
 import { SettingsPage } from '@/features/settings/pages/SettingsPage'
+import { ExerciseLibraryPage } from '@/features/exercises/pages/ExerciseLibraryPage'
+import { ExerciseDetailPage } from '@/features/exercises/pages/ExerciseDetailPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -28,6 +31,14 @@ export const router = createBrowserRouter([
         { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
         { path: '/__dev/streak/:n', element: <DevStreakPreview /> },
         { path: '/__dev/leaderboard', element: <DevLeaderboardPreview /> },
+        {
+          path: '/__dev/exercises',
+          element: <AppShell />,
+          children: [
+            { index: true, element: <DevExerciseLibraryPreview /> },
+            { path: ':id', element: <DevExerciseDetailPreview /> },
+          ],
+        },
       ]
     : []),
   { path: '/auth/callback', element: <AuthCallbackPage /> },
@@ -58,6 +69,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'workouts', element: <WorkoutsPage /> },
+      { path: 'exercises', element: <ExerciseLibraryPage /> },
+      { path: 'exercises/:id', element: <ExerciseDetailPage /> },
       { path: 'track', element: <TrackPage /> },
       { path: 'today', element: <TodayPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },

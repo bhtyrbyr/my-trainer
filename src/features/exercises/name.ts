@@ -17,3 +17,14 @@ export function exerciseSteps(ex: Pick<Exercise, 'instructions_en' | 'instructio
 export function sanitizeSearch(q: string | undefined): string {
   return (q ?? '').replace(/[,()%*\\]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60)
 }
+
+/**
+ * i18n key for a catalog vocabulary value (body part, muscle, equipment): lowercase, every run of
+ * non-alphanumerics becomes one underscore, so keys never contain dots or spaces. 'EZ bar' -> 'ez_bar'.
+ */
+export function vocabKey(name: string): string {
+  return name
+    .toLocaleLowerCase('en')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}

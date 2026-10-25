@@ -41,5 +41,7 @@ void i18n
 i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng
 })
+// init() may resolve the detected language before the listener above exists; CSS uppercase depends on lang (tr: i -> İ)
+if (i18n.resolvedLanguage) document.documentElement.lang = i18n.resolvedLanguage
 
 export default i18n
