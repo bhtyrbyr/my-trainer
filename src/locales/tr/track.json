@@ -1,0 +1,23 @@
+{
+  "title": "Takip",
+  "subtitle": "Vücut, beslenme, uyku ve gelişim kayıtların",
+  "body": {
+    "name": "Vücut",
+    "hint": "Kilo, ölçüler, trend",
+    "empty": "Kilo gir"
+  },
+  "nutrition": {
+    "name": "Beslenme",
+    "hint": "Öğünler, kalori, makrolar"
+  },
+  "sleepWater": {
+    "name": "Uyku ve su",
+    "hint": "Uyku süresi, su hedefi"
+  },
+  "photos": {
+    "name": "Gelişim fotoğrafları",
+    "hint": "Uçtan uca şifreli"
+  },
+  "soon": "Yakında",
+  "open": "{{name}} aç"
+}

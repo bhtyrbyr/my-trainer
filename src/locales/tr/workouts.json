@@ -225,7 +225,7 @@
   "energy": {
     "label": "Yakılan enerji",
     "basis": "{{kg}} kg vücut ağırlığına göre tahmini. Yenilen kaloriye eklenmez.",
-    "assumedWeight": "70 kg varsayılarak tahmin edildi. Kilonu girersen daha doğru olur.",
+    "assumedWeight": "70 kg varsayılarak tahmin edildi. Takip > Vücut bölümünden kilonu girersen daha doğru olur.",
     "short": "≈ {{kcal}} kcal",
     "todayEyebrow": "Bugün yakılan",
     "todaySessions_one": "{{count}} antrenmandan tahmini",

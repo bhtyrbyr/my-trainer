@@ -1,0 +1,23 @@
+{
+  "title": "Track",
+  "subtitle": "Your body, nutrition, sleep and progress logs",
+  "body": {
+    "name": "Body",
+    "hint": "Weight, measurements, trend",
+    "empty": "Log weight"
+  },
+  "nutrition": {
+    "name": "Nutrition",
+    "hint": "Meals, calories, macros"
+  },
+  "sleepWater": {
+    "name": "Sleep and water",
+    "hint": "Sleep time, water goal"
+  },
+  "photos": {
+    "name": "Progress photos",
+    "hint": "End-to-end encrypted"
+  },
+  "soon": "Soon",
+  "open": "Open {{name}}"
+}

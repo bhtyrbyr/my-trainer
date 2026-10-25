@@ -37,7 +37,8 @@
     "unknown": "An unexpected error occurred.",
     "crashTitle": "Something went wrong.",
     "reload": "Reload",
-    "alreadyFinished": "This workout has already been finished."
+    "alreadyFinished": "This workout has already been finished.",
+    "futureDate": "You cannot log a future date."
   },
   "update": {
     "title": "New version released",

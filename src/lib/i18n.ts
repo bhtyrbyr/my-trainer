@@ -18,13 +18,17 @@ import trExercises from '@/locales/tr/exercises.json'
 import enExercises from '@/locales/en/exercises.json'
 import trWorkouts from '@/locales/tr/workouts.json'
 import enWorkouts from '@/locales/en/workouts.json'
+import trBody from '@/locales/tr/body.json'
+import enBody from '@/locales/en/body.json'
+import trTrack from '@/locales/tr/track.json'
+import enTrack from '@/locales/en/track.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack },
 } as const
 
 void i18n
