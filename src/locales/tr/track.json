@@ -1,10 +1,49 @@
 {
   "title": "Takip",
-  "subtitle": "Vücut, beslenme, uyku ve gelişim kayıtların",
+  "subtitle": "Seçtiğin günün bütün kayıtları",
+  "day": {
+    "today": "Bugün",
+    "yesterday": "Dün",
+    "prev": "Önceki gün",
+    "next": "Sonraki gün",
+    "pick": "Tarih seç"
+  },
+  "calendar": {
+    "title": "Gün seç",
+    "prevMonth": "Önceki ay",
+    "nextMonth": "Sonraki ay",
+    "hasRecords": "kayıt var",
+    "close": "Kapat"
+  },
+  "energy": {
+    "open": "Beslenme gününü aç"
+  },
   "body": {
     "name": "Vücut",
     "hint": "Kilo, ölçüler, trend",
-    "empty": "Kilo gir"
+    "empty": "Kilo gir",
+    "none": "Bu gün kilo kaydı yok.",
+    "log": "Kilo gir",
+    "measures_one": "{{count}} ölçü",
+    "measures_other": "{{count}} ölçü",
+    "open": "Vücut sayfasını aç"
+  },
+  "workouts": {
+    "name": "Antrenman",
+    "none": "Bu gün antrenman yok.",
+    "start": "Antrenmana git"
+  },
+  "meals": {
+    "name": "Öğünler",
+    "none": "Bu güne yemek eklenmedi.",
+    "add": "Yemek ekle",
+    "items_one": "{{count}} yemek",
+    "items_other": "{{count}} yemek",
+    "open": "Beslenme gününü aç"
+  },
+  "soon": {
+    "title": "Yakında burada",
+    "list": "Uyku ve su, alışkanlıklar ve görevler, gelişim fotoğrafları"
   },
   "nutrition": {
     "name": "Beslenme",
@@ -19,6 +58,6 @@
     "name": "Gelişim fotoğrafları",
     "hint": "Uçtan uca şifreli"
   },
-  "soon": "Yakında",
-  "open": "{{name}} aç"
+  "open": "{{name}} aç",
+  "soonTag": "Yakında"
 }

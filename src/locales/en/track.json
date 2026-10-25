@@ -1,10 +1,49 @@
 {
   "title": "Track",
-  "subtitle": "Your body, nutrition, sleep and progress logs",
+  "subtitle": "Everything you logged on the chosen day",
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "prev": "Previous day",
+    "next": "Next day",
+    "pick": "Pick a date"
+  },
+  "calendar": {
+    "title": "Pick a day",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "hasRecords": "has records",
+    "close": "Close"
+  },
+  "energy": {
+    "open": "Open the nutrition day"
+  },
   "body": {
     "name": "Body",
     "hint": "Weight, measurements, trend",
-    "empty": "Log weight"
+    "empty": "Log weight",
+    "none": "No weigh-in on this day.",
+    "log": "Log weight",
+    "measures_one": "{{count}} measurement",
+    "measures_other": "{{count}} measurements",
+    "open": "Open body"
+  },
+  "workouts": {
+    "name": "Workouts",
+    "none": "No workout on this day.",
+    "start": "Go to workouts"
+  },
+  "meals": {
+    "name": "Meals",
+    "none": "Nothing eaten logged for this day.",
+    "add": "Add food",
+    "items_one": "{{count}} food",
+    "items_other": "{{count}} foods",
+    "open": "Open the nutrition day"
+  },
+  "soon": {
+    "title": "Coming here soon",
+    "list": "Sleep and water, habits and to-dos, progress photos"
   },
   "nutrition": {
     "name": "Nutrition",
@@ -19,6 +58,6 @@
     "name": "Progress photos",
     "hint": "End-to-end encrypted"
   },
-  "soon": "Soon",
-  "open": "Open {{name}}"
+  "open": "Open {{name}}",
+  "soonTag": "Soon"
 }

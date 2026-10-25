@@ -114,3 +114,10 @@ export async function searchProducts(q: string): Promise<ProductHit[]> {
   }
   return Array.isArray(data?.items) ? (data.items as ProductHit[]) : []
 }
+
+/** Distinct days with at least one meal between two local days (inclusive), for calendar dots. */
+export async function listMealDays(from: string, to: string): Promise<string[]> {
+  const { data, error } = await supabase.from('meal_entries').select('eaten_on').gte('eaten_on', from).lte('eaten_on', to).limit(2000)
+  if (error) throw error
+  return [...new Set((data ?? []).map((r) => r.eaten_on))]
+}

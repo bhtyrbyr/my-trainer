@@ -1,7 +1,9 @@
 // Public surface of the body feature. Other features import ONLY from here.
 import { useBodyMetrics } from './hooks'
 
-export { bodyKeys } from './hooks'
+export { bodyKeys, useBodyMetrics } from './hooks'
+export { MEASURE_FIELDS } from './types'
+export type { BodyMetric } from './types'
 export { BodyPreviewContext } from './previewContext'
 
 /** Latest logged body weight (kg) or null; shares the body metrics query. */

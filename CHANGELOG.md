@@ -14,7 +14,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - Catalog sync (`scripts/sync-foods.mjs`): runs on every deploy (curated list; USDA once; a batch of translations) and as a monthly/manual workflow.
 - **Admin AI usage dashboard** (Profile > Admin > AI usage): today's Gemini requests per model against the free-tier limits copied from AI Studio, with the Pacific-midnight reset time and the last-minute rate. It also shows the app's own daily cap, a daily usage trend (tokens or requests; 7, 30 or 90 days) and a who / when / how-much ledger. Only counts are logged, never prompts, photos or answers.
 - **Error reports**: errors the user cannot fix (unexpected, server, timeout, updating) show a "Report to admin" button, also on the crash screen. The report carries the screen, app version, the failing request (method, path, sanitized body; never headers or tokens; photos omitted) and the server's error response. Admins review and resolve reports under Profile > Admin > Error reports.
+- **Track is the day logbook**: pick any day with the arrows or the calendar (days with records are dotted) and see everything logged on it: eaten vs burned, the weigh-in, workouts and meals, each opening its module. The Today tab is merged into Track; habits and to-dos will live here.
 ### Changed
+- Bottom bar has five tabs: Home, Track, Workouts (centre, raised volt button), Ranking, Profile.
 - Error messages never show technical details to users (they go to the developer console); every message says what to do next. A deploy-in-progress mismatch ("function not found in schema cache") now reads "the app is being updated, refresh in a few minutes".
 - Points: 5 per logged food (max 20 a day) and 15 when the protein goal is reached, both server-side and revoked when entries are removed.
 

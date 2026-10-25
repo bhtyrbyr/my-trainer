@@ -123,7 +123,7 @@ export const router = createBrowserRouter([
       { path: 'track', lazy: page(() => import('@/features/track/pages/TrackPage'), 'TrackPage') },
       { path: 'track/body', lazy: body },
       { path: 'track/nutrition', lazy: nutrition },
-      { path: 'today', lazy: page(() => import('@/features/today/pages/TodayPage'), 'TodayPage') },
+      { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
       {

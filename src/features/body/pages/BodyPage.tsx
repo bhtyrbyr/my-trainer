@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Check, ChevronRight, Loader2, Plus, TrendingDown, TrendingUp } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
@@ -27,7 +27,10 @@ export function BodyPage() {
   const preview = useIsBodyPreview()
   const metrics = useBodyMetrics()
   const target = usePrivateWeights()
-  const [sheetDay, setSheetDay] = useState<string | null>(null)
+  // ?log=YYYY-MM-DD (from the Track day view) opens the entry sheet for that day
+  const [params, setParams] = useSearchParams()
+  const logParam = params.get('log')
+  const [sheetDay, setSheetDay] = useState<string | null>(() => (logParam && /^\d{4}-\d{2}-\d{2}$/.test(logParam) && logParam <= toLocalDateISO() ? logParam : null))
   const [targetOpen, setTargetOpen] = useState(false)
 
   const rows = useMemo(() => metrics.data ?? [], [metrics.data])
@@ -68,7 +71,10 @@ export function BodyPage() {
         </div>
       )}
 
-      <LogSheet open={sheetDay !== null} day={sheetDay ?? toLocalDateISO()} rows={rows} lastWeight={latestWeight} onClose={() => setSheetDay(null)} />
+      <LogSheet open={sheetDay !== null} day={sheetDay ?? toLocalDateISO()} rows={rows} lastWeight={latestWeight} onClose={() => {
+          setSheetDay(null)
+          if (logParam) setParams({}, { replace: true })
+        }} />
       <TargetSheet open={targetOpen} current={targetKg} suggestion={latestWeight} onClose={() => setTargetOpen(false)} />
     </PageShell>
   )
