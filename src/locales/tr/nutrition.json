@@ -1,0 +1,112 @@
+{
+  "title": "Beslenme",
+  "back": "Takip",
+  "day": {
+    "today": "Bugün",
+    "yesterday": "Dün",
+    "prev": "Önceki gün",
+    "next": "Sonraki gün"
+  },
+  "ledger": {
+    "eaten": "Alınan",
+    "burned": "Yakılan",
+    "burnedHint": "Antrenmanlardan tahmini. Alınana eklenmez.",
+    "burnedNone": "Bu gün antrenman yok",
+    "goal": "Hedef {{kcal}}",
+    "left": "{{kcal}} kaldı",
+    "over": "{{kcal}} fazla",
+    "noGoal": "Hedef belirle",
+    "protein": "Protein",
+    "carb": "Karb.",
+    "fat": "Yağ",
+    "ofGoal": "/ {{g}} g",
+    "editGoals": "Günlük hedefleri düzenle",
+    "entries_one": "{{count}} yemek",
+    "entries_other": "{{count}} yemek",
+    "burnedShort": "Antrenmandan tahmini"
+  },
+  "slots": {
+    "breakfast": "Kahvaltı",
+    "lunch": "Öğle",
+    "dinner": "Akşam",
+    "snack": "Ara öğün"
+  },
+  "add": "Yemek ekle",
+  "addTo": "{{slot}} öğününe ekle",
+  "emptyDay": "Bu güne henüz yemek eklenmedi.",
+  "emptySlot": "Boş",
+  "entry": {
+    "edit": "{{name}} kaydını düzenle",
+    "title": "Kaydı düzenle",
+    "name": "Ad",
+    "kcal": "Kalori",
+    "protein": "Protein (g)",
+    "carb": "Karbonhidrat (g)",
+    "fat": "Yağ (g)",
+    "slot": "Öğün",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "confirmDelete": "Silmek için tekrar dokun"
+  },
+  "sheet": {
+    "title": "Yemek ekle",
+    "slot": "Öğün",
+    "tabs": {
+      "describe": "Yaz",
+      "photo": "Fotoğraf",
+      "manual": "Elle",
+      "saved": "Kayıtlı"
+    },
+    "describeLabel": "Ne yedin?",
+    "describePlaceholder": "Örn. 2 yumurta, 1 dilim beyaz peynir, 2 dilim tam buğday ekmeği",
+    "estimate": "Tahmin et",
+    "estimating": "Tahmin ediliyor…",
+    "photoPick": "Fotoğraf çek ya da seç",
+    "photoChange": "Başka fotoğraf",
+    "photoHint": "İsteğe bağlı not (örn. yarısını yedim)",
+    "photoAlt": "Seçilen yemek fotoğrafı",
+    "privacy": "Yazdığın metin ya da fotoğraf yalnızca tahmin için Google Gemini'ye gönderilir ve uygulamada saklanmaz. Ücretsiz katmanda Google bu içeriği ürünlerini geliştirmek için kullanabilir; yüz ya da kişisel bilgi içeren fotoğraf gönderme.",
+    "remaining": "Bugün {{count}} tahmin hakkın kaldı.",
+    "noFood": "Bu içerikte yemek bulunamadı. Daha açık yaz ya da elle ekle.",
+    "manualName": "Yemek adı",
+    "manualPortion": "Porsiyon (isteğe bağlı)",
+    "manualAdd": "Listeye ekle",
+    "savedSearch": "Kayıtlı yiyeceklerde ara",
+    "savedEmpty": "Henüz kayıtlı yiyeceğin yok. Eklerken \"Sık yediklerime kaydet\"i işaretle.",
+    "savedNone": "Eşleşen yiyecek yok.",
+    "savedRemove": "{{name}} kayıtlılardan çıkar",
+    "draftsTitle": "Eklenecekler",
+    "draftRemove": "{{name}} çıkar",
+    "estimateBadge": "Tahmini değerler; gerekirse düzelt.",
+    "saveToFoods": "Sık yediklerime kaydet",
+    "submit_one": "{{count}} yemeği ekle · {{kcal}} kcal",
+    "submit_other": "{{count}} yemeği ekle · {{kcal}} kcal",
+    "submitEmpty": "Önce listeye yemek ekle",
+    "points": "Her yemek 5 puan (günde en fazla 20); protein hedefini tutturmak 15 puan."
+  },
+  "goals": {
+    "title": "Günlük hedefler",
+    "kcal": "Kalori hedefi",
+    "protein": "Protein hedefi",
+    "save": "Kaydet",
+    "clear": "Hedef yok",
+    "hint": "Antrenman kalorisi bu hedefe eklenmez; ikisi ayrı gösterilir.",
+    "kcalDec": "Kalori hedefini 50 azalt",
+    "kcalInc": "Kalori hedefini 50 artır",
+    "proteinDec": "Protein hedefini 5 azalt",
+    "proteinInc": "Protein hedefini 5 artır"
+  },
+  "units": {
+    "kcal": "kcal",
+    "g": "g"
+  },
+  "actions": {
+    "close": "Kapat",
+    "cancel": "Vazgeç"
+  },
+  "short": {
+    "protein": "P",
+    "carb": "K",
+    "fat": "Y"
+  }
+}

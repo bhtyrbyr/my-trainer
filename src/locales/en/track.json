@@ -8,7 +8,8 @@
   },
   "nutrition": {
     "name": "Nutrition",
-    "hint": "Meals, calories, macros"
+    "hint": "Meals, calories, macros",
+    "empty": "Add food"
   },
   "sleepWater": {
     "name": "Sleep and water",

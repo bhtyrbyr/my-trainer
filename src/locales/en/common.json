@@ -38,7 +38,11 @@
     "crashTitle": "Something went wrong.",
     "reload": "Reload",
     "alreadyFinished": "This workout has already been finished.",
-    "futureDate": "You cannot log a future date."
+    "futureDate": "You cannot log a future date.",
+    "aiQuota": "You have used today's AI requests. Try again tomorrow or enter it by hand.",
+    "aiNotConfigured": "AI estimates are not switched on yet. You can enter it by hand.",
+    "aiUnavailable": "The AI service is unreachable right now. Try again shortly or enter it by hand.",
+    "aiBadInput": "Describe a meal or add a photo to get an estimate."
   },
   "update": {
     "title": "New version released",

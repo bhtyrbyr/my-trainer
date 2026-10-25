@@ -6,7 +6,7 @@ import { effectiveStreak } from '@/features/gamification/streak'
 import { TodayWorkoutCard } from '@/features/workouts'
 import { DailyEnergyCard } from '../components/DailyEnergyCard'
 
-export function DashboardPage({ preview }: { preview?: { points: number; streak: number; burned?: { kcal: number; sessions: number } } }) {
+export function DashboardPage({ preview }: { preview?: { points: number; streak: number; energy?: { burned: { kcal: number; sessions: number }; eaten: { kcal: number; entries: number } } } }) {
   const { t } = useTranslation('common')
   const { profile } = useAuth()
   const points = preview?.points ?? profile?.total_points ?? 0
@@ -15,7 +15,7 @@ export function DashboardPage({ preview }: { preview?: { points: number; streak:
     <PageShell title={t('nav.home')} bare className="space-y-4 pt-3">
       <ScoreHero points={points} streak={streak} />
       <TodayWorkoutCard variant="dashboard" />
-      <DailyEnergyCard preview={preview?.burned} />
+      <DailyEnergyCard preview={preview?.energy} />
       {/* water, nutrition, sleep and the weekly summary arrive in phase 4 */}
       <p className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-dashed border-line px-4 py-3 text-[13px] text-ink-faint">
         <span>{t('comingSoon')}</span>

@@ -25,6 +25,11 @@ export function classifyError(err: unknown): AppError {
   if (/NOT_REJECTED/.test(message)) return { key: 'errors.notRejected', code }
   if (/ALREADY_FINISHED/.test(message)) return { key: 'errors.alreadyFinished', code }
   if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
+  // Codes returned by the ai-coach Edge Function
+  if (/AI_QUOTA/.test(message)) return { key: 'errors.aiQuota', code }
+  if (/AI_NOT_CONFIGURED/.test(message)) return { key: 'errors.aiNotConfigured', code }
+  if (/AI_UNAVAILABLE/.test(message)) return { key: 'errors.aiUnavailable', code }
+  if (/AI_BAD_INPUT/.test(message)) return { key: 'errors.aiBadInput', code }
   if (/FORBIDDEN/.test(message)) return { key: 'errors.forbidden', code }
   if (/NOT_AUTHENTICATED|JWT|jwt expired/i.test(message)) return { key: 'errors.sessionExpired', code }
 

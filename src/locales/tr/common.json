@@ -38,7 +38,11 @@
     "crashTitle": "Bir şeyler ters gitti.",
     "reload": "Yeniden yükle",
     "alreadyFinished": "Bu antrenman zaten bitirilmiş.",
-    "futureDate": "Gelecek bir tarihe kayıt eklenemez."
+    "futureDate": "Gelecek bir tarihe kayıt eklenemez.",
+    "aiQuota": "Bugünkü yapay zekâ hakkın doldu. Yarın tekrar deneyebilir ya da elle girebilirsin.",
+    "aiNotConfigured": "Yapay zekâ tahmini henüz açılmadı. Şimdilik elle girebilirsin.",
+    "aiUnavailable": "Yapay zekâ servisine şu an ulaşılamıyor. Biraz sonra dene ya da elle gir.",
+    "aiBadInput": "Tahmin için bir yemek adı yaz ya da fotoğraf ekle."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

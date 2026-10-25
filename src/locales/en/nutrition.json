@@ -1,0 +1,112 @@
+{
+  "title": "Nutrition",
+  "back": "Track",
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "prev": "Previous day",
+    "next": "Next day"
+  },
+  "ledger": {
+    "eaten": "Eaten",
+    "burned": "Burned",
+    "burnedHint": "Estimated from workouts. Not added to eaten.",
+    "burnedNone": "No workout this day",
+    "goal": "Goal {{kcal}}",
+    "left": "{{kcal}} left",
+    "over": "{{kcal}} over",
+    "noGoal": "Set a goal",
+    "protein": "Protein",
+    "carb": "Carbs",
+    "fat": "Fat",
+    "ofGoal": "/ {{g}} g",
+    "editGoals": "Edit daily goals",
+    "entries_one": "{{count}} food",
+    "entries_other": "{{count}} foods",
+    "burnedShort": "Estimated from workouts"
+  },
+  "slots": {
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack"
+  },
+  "add": "Add food",
+  "addTo": "Add to {{slot}}",
+  "emptyDay": "Nothing logged for this day yet.",
+  "emptySlot": "Empty",
+  "entry": {
+    "edit": "Edit {{name}}",
+    "title": "Edit entry",
+    "name": "Name",
+    "kcal": "Calories",
+    "protein": "Protein (g)",
+    "carb": "Carbohydrate (g)",
+    "fat": "Fat (g)",
+    "slot": "Meal",
+    "save": "Save",
+    "delete": "Delete",
+    "confirmDelete": "Tap again to delete"
+  },
+  "sheet": {
+    "title": "Add food",
+    "slot": "Meal",
+    "tabs": {
+      "describe": "Describe",
+      "photo": "Photo",
+      "manual": "Manual",
+      "saved": "Saved"
+    },
+    "describeLabel": "What did you eat?",
+    "describePlaceholder": "E.g. 2 eggs, 1 slice of white cheese, 2 slices of wholemeal bread",
+    "estimate": "Estimate",
+    "estimating": "Estimating…",
+    "photoPick": "Take or choose a photo",
+    "photoChange": "Another photo",
+    "photoHint": "Optional note (e.g. I ate half)",
+    "photoAlt": "Selected meal photo",
+    "privacy": "Your text or photo is sent to Google Gemini only for the estimate and is not stored by the app. On the free tier Google may use it to improve its products; do not send photos with faces or personal details.",
+    "remaining": "{{count}} estimates left today.",
+    "noFood": "No food found. Describe it more clearly or add it by hand.",
+    "manualName": "Food name",
+    "manualPortion": "Portion (optional)",
+    "manualAdd": "Add to list",
+    "savedSearch": "Search saved foods",
+    "savedEmpty": "No saved foods yet. Tick \"Save to my foods\" when adding.",
+    "savedNone": "No matching food.",
+    "savedRemove": "Remove {{name}} from saved",
+    "draftsTitle": "To add",
+    "draftRemove": "Remove {{name}}",
+    "estimateBadge": "Estimated values; correct them if needed.",
+    "saveToFoods": "Save to my foods",
+    "submit_one": "Add {{count}} food · {{kcal}} kcal",
+    "submit_other": "Add {{count}} foods · {{kcal}} kcal",
+    "submitEmpty": "Add something to the list first",
+    "points": "Each food earns 5 points (max 20 a day); hitting the protein goal earns 15."
+  },
+  "goals": {
+    "title": "Daily goals",
+    "kcal": "Calorie goal",
+    "protein": "Protein goal",
+    "save": "Save",
+    "clear": "No goal",
+    "hint": "Workout calories are never added to this goal; both are shown separately.",
+    "kcalDec": "Decrease the calorie goal by 50",
+    "kcalInc": "Increase the calorie goal by 50",
+    "proteinDec": "Decrease the protein goal by 5",
+    "proteinInc": "Increase the protein goal by 5"
+  },
+  "units": {
+    "kcal": "kcal",
+    "g": "g"
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel"
+  },
+  "short": {
+    "protein": "P",
+    "carb": "C",
+    "fat": "F"
+  }
+}
