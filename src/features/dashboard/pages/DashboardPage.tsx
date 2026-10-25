@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { PageShell } from '@/components/layout/PageShell'
-import { ComingSoon } from '@/components/layout/ComingSoon'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { ScoreHero } from '@/features/gamification/ScoreHero'
 import { effectiveStreak } from '@/features/gamification/streak'
+import { TodayWorkoutCard } from '@/features/workouts'
 
 export function DashboardPage({ preview }: { preview?: { points: number; streak: number } }) {
   const { t } = useTranslation('common')
@@ -13,7 +13,12 @@ export function DashboardPage({ preview }: { preview?: { points: number; streak:
   return (
     <PageShell title={t('nav.home')} bare className="space-y-4 pt-3">
       <ScoreHero points={points} streak={streak} />
-      <ComingSoon phase={4} />
+      <TodayWorkoutCard variant="dashboard" />
+      {/* water, nutrition, sleep and the weekly summary arrive in phase 4 */}
+      <p className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-dashed border-line px-4 py-3 text-[13px] text-ink-faint">
+        <span>{t('comingSoon')}</span>
+        <span className="shrink-0 rounded-full bg-raised px-2.5 py-0.5 text-[11px] font-medium text-ink-muted">{t('phase', { n: 4 })}</span>
+      </p>
     </PageShell>
   )
 }

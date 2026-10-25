@@ -12,6 +12,16 @@ import { RegistrationRequestsPage } from '@/features/admin/pages/RegistrationReq
 import { OnboardingPage } from '@/features/profile/pages/OnboardingPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { WorkoutsPage } from '@/features/workouts/pages/WorkoutsPage'
+import { TemplateEditorPage } from '@/features/workouts/pages/TemplateEditorPage'
+import { LiveSessionPage } from '@/features/workouts/pages/LiveSessionPage'
+import { HistoryPage } from '@/features/workouts/pages/HistoryPage'
+import { SessionDetailPage } from '@/features/workouts/pages/SessionDetailPage'
+
+type DevWorkouts = typeof import('@/features/workouts/dev/DevWorkoutsPreview')
+/** Dev-only: loaded lazily so the sample data never reaches the production bundle. */
+const devWorkouts = (name: keyof DevWorkouts) => async () => ({
+  Component: (await import('@/features/workouts/dev/DevWorkoutsPreview'))[name],
+})
 import { TrackPage } from '@/features/track/pages/TrackPage'
 import { TodayPage } from '@/features/today/pages/TodayPage'
 import { LeaderboardPage } from '@/features/leaderboard/pages/LeaderboardPage'
@@ -28,6 +38,19 @@ export const router = createBrowserRouter([
         { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
         { path: '/__dev/streak/:n', element: <DevStreakPreview /> },
         { path: '/__dev/leaderboard', element: <DevLeaderboardPreview /> },
+        {
+          // workouts with sample data: ?today=plan|rest|none|active, session ?state=entry|rest|empty|summary
+          path: '/__dev/workouts',
+          lazy: devWorkouts('DevWorkoutsLayout'),
+          children: [
+            { index: true, element: <WorkoutsPage /> },
+            { path: 'dashboard', lazy: devWorkouts('DevDashboard') },
+            { path: 'plan', lazy: devWorkouts('DevTemplateEditor') },
+            { path: 'session', lazy: devWorkouts('DevLiveSession') },
+            { path: 'history', element: <HistoryPage /> },
+            { path: 'detail', lazy: devWorkouts('DevSessionDetail') },
+          ],
+        },
       ]
     : []),
   { path: '/auth/callback', element: <AuthCallbackPage /> },
@@ -58,6 +81,11 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'workouts', element: <WorkoutsPage /> },
+      { path: 'workouts/plans/new', element: <TemplateEditorPage /> },
+      { path: 'workouts/plans/:id', element: <TemplateEditorPage /> },
+      { path: 'workouts/session/:id', element: <LiveSessionPage /> },
+      { path: 'workouts/history', element: <HistoryPage /> },
+      { path: 'workouts/history/:id', element: <SessionDetailPage /> },
       { path: 'track', element: <TrackPage /> },
       { path: 'today', element: <TodayPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
