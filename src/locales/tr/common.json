@@ -55,7 +55,11 @@
       "high": "Yangın",
       "legendary": "Efsanevi",
       "mythic": "Mitik"
-    }
+    },
+    "toNextLevel": "{{n}} puan kaldı",
+    "toNextTier": "{{tier}}: {{n}} gün",
+    "startStreak": "Bugün seriyi başlat",
+    "topTier": "zirve"
   },
   "points": "{{n}} puan",
   "level": "Seviye {{n}}",

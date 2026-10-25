@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { daysToNextTier, effectiveStreak, streakTier } from './streak'
+import { daysToNextTier, effectiveStreak, streakTier, tierProgress } from './streak'
+
+describe('tierProgress', () => {
+  it('fills within each band and is full at mythic', () => {
+    expect(tierProgress(0)).toBe(0)
+    expect(tierProgress(1)).toBe(0.25)
+    expect(tierProgress(4)).toBe(1)
+    expect(tierProgress(5)).toBe(0.1)
+    expect(tierProgress(44)).toBe(1)
+    expect(tierProgress(90)).toBe(1)
+  })
+})
 
 describe('effectiveStreak', () => {
   const today = new Date(2026, 9, 26, 22, 0)
