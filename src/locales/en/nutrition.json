@@ -126,5 +126,26 @@
     "addGrams": "Add · {{kcal}} kcal",
     "hint": "Type a food: your saved foods and the nutrition database are searched first; if it is not there, try packaged products or the AI.",
     "offCredit": "Packaged product data: Open Food Facts (ODbL). Values are per 100 g."
+  },
+  "aiStatus": {
+    "user_daily": {
+      "title": "Your AI estimates for today are used up",
+      "body": "You have used your daily estimates. They renew at {{time}} (in {{in}})."
+    },
+    "app_daily": {
+      "title": "The app's daily AI cap is reached",
+      "body": "The daily cap we set for all users has been reached. It renews at {{time}} (in {{in}})."
+    },
+    "google_daily": {
+      "title": "The free AI quota is used up for today",
+      "body": "Google's free tier gives a limited number of requests a day to all users together (Gemini Flash 20, Flash Lite 500). They renew at {{time}} (in {{in}})."
+    },
+    "google_minute": {
+      "title": "The AI is busy right now",
+      "body": "Google accepts a limited number of requests per minute. Try again in about a minute."
+    },
+    "meanwhile": "Meanwhile you can use the nutrition database on the Search tab or enter it by hand.",
+    "left": "{{count}} estimates left today.",
+    "toSearch": "Go to Search"
   }
 }

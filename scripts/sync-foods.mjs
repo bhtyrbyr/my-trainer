@@ -220,9 +220,23 @@ async function upsert(rows) {
 }
 
 // ---------------------------------------------------------------------------------------------
+/** Lite requests left today (Pacific day) minus a reserve kept for users' food estimates. */
+const USER_RESERVE = 100
+async function liteBudget() {
+  const { data: cfg } = await db.from('app_config').select('value').eq('key', 'ai_model_limits').maybeSingle()
+  const rpd = Number(cfg?.value?.[GEMINI_MODEL]?.rpd ?? 500)
+  const dayPt = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
+  const { count } = await db.from('ai_usage_log').select('id', { count: 'exact', head: true }).eq('model', GEMINI_MODEL).eq('day_pt', dayPt)
+  return rpd - (count ?? 0) - USER_RESERVE
+}
+
 async function translateMissing() {
   let done = 0
   while (done < TRANSLATE_LIMIT) {
+    if ((await liteBudget()) <= 0) {
+      console.log(`translation paused: keeping ${USER_RESERVE} ${GEMINI_MODEL} requests for users today; the next run continues`)
+      break
+    }
     const { data, error } = await db
       .from('food_catalog')
       .select('id, name_en, portion_en')

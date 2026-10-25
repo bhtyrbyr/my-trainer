@@ -121,3 +121,23 @@ export async function listMealDays(from: string, to: string): Promise<string[]> 
   if (error) throw error
   return [...new Set((data ?? []).map((r) => r.eaten_on))]
 }
+
+export type AiAvailability = {
+  available: boolean
+  reason: 'ok' | 'user_daily' | 'app_daily' | 'google_daily' | 'google_minute'
+  resets_at: string | null
+  user_left: number | null
+}
+
+/** Can the AI be asked right now (user limit, app cap, Google's shared free-tier quota)? */
+export async function aiAvailability(): Promise<AiAvailability> {
+  const { data, error } = await supabase.rpc('ai_availability')
+  if (error) throw error
+  const d = (data ?? {}) as Record<string, unknown>
+  return {
+    available: d.available === true,
+    reason: (typeof d.reason === 'string' ? d.reason : 'ok') as AiAvailability['reason'],
+    resets_at: typeof d.resets_at === 'string' ? d.resets_at : null,
+    user_left: typeof d.user_left === 'number' ? d.user_left : null,
+  }
+}

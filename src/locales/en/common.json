@@ -50,7 +50,10 @@
     "reportHint": "This is not something you can fix.",
     "reportSent": "Reported to the admin, thanks.",
     "reportFailed": "Could not send the report, try again.",
-    "reportLimit": "You have sent many reports today. Try again tomorrow."
+    "reportLimit": "You have sent many reports today. Try again tomorrow.",
+    "aiAppLimit": "The app's AI cap for today is used up. Try again tomorrow or enter it by hand.",
+    "aiGoogleDaily": "The app's free AI quota for today is used up. Use the nutrition database on the Search tab or enter it by hand.",
+    "aiGoogleMinute": "The AI is busy right now. Try again in about a minute."
   },
   "update": {
     "title": "New version released",

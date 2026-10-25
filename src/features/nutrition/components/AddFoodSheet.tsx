@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera, ChevronDown, Loader2, Sparkles, X } from 'lucide-react'
+import { Camera, ChevronDown, Clock, Loader2, Sparkles, X } from 'lucide-react'
+import { formatDistanceStrict, format } from 'date-fns'
+import { enUS, tr } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
-import { useAddMeals, useEstimateFood } from '../hooks'
-import { MEAL_SLOTS, type DraftItem, type EntrySource, type EstimateItem, type Food, type MealSlot } from '../types'
+import { useAddMeals, useAiAvailability, useEstimateFood } from '../hooks'
+import type { AiAvailability } from '../api'
+import {
+  MEAL_SLOTS,
+  type DraftItem,
+  type EntrySource,
+  type EstimateItem,
+  type Food,
+  type MealSlot,
+} from '../types'
 import { AmountInput } from './AmountInput'
 import { SearchPanel } from './SearchPanel'
 
@@ -16,7 +26,12 @@ type Props = { open: boolean; day: string; slot: MealSlot; onClose: () => void }
 
 let seq = 0
 const key = () => `d${Date.now().toString(36)}${(seq++).toString(36)}`
-const fromEstimate = (it: EstimateItem, source: EntrySource): DraftItem => ({ key: key(), ...it, source, food_id: null })
+const fromEstimate = (it: EstimateItem, source: EntrySource): DraftItem => ({
+  key: key(),
+  ...it,
+  source,
+  food_id: null,
+})
 
 /**
  * Add food. Every way in (search: saved foods, catalog, packaged products; AI text; AI photo; manual) lands in one editable "to add"
@@ -41,7 +56,6 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
     setTab('search')
     setAiSeed('')
     add.reset()
-     
   }, [open])
 
   useEffect(() => {
@@ -58,7 +72,12 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
   const append = (items: DraftItem[]) => setDrafts((prev) => [...prev, ...items])
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={t('sheet.title')} className="fixed inset-0 z-50 flex flex-col bg-bg pt-safe pb-safe">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('sheet.title')}
+      className="fixed inset-0 z-50 flex flex-col bg-bg pt-safe pb-safe"
+    >
       <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line px-4">
         <h2 className="text-lg font-bold tracking-tight">{t('sheet.title')}</h2>
         <Button variant="ghost" size="icon" aria-label={t('actions.close')} onClick={onClose}>
@@ -96,7 +115,10 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
                 role="tab"
                 aria-selected={tab === k}
                 onClick={() => setTab(k)}
-                className={cn('h-10 rounded-full text-[13px] font-medium transition-colors', tab === k ? 'bg-raised text-ink' : 'text-ink-muted hover:text-ink')}
+                className={cn(
+                  'h-10 rounded-full text-[13px] font-medium transition-colors',
+                  tab === k ? 'bg-raised text-ink' : 'text-ink-muted hover:text-ink',
+                )}
               >
                 {t(`sheet.tabs.${k}`)}
               </button>
@@ -113,13 +135,39 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
                   setTab('describe')
                 }}
                 onPickSaved={(f) => {
-                  append([{ key: key(), name: f.name, portion: f.serving_desc ?? '', kcal: f.kcal, protein_g: Number(f.protein_g), carb_g: Number(f.carb_g), fat_g: Number(f.fat_g), source: 'food', food_id: f.id }])
+                  append([
+                    {
+                      key: key(),
+                      name: f.name,
+                      portion: f.serving_desc ?? '',
+                      kcal: f.kcal,
+                      protein_g: Number(f.protein_g),
+                      carb_g: Number(f.carb_g),
+                      fat_g: Number(f.fat_g),
+                      source: 'food',
+                      food_id: f.id,
+                    },
+                  ])
                   setUsedFoods((u) => (u.some((x) => x.id === f.id) ? u : [...u, f]))
                 }}
               />
             )}
-            {tab === 'describe' && <EstimatePanel key={aiSeed} mode="text" initialText={aiSeed} onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_text')))} />}
-            {tab === 'photo' && <EstimatePanel mode="photo" onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_photo')))} />}
+            {tab === 'describe' && (
+              <EstimatePanel
+                key={aiSeed}
+                mode="text"
+                initialText={aiSeed}
+                onSearch={() => setTab('search')}
+                onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_text')))}
+              />
+            )}
+            {tab === 'photo' && (
+              <EstimatePanel
+                mode="photo"
+                onSearch={() => setTab('search')}
+                onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_photo')))}
+              />
+            )}
             {tab === 'manual' && <ManualPanel onAdd={(d) => append([d])} />}
           </div>
         </div>
@@ -130,7 +178,9 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
               <h3 id="drafts-title" className="eyebrow">
                 {t('sheet.draftsTitle')}
               </h3>
-              {drafts.some((d) => d.source === 'ai_text' || d.source === 'ai_photo') && <span className="text-[11px] text-ink-faint">{t('sheet.estimateBadge')}</span>}
+              {drafts.some((d) => d.source === 'ai_text' || d.source === 'ai_photo') && (
+                <span className="text-[11px] text-ink-faint">{t('sheet.estimateBadge')}</span>
+              )}
             </div>
             <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
               {drafts.map((d) => (
@@ -149,7 +199,12 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
       <div className="mx-auto w-full max-w-md shrink-0 border-t border-line px-4 pb-3 pt-2">
         {anyNew && (
           <label className="flex h-11 items-center gap-3 text-[14px] text-ink-muted">
-            <input type="checkbox" checked={saveToFoods} onChange={(e) => setSaveToFoods(e.target.checked)} className="size-5 accent-[var(--color-volt)]" />
+            <input
+              type="checkbox"
+              checked={saveToFoods}
+              onChange={(e) => setSaveToFoods(e.target.checked)}
+              className="size-5 accent-[var(--color-volt)]"
+            />
             {t('sheet.saveToFoods')}
           </label>
         )}
@@ -169,9 +224,21 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
   )
 }
 
-function EstimatePanel({ mode, initialText = '', onItems }: { mode: 'text' | 'photo'; initialText?: string; onItems: (items: EstimateItem[]) => void }) {
+function EstimatePanel({
+  mode,
+  initialText = '',
+  onItems,
+  onSearch,
+}: {
+  mode: 'text' | 'photo'
+  initialText?: string
+  onItems: (items: EstimateItem[]) => void
+  onSearch: () => void
+}) {
   const { t } = useTranslation('nutrition')
   const estimate = useEstimateFood()
+  const availability = useAiAvailability()
+  const blocked = availability.data && !availability.data.available ? availability.data : null
   const [text, setText] = useState(initialText)
   const [photo, setPhoto] = useState<File | null>(null)
   const [empty, setEmpty] = useState(false)
@@ -200,6 +267,7 @@ function EstimatePanel({ mode, initialText = '', onItems }: { mode: 'text' | 'ph
 
   return (
     <div className="space-y-3">
+      {blocked && <AiStatusCard status={blocked} onSearch={onSearch} />}
       {mode === 'photo' && (
         <>
           <input
@@ -216,7 +284,11 @@ function EstimatePanel({ mode, initialText = '', onItems }: { mode: 'text' | 'ph
           />
           {previewUrl ? (
             <div className="flex items-center gap-3">
-              <img src={previewUrl} alt={t('sheet.photoAlt')} className="hairline size-24 shrink-0 rounded-[var(--radius-input)] object-cover" />
+              <img
+                src={previewUrl}
+                alt={t('sheet.photoAlt')}
+                className="hairline size-24 shrink-0 rounded-[var(--radius-input)] object-cover"
+              />
               <Button variant="secondary" onClick={() => fileRef.current?.click()}>
                 <Camera className="size-4" aria-hidden />
                 {t('sheet.photoChange')}
@@ -235,7 +307,9 @@ function EstimatePanel({ mode, initialText = '', onItems }: { mode: 'text' | 'ph
         </>
       )}
       <label className="block">
-        <span className={cn('mb-1.5 block', mode === 'text' ? 'eyebrow' : 'sr-only')}>{mode === 'text' ? t('sheet.describeLabel') : t('sheet.photoHint')}</span>
+        <span className={cn('mb-1.5 block', mode === 'text' ? 'eyebrow' : 'sr-only')}>
+          {mode === 'text' ? t('sheet.describeLabel') : t('sheet.photoHint')}
+        </span>
         {mode === 'text' ? (
           <textarea
             value={text}
@@ -255,13 +329,26 @@ function EstimatePanel({ mode, initialText = '', onItems }: { mode: 'text' | 'ph
           />
         )}
       </label>
-      <Button variant="secondary" className="w-full" disabled={!ready || estimate.isPending} onClick={run}>
-        {estimate.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4 text-volt" aria-hidden />}
+      <Button
+        variant="secondary"
+        className="w-full"
+        disabled={!ready || estimate.isPending || Boolean(blocked)}
+        onClick={run}
+      >
+        {estimate.isPending ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <Sparkles className="size-4 text-volt" aria-hidden />
+        )}
         {estimate.isPending ? t('sheet.estimating') : t('sheet.estimate')}
       </Button>
       <ErrorNote error={estimate.error} />
       {empty && <p className="text-[13px] text-ink-muted">{t('sheet.noFood')}</p>}
-      {estimate.data?.remaining != null && !estimate.isPending && <p className="text-[12px] text-ink-faint">{t('sheet.remaining', { count: estimate.data.remaining })}</p>}
+      {!blocked && availability.data?.user_left != null && !estimate.isPending && (
+        <p className="text-[12px] text-ink-faint">
+          {t('aiStatus.left', { count: availability.data.user_left })}
+        </p>
+      )}
       <p className="text-[11px] leading-snug text-ink-faint">{t('sheet.privacy')}</p>
     </div>
   )
@@ -296,7 +383,14 @@ function ManualPanel({ onAdd }: { onAdd: (d: DraftItem) => void }) {
         className="w-full"
         disabled={!name.trim()}
         onClick={() => {
-          onAdd({ key: key(), name: name.trim(), portion: portion.trim(), ...v, source: 'manual', food_id: null })
+          onAdd({
+            key: key(),
+            name: name.trim(),
+            portion: portion.trim(),
+            ...v,
+            source: 'manual',
+            food_id: null,
+          })
           setName('')
           setPortion('')
           setV({ kcal: 0, protein_g: 0, carb_g: 0, fat_g: 0 })
@@ -308,25 +402,47 @@ function ManualPanel({ onAdd }: { onAdd: (d: DraftItem) => void }) {
   )
 }
 
-function DraftRow({ draft, onChange, onRemove }: { draft: DraftItem; onChange: (d: DraftItem) => void; onRemove: () => void }) {
+function DraftRow({
+  draft,
+  onChange,
+  onRemove,
+}: {
+  draft: DraftItem
+  onChange: (d: DraftItem) => void
+  onRemove: () => void
+}) {
   const { t, i18n } = useTranslation('nutrition')
   const [open, setOpen] = useState(false)
   const nf = new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr', { maximumFractionDigits: 1 })
   return (
     <li>
       <div className="flex items-center">
-        <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left"
+        >
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[14px] font-medium">{draft.name || '–'}</span>
             <span className="tabular block truncate text-[12px] text-ink-faint">
               {draft.portion ? `${draft.portion} · ` : ''}
-              {t('short.protein')} {nf.format(draft.protein_g)} · {t('short.carb')} {nf.format(draft.carb_g)} · {t('short.fat')} {nf.format(draft.fat_g)}
+              {t('short.protein')} {nf.format(draft.protein_g)} · {t('short.carb')} {nf.format(draft.carb_g)}{' '}
+              · {t('short.fat')} {nf.format(draft.fat_g)}
             </span>
           </span>
           <span className="tabular shrink-0 text-[15px] font-semibold">{Math.round(draft.kcal)}</span>
-          <ChevronDown className={cn('size-4 shrink-0 text-ink-faint transition-transform', open && 'rotate-180')} aria-hidden />
+          <ChevronDown
+            className={cn('size-4 shrink-0 text-ink-faint transition-transform', open && 'rotate-180')}
+            aria-hidden
+          />
         </button>
-        <button type="button" aria-label={t('sheet.draftRemove', { name: draft.name })} onClick={onRemove} className="flex size-11 shrink-0 items-center justify-center text-ink-faint hover:text-ink">
+        <button
+          type="button"
+          aria-label={t('sheet.draftRemove', { name: draft.name })}
+          onClick={onRemove}
+          className="flex size-11 shrink-0 items-center justify-center text-ink-faint hover:text-ink"
+        >
           <X className="size-4" aria-hidden />
         </button>
       </div>
@@ -361,10 +477,57 @@ function MacroInputs({ value, onChange }: { value: Macros; onChange: (v: Macros)
   const { t } = useTranslation('nutrition')
   return (
     <div className="grid grid-cols-4 gap-2">
-      <AmountInput label={t('units.kcal')} value={value.kcal} onChange={(n) => onChange({ ...value, kcal: n })} max={5000} integer />
-      <AmountInput label={t('short.protein')} value={value.protein_g} onChange={(n) => onChange({ ...value, protein_g: n })} max={500} />
-      <AmountInput label={t('short.carb')} value={value.carb_g} onChange={(n) => onChange({ ...value, carb_g: n })} max={1000} />
-      <AmountInput label={t('short.fat')} value={value.fat_g} onChange={(n) => onChange({ ...value, fat_g: n })} max={500} />
+      <AmountInput
+        label={t('units.kcal')}
+        value={value.kcal}
+        onChange={(n) => onChange({ ...value, kcal: n })}
+        max={5000}
+        integer
+      />
+      <AmountInput
+        label={t('short.protein')}
+        value={value.protein_g}
+        onChange={(n) => onChange({ ...value, protein_g: n })}
+        max={500}
+      />
+      <AmountInput
+        label={t('short.carb')}
+        value={value.carb_g}
+        onChange={(n) => onChange({ ...value, carb_g: n })}
+        max={1000}
+      />
+      <AmountInput
+        label={t('short.fat')}
+        value={value.fat_g}
+        onChange={(n) => onChange({ ...value, fat_g: n })}
+        max={500}
+      />
+    </div>
+  )
+}
+
+/** Why the AI is closed right now, until when, and what to use instead. */
+function AiStatusCard({ status, onSearch }: { status: AiAvailability; onSearch: () => void }) {
+  const { t, i18n } = useTranslation('nutrition')
+  const locale = i18n.resolvedLanguage === 'en' ? enUS : tr
+  const reason = status.reason === 'ok' ? 'google_minute' : status.reason
+  const at = status.resets_at ? new Date(status.resets_at) : null
+  const vars = at
+    ? { time: format(at, 'HH:mm', { locale }), in: formatDistanceStrict(at, new Date(), { locale }) }
+    : { time: '–', in: '–' }
+  return (
+    <div role="status" className="hairline rounded-[var(--radius-card)] bg-surface p-4">
+      <p className="flex items-center gap-2 text-[15px] font-semibold">
+        <Clock className="size-4 shrink-0 text-ink-muted" aria-hidden />
+        {t(`aiStatus.${reason}.title`)}
+      </p>
+      <p className="mt-1.5 text-[13px] leading-snug text-ink-muted">{t(`aiStatus.${reason}.body`, vars)}</p>
+      {reason !== 'google_minute' && (
+        <p className="mt-1.5 text-[13px] leading-snug text-ink-muted">{t('aiStatus.meanwhile')}</p>
+      )}
+      <Button variant="secondary" size="sm" className="mt-3 h-11" onClick={onSearch}>
+        {t('aiStatus.toSearch')}
+      </Button>
     </div>
   )
 }

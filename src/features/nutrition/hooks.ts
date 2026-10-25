@@ -11,6 +11,7 @@ export const nutritionKeys = {
   foods: ['nutrition', 'foods'] as const,
   catalog: (q: string) => ['nutrition', 'catalog', q.toLocaleLowerCase('tr')] as const,
   products: (q: string) => ['nutrition', 'products', q.toLocaleLowerCase('tr')] as const,
+  ai: ['nutrition', 'ai-availability'] as const,
 }
 
 export function useMeals(day: string) {
@@ -123,10 +124,26 @@ const SAMPLE: EstimateResult = {
   ],
 }
 
+/** AI status before the user types or picks a photo (refreshes every 30 s while visible). */
+export function useAiAvailability() {
+  const preview = useIsNutritionPreview()
+  return useQuery({
+    queryKey: nutritionKeys.ai,
+    queryFn: api.aiAvailability,
+    enabled: !preview,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  })
+}
+
 export function useEstimateFood() {
   const { i18n } = useTranslation()
   const preview = useIsNutritionPreview()
+  const qc = useQueryClient()
   return useMutation({
+    onSettled: () => {
+      if (!preview) void qc.invalidateQueries({ queryKey: nutritionKeys.ai })
+    },
     mutationFn: async ({ text, photo }: { text: string; photo: Blob | null }) => {
       if (preview) return new Promise<EstimateResult>((r) => setTimeout(() => r(SAMPLE), 700))
       const image = photo ? await api.prepareFoodPhoto(photo) : undefined
