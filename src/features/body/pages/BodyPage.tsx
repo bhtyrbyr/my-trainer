@@ -9,11 +9,12 @@ import { Stepper } from '@/features/workouts'
 import { toLocalDateISO } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { LogSheet } from '../components/LogSheet'
+import { HeightSheet } from '../components/HeightSheet'
 import { TargetSheet } from '../components/TargetSheet'
 import { WeightTrend } from '../components/WeightTrend'
 import { useBodyFormat } from '../format'
 import { useBodyMetrics, usePrivateWeights, useSaveBodyMetric } from '../hooks'
-import { filterPeriod, hasMeasurements, latestMeasurements, summarizeWeight, weightSeries, type MeasureRow } from '../logic'
+import { bmi, filterPeriod, hasMeasurements, latestMeasurements, summarizeWeight, weightSeries, type MeasureRow } from '../logic'
 import { useIsBodyPreview } from '../previewContext'
 import { MEASURE_FIELDS, type BodyMetric } from '../types'
 
@@ -32,6 +33,7 @@ export function BodyPage() {
   const logParam = params.get('log')
   const [sheetDay, setSheetDay] = useState<string | null>(() => (logParam && /^\d{4}-\d{2}-\d{2}$/.test(logParam) && logParam <= toLocalDateISO() ? logParam : null))
   const [targetOpen, setTargetOpen] = useState(false)
+  const [heightOpen, setHeightOpen] = useState(false)
 
   const rows = useMemo(() => metrics.data ?? [], [metrics.data])
   const points = useMemo(() => weightSeries(rows), [rows])
@@ -60,7 +62,7 @@ export function BodyPage() {
       ) : (
         <div className="space-y-10 pb-6 lg:grid lg:grid-cols-2 lg:gap-10 lg:space-y-0">
           <div className="space-y-6">
-            <Hero points={points} target={targetKg} onTarget={() => setTargetOpen(true)} />
+            <Hero points={points} target={targetKg} height={target.data?.height ?? null} onTarget={() => setTargetOpen(true)} onHeight={() => setHeightOpen(true)} />
             <QuickLog rows={rows} lastWeight={latestWeight} onMore={() => setSheetDay(toLocalDateISO())} />
           </div>
           <div className="space-y-10">
@@ -75,12 +77,25 @@ export function BodyPage() {
           setSheetDay(null)
           if (logParam) setParams({}, { replace: true })
         }} />
+      <HeightSheet open={heightOpen} current={target.data?.height ?? null} onClose={() => setHeightOpen(false)} />
       <TargetSheet open={targetOpen} current={targetKg} suggestion={latestWeight} onClose={() => setTargetOpen(false)} />
     </PageShell>
   )
 }
 
-function Hero({ points, target, onTarget }: { points: ReturnType<typeof weightSeries>; target: number | null; onTarget: () => void }) {
+function Hero({
+  points,
+  target,
+  height,
+  onTarget,
+  onHeight,
+}: {
+  points: ReturnType<typeof weightSeries>
+  target: number | null
+  height: number | null
+  onTarget: () => void
+  onHeight: () => void
+}) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
   const [now] = useState(() => new Date())
@@ -138,7 +153,32 @@ function Hero({ points, target, onTarget }: { points: ReturnType<typeof weightSe
         )}
         <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
       </button>
+      <BmiRow kg={s.latest.kg} height={height} onEdit={onHeight} />
     </section>
+  )
+}
+
+function BmiRow({ kg, height, onEdit }: { kg: number; height: number | null; onEdit: () => void }) {
+  const { t } = useTranslation('body')
+  const f = useBodyFormat()
+  const b = bmi(kg, height)
+  return (
+    <button type="button" onClick={onEdit} className="group flex min-h-12 w-full items-center justify-between gap-3 border-t border-line py-2 text-left">
+      {b && height ? (
+        <span className="tabular text-[14px] text-ink-muted">
+          <span className="font-semibold text-ink">
+            {t('bmi.label')} {f.num(b.value)}
+          </span>
+          <span className="mx-2 text-ink-faint">·</span>
+          {t(`bmi.category.${b.category}`)}
+          <span className="mx-2 text-ink-faint">·</span>
+          {t('height.value', { cm: Math.round(height) })}
+        </span>
+      ) : (
+        <span className="text-[14px] font-medium text-ink-muted group-hover:text-ink">{t('bmi.needHeight')}</span>
+      )}
+      <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+    </button>
   )
 }
 

@@ -91,5 +91,28 @@
   "actions": {
     "close": "Kapat",
     "cancel": "Vazgeç"
-  }
+  },
+  "height": {
+    "title": "Boy",
+    "hint": "Vücut kitle indeksi (VKİ) için kullanılır. Sadece sen görürsün.",
+    "save": "Kaydet",
+    "dec": "Boyu 1 cm azalt",
+    "inc": "Boyu 1 cm artır",
+    "add": "Boy ekle",
+    "value": "Boy {{cm}} cm"
+  },
+  "bmi": {
+    "label": "VKİ",
+    "title": "Vücut kitle indeksi",
+    "needHeight": "VKİ için boyunu ekle",
+    "category": {
+      "under": "zayıf",
+      "normal": "normal",
+      "over": "fazla kilolu",
+      "obese": "obez"
+    },
+    "note": "VKİ kas kütlesini ayırt etmez; düzenli ağırlık çalışanlarda yüksek çıkabilir."
+  },
+  "lastWeigh": "Son tartı",
+  "onDay": "{{date}} tartısı"
 }

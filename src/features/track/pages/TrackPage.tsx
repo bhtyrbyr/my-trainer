@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { addDays, format, parseISO } from 'date-fns'
@@ -7,7 +7,13 @@ import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { MEASURE_FIELDS, useBodyMetrics } from '@/features/body'
+import {
+  MEASURE_FIELDS,
+  bmi,
+  latestWeightOnOrBefore,
+  useBodyMetrics,
+  usePrivateWeights,
+} from '@/features/body'
 import { MEAL_SLOTS, useMeals, type MealSlot } from '@/features/nutrition'
 import { useUserSettings } from '@/features/settings/hooks'
 import { sessionTitle, useBurnedOn, useSessionsOn } from '@/features/workouts'
@@ -24,7 +30,10 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const lang = i18n.resolvedLanguage === 'en' ? 'en' : 'tr'
   const locale = lang === 'en' ? enUS : tr
   const nf = useMemo(() => new Intl.NumberFormat(lang), [lang])
-  const one = useMemo(() => new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }), [lang])
+  const one = useMemo(
+    () => new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    [lang],
+  )
   const [params, setParams] = useSearchParams()
   const [picking, setPicking] = useState(false)
   const today = toLocalDateISO()
@@ -37,18 +46,26 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const burned = useBurnedOn(day, preview ? { kcal: 412, sessions: 1 } : undefined)
   const sessions = useSessionsOn(day)
   const body = useBodyMetrics()
+  const profile = usePrivateWeights()
   const { settings } = useUserSettings()
   const goalKcal = preview ? 2200 : (settings?.daily_kcal ?? null)
 
   const setDay = (d: string) => setParams(d === today ? {} : { day: d }, { replace: true })
   const shift = (n: number) => setDay(toLocalDateISO(addDays(parseISO(day), n)))
   const yesterday = toLocalDateISO(addDays(new Date(), -1))
-  const label = day === today ? t('track:day.today') : day === yesterday ? t('track:day.yesterday') : format(parseISO(day), 'd MMMM, EEEE', { locale })
+  const label =
+    day === today
+      ? t('track:day.today')
+      : day === yesterday
+        ? t('track:day.yesterday')
+        : format(parseISO(day), 'd MMMM, EEEE', { locale })
 
   const entries = meals.data ?? []
   const eaten = entries.reduce((s, e) => s + e.kcal, 0)
   const bodyRow = (body.data ?? []).find((r) => r.measured_on === day) ?? null
   const measureCount = bodyRow ? MEASURE_FIELDS.filter((k) => bodyRow[k] != null).length : 0
+  const lastWeigh = latestWeightOnOrBefore(body.data ?? [], day)
+  const bodyIndex = bmi(lastWeigh?.kg, profile.data?.height)
   const slots = MEAL_SLOTS.map((s) => {
     const rows = entries.filter((e) => e.meal_slot === s)
     return { slot: s as MealSlot, count: rows.length, kcal: rows.reduce((a, e) => a + e.kcal, 0) }
@@ -61,17 +78,33 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
       title={t('track:title')}
       subtitle={t('track:subtitle')}
       actions={
-        <Button variant="ghost" size="icon" aria-label={t('track:day.pick')} title={t('track:day.pick')} onClick={() => setPicking(true)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t('track:day.pick')}
+          title={t('track:day.pick')}
+          onClick={() => setPicking(true)}
+        >
           <CalendarDays className="size-5" aria-hidden />
         </Button>
       }
     >
       <div className="mx-auto max-w-2xl space-y-6 pb-6">
         <div className="flex items-center justify-between">
-          <button type="button" aria-label={t('track:day.prev')} onClick={() => shift(-1)} className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink">
+          <button
+            type="button"
+            aria-label={t('track:day.prev')}
+            onClick={() => shift(-1)}
+            className="flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink"
+          >
             <ChevronLeft className="size-5" aria-hidden />
           </button>
-          <button type="button" onClick={() => setPicking(true)} className="display h-11 rounded-full px-3 text-[22px] capitalize hover:bg-raised" aria-live="polite">
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            className="display h-11 rounded-full px-3 text-[22px] capitalize hover:bg-raised"
+            aria-live="polite"
+          >
             {label}
           </button>
           <button
@@ -85,18 +118,27 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           </button>
         </div>
 
-        <ErrorNote error={meals.error ?? sessions.error ?? body.error ?? burned.error} />
+        <ErrorNote error={meals.error ?? sessions.error ?? body.error ?? burned.error ?? profile.error} />
 
         {/* One nutrition card: eaten | burned (never netted) on top, the day's meals by slot below. */}
-        <section aria-label={t('track:nutrition.name')} className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
-          <Link to={`${base}/nutrition${dayQuery}`} aria-label={t('track:energy.open')} className="grid grid-cols-2 hover:bg-raised/40">
+        <section
+          aria-label={t('track:nutrition.name')}
+          className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+        >
+          <Link
+            to={`${base}/nutrition${dayQuery}`}
+            aria-label={t('track:energy.open')}
+            className="grid grid-cols-2 hover:bg-raised/40"
+          >
             <Figure
               eyebrow={t('nutrition:ledger.eaten')}
               value={nf.format(eaten)}
               sub={
                 goalKcal
                   ? `${t('nutrition:ledger.goal', { kcal: nf.format(goalKcal) })} · ${
-                      eaten > goalKcal ? t('nutrition:ledger.over', { kcal: nf.format(eaten - goalKcal) }) : t('nutrition:ledger.left', { kcal: nf.format(goalKcal - eaten) })
+                      eaten > goalKcal
+                        ? t('nutrition:ledger.over', { kcal: nf.format(eaten - goalKcal) })
+                        : t('nutrition:ledger.left', { kcal: nf.format(goalKcal - eaten) })
                     }`
                   : t('track:meals.items', { count: entries.length })
               }
@@ -113,67 +155,135 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           </Link>
           <div className="border-t border-line">
             {slots.length > 0 ? (
-              <Link to={`${base}/nutrition${dayQuery}`} aria-label={t('track:meals.open')} className="block hover:bg-raised/40">
+              <Link
+                to={`${base}/nutrition${dayQuery}`}
+                aria-label={t('track:meals.open')}
+                className="block hover:bg-raised/40"
+              >
                 <ul className="divide-y divide-line">
                   {slots.map((s) => (
                     <li key={s.slot} className="flex h-12 items-center gap-3 px-4">
                       <span className="flex-1 text-[14px] font-medium">{t(`nutrition:slots.${s.slot}`)}</span>
-                      <span className="text-[12px] text-ink-faint">{t('track:meals.items', { count: s.count })}</span>
-                      <span className="tabular w-20 text-right text-[14px] font-semibold">{nf.format(s.kcal)}</span>
+                      <span className="text-[12px] text-ink-faint">
+                        {t('track:meals.items', { count: s.count })}
+                      </span>
+                      <span className="tabular w-20 text-right text-[14px] font-semibold">
+                        {nf.format(s.kcal)}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </Link>
             ) : (
-              <Empty text={t('track:meals.none')} action={t('track:meals.add')} to={`${base}/nutrition${dayQuery}`} />
+              <Empty
+                text={t('track:meals.none')}
+                action={t('track:meals.add')}
+                to={`${base}/nutrition${dayQuery}`}
+              />
             )}
           </div>
         </section>
 
-        <Block title={t('track:body.name')} to={`${base}/body`} openLabel={t('track:body.open')}>
-          {bodyRow?.weight_kg != null || measureCount > 0 ? (
-            <div className="flex items-baseline justify-between gap-3 px-4 py-3.5">
-              <span className="tabular text-[20px] font-semibold">
-                {bodyRow?.weight_kg != null ? (
-                  <>
-                    {one.format(Number(bodyRow.weight_kg))} <span className="text-[13px] font-medium text-ink-faint">kg</span>
-                  </>
+        {/* Body: latest weigh-in up to this day and the body mass index; opens the body page. */}
+        {lastWeigh ? (
+          <section
+            aria-label={t('track:body.name')}
+            className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+          >
+            <Link
+              to={`${base}/body`}
+              aria-label={t('track:body.open')}
+              className="grid grid-cols-2 hover:bg-raised/40"
+            >
+              <Figure
+                eyebrow={t('body:lastWeigh')}
+                value={one.format(lastWeigh.kg)}
+                unit="kg"
+                sub={lastWeigh.day === day ? label : format(parseISO(lastWeigh.day), 'd MMM', { locale })}
+              />
+              <Figure
+                eyebrow={t('body:bmi.label')}
+                value={bodyIndex ? one.format(bodyIndex.value) : '–'}
+                unit=""
+                muted={!bodyIndex}
+                border
+                sub={bodyIndex ? t(`body:bmi.category.${bodyIndex.category}`) : t('body:bmi.needHeight')}
+              />
+            </Link>
+            {(measureCount > 0 || bodyRow?.weight_kg == null) && (
+              <div className="border-t border-line">
+                {measureCount > 0 ? (
+                  <p className="px-4 py-3 text-[13px] text-ink-muted">
+                    {t('track:body.measures', { count: measureCount })}
+                  </p>
                 ) : (
-                  '–'
+                  <Empty
+                    text={t('track:body.none')}
+                    action={t('track:body.log')}
+                    to={`${base}/body?log=${day}`}
+                  />
                 )}
-              </span>
-              {measureCount > 0 && <span className="text-[13px] text-ink-muted">{t('track:body.measures', { count: measureCount })}</span>}
-            </div>
-          ) : (
+              </div>
+            )}
+          </section>
+        ) : (
+          <section
+            aria-label={t('track:body.name')}
+            className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+          >
             <Empty text={t('track:body.none')} action={t('track:body.log')} to={`${base}/body?log=${day}`} />
-          )}
-        </Block>
+          </section>
+        )}
 
-        <Block title={t('track:workouts.name')} to={workoutsBase} openLabel={t('track:workouts.start')}>
-          {(sessions.data ?? []).length > 0 ? (
-            <ul className="divide-y divide-line">
-              {(sessions.data ?? []).map((s) => (
-                <li key={s.id}>
-                  <Link to={`/workouts/history/${s.id}`} className="flex min-h-12 items-center gap-3 px-4 py-2.5 hover:bg-raised/50">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium">{sessionTitle(s, t)}</span>
-                      <span className="tabular block text-[12px] text-ink-faint">
-                        {format(new Date(s.started_at), 'HH:mm')} · {t('workouts:units.minN', { n: Math.max(1, Math.round((s.duration_sec ?? 0) / 60)) })}
+        <section
+          aria-label={t('track:workouts.name')}
+          className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+        >
+          <Link
+            to={workoutsBase}
+            aria-label={t('track:workouts.start')}
+            className="flex h-11 items-center justify-between px-4 hover:bg-raised/40"
+          >
+            <span className="eyebrow">{t('track:workouts.name')}</span>
+            <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+          </Link>
+          <div className="border-t border-line">
+            {(sessions.data ?? []).length > 0 ? (
+              <ul className="divide-y divide-line">
+                {(sessions.data ?? []).map((s) => (
+                  <li key={s.id}>
+                    <Link
+                      to={`/workouts/history/${s.id}`}
+                      className="flex min-h-12 items-center gap-3 px-4 py-2.5 hover:bg-raised/50"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[14px] font-medium">{sessionTitle(s, t)}</span>
+                        <span className="tabular block text-[12px] text-ink-faint">
+                          {format(new Date(s.started_at), 'HH:mm')} ·{' '}
+                          {t('workouts:units.minN', {
+                            n: Math.max(1, Math.round((s.duration_sec ?? 0) / 60)),
+                          })}
+                        </span>
                       </span>
-                    </span>
-                    {s.kcal_estimate != null && <span className="tabular shrink-0 text-[13px] text-ink-muted">≈ {nf.format(s.kcal_estimate)} kcal</span>}
-                    <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Empty text={t('track:workouts.none')} action={t('track:workouts.start')} to={workoutsBase} />
-          )}
-        </Block>
+                      {s.kcal_estimate != null && (
+                        <span className="tabular shrink-0 text-[13px] text-ink-muted">
+                          ≈ {nf.format(s.kcal_estimate)} kcal
+                        </span>
+                      )}
+                      <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty text={t('track:workouts.none')} action={t('track:workouts.start')} to={workoutsBase} />
+            )}
+          </div>
+        </section>
 
         <p className="px-1 text-[12px] leading-snug text-ink-faint">
-          <span className="font-semibold text-ink-muted">{t('track:soon.title')}:</span> {t('track:soon.list')}
+          <span className="font-semibold text-ink-muted">{t('track:soon.title')}:</span>{' '}
+          {t('track:soon.list')}
         </p>
       </div>
 
@@ -198,9 +308,11 @@ function Figure({
   muted,
   border,
   progress,
+  unit = 'kcal',
 }: {
   eyebrow: string
   value: string
+  unit?: string
   sub: string
   approx?: boolean
   muted?: boolean
@@ -214,8 +326,16 @@ function Figure({
       <p className="eyebrow">{eyebrow}</p>
       <p className="mt-2.5 flex items-baseline gap-1">
         {approx && <span className="text-[16px] text-ink-faint">≈</span>}
-        <span className={muted ? 'display tabular text-[30px] leading-none text-ink-muted' : 'display tabular text-[30px] leading-none'}>{value}</span>
-        <span className="text-[12px] font-medium text-ink-faint">kcal</span>
+        <span
+          className={
+            muted
+              ? 'display tabular text-[30px] leading-none text-ink-muted'
+              : 'display tabular text-[30px] leading-none'
+          }
+        >
+          {value}
+        </span>
+        {unit && <span className="text-[12px] font-medium text-ink-faint">{unit}</span>}
       </p>
       {progress && (
         <div
@@ -226,25 +346,14 @@ function Figure({
           aria-label={sub}
           className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-raised"
         >
-          <div className={over ? 'h-full rounded-full bg-ink-muted' : 'h-full rounded-full bg-volt'} style={{ width: `${pct}%` }} />
+          <div
+            className={over ? 'h-full rounded-full bg-ink-muted' : 'h-full rounded-full bg-volt'}
+            style={{ width: `${pct}%` }}
+          />
         </div>
       )}
       <p className="tabular mt-2 truncate text-[12px] text-ink-faint">{sub}</p>
     </div>
-  )
-}
-
-function Block({ title, to, openLabel, children }: { title: string; to: string; openLabel: string; children: ReactNode }) {
-  return (
-    <section aria-label={title}>
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="display text-[20px]">{title}</h2>
-        <Link to={to} aria-label={openLabel} className="-mr-2 flex size-11 items-center justify-center rounded-full text-ink-faint hover:bg-raised hover:text-ink">
-          <ChevronRight className="size-5" aria-hidden />
-        </Link>
-      </div>
-      <div className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">{children}</div>
-    </section>
   )
 }
 

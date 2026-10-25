@@ -91,5 +91,28 @@
   "actions": {
     "close": "Close",
     "cancel": "Cancel"
-  }
+  },
+  "height": {
+    "title": "Height",
+    "hint": "Used for the body mass index (BMI). Only you can see it.",
+    "save": "Save",
+    "dec": "Decrease height by 1 cm",
+    "inc": "Increase height by 1 cm",
+    "add": "Add height",
+    "value": "Height {{cm}} cm"
+  },
+  "bmi": {
+    "label": "BMI",
+    "title": "Body mass index",
+    "needHeight": "Add your height for BMI",
+    "category": {
+      "under": "underweight",
+      "normal": "normal",
+      "over": "overweight",
+      "obese": "obese"
+    },
+    "note": "BMI does not tell muscle from fat; it can read high for people who lift."
+  },
+  "lastWeigh": "Last weigh-in",
+  "onDay": "Weigh-in of {{date}}"
 }

@@ -33,7 +33,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.122.0 # pinned: "latest" resolves through the GitHub API and fails when rate-limited
       - name: Link project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
         env:

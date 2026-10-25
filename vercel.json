@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
+  "git": { "deploymentEnabled": false },
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [{ "source": "/((?!assets/|sw\\.js|workbox-|manifest\\.webmanifest|favicon|pwa-|apple-touch).*)", "destination": "/index.html" }],

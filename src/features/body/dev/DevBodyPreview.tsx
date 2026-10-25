@@ -45,7 +45,7 @@ function sampleRows(): BodyMetric[] {
 function seed(empty: boolean, aiClosed: boolean) {
   const qc = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } })
   qc.setQueryData(bodyKeys.metrics, empty ? [] : sampleRows())
-  qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86 })
+  qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86, height: empty ? null : 180 })
   qc.setQueryData(nutritionKeys.day(toLocalDateISO()), empty ? [] : sampleMeals())
   qc.setQueryData(nutritionKeys.foods, empty ? [] : sampleFoods())
   // ?ai=closed shows the "free quota used up" card in the add-food sheet
