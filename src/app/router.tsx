@@ -1,9 +1,11 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from './AppShell'
-import { RequireAuth, RequireOnboarding } from '@/features/auth/RequireAuth'
+import { RequireAdmin, RequireAuth, RequireOnboarding, RequirePending } from '@/features/auth/RequireAuth'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { AccessDeniedPage } from '@/features/auth/pages/AccessDeniedPage'
+import { PendingApprovalPage } from '@/features/auth/pages/PendingApprovalPage'
+import { RegistrationRequestsPage } from '@/features/admin/pages/RegistrationRequestsPage'
 import { OnboardingPage } from '@/features/profile/pages/OnboardingPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { WorkoutsPage } from '@/features/workouts/pages/WorkoutsPage'
@@ -15,7 +17,13 @@ import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   // Dev-only: render gated screens without a session for design verification. Stripped from production builds.
-  ...(import.meta.env.DEV ? [{ path: '/__dev/onboarding', element: <OnboardingPage /> }] : []),
+  ...(import.meta.env.DEV
+    ? [
+        { path: '/__dev/onboarding', element: <OnboardingPage /> },
+        { path: '/__dev/pending', element: <PendingApprovalPage preview="pending" /> },
+        { path: '/__dev/rejected', element: <PendingApprovalPage preview="rejected" /> },
+      ]
+    : []),
   { path: '/auth/callback', element: <AuthCallbackPage /> },
   { path: '/denied', element: <AccessDeniedPage /> },
   {
@@ -24,6 +32,14 @@ export const router = createBrowserRouter([
       <RequireOnboarding>
         <OnboardingPage />
       </RequireOnboarding>
+    ),
+  },
+  {
+    path: '/pending',
+    element: (
+      <RequirePending>
+        <PendingApprovalPage />
+      </RequirePending>
     ),
   },
   {
@@ -40,6 +56,14 @@ export const router = createBrowserRouter([
       { path: 'today', element: <TodayPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      {
+        path: 'admin/requests',
+        element: (
+          <RequireAdmin>
+            <RegistrationRequestsPage />
+          </RequireAdmin>
+        ),
+      },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

@@ -1,0 +1,15 @@
+{
+  "section": "Admin",
+  "you": "you",
+  "requests": {
+    "title": "Registration requests",
+    "link": "Registration requests",
+    "empty": {
+      "pending": "No pending requests.",
+      "approved": "No approved registrations yet.",
+      "rejected": "No rejected registrations."
+    }
+  },
+  "status": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected" },
+  "actions": { "approve": "Approve", "reject": "Reject" }
+}

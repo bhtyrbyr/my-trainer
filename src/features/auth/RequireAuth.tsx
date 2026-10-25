@@ -1,26 +1,36 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from './AuthProvider'
+import { useAuth, type AuthStatus } from './AuthProvider'
+import { routeFor } from './routeFor'
 import { FullScreenSpinner } from '@/components/layout/FullScreenSpinner'
 
-/** Gate for the main app: must be signed in, not blocked, and onboarded. */
-export function RequireAuth({ children }: { children: ReactNode }) {
+function Gate({ allow, children }: { allow: AuthStatus[]; children: ReactNode }) {
   const { status } = useAuth()
   const location = useLocation()
-
   if (status === 'loading' || status === 'checking') return <FullScreenSpinner />
-  if (status === 'signed-out') return <Navigate to="/login" replace state={{ from: location }} />
-  if (status === 'blocked') return <Navigate to="/denied" replace />
-  if (status === 'onboarding') return <Navigate to="/onboarding" replace />
-  return <>{children}</>
+  if (allow.includes(status)) return <>{children}</>
+  const to = routeFor(status) ?? '/'
+  return <Navigate to={to} replace state={status === 'signed-out' ? { from: location } : undefined} />
 }
 
-/** Gate for /onboarding: must be signed in and NOT yet onboarded. */
+/** Main app: signed in, onboarded, approved, not blocked. */
+export function RequireAuth({ children }: { children: ReactNode }) {
+  return <Gate allow={['ready']}>{children}</Gate>
+}
+
+/** /onboarding: signed in and NOT yet onboarded. */
 export function RequireOnboarding({ children }: { children: ReactNode }) {
-  const { status } = useAuth()
-  if (status === 'loading' || status === 'checking') return <FullScreenSpinner />
-  if (status === 'signed-out') return <Navigate to="/login" replace />
-  if (status === 'blocked') return <Navigate to="/denied" replace />
-  if (status === 'ready') return <Navigate to="/" replace />
+  return <Gate allow={['onboarding']}>{children}</Gate>
+}
+
+/** /pending: onboarded but waiting for (or refused) admin approval. */
+export function RequirePending({ children }: { children: ReactNode }) {
+  return <Gate allow={['pending', 'rejected']}>{children}</Gate>
+}
+
+/** Admin-only screens (on top of RequireAuth). */
+export function RequireAdmin({ children }: { children: ReactNode }) {
+  const { profile } = useAuth()
+  if (profile?.role !== 'admin') return <Navigate to="/" replace />
   return <>{children}</>
 }

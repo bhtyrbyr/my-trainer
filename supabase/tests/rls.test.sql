@@ -1,6 +1,6 @@
 -- pgTAP tests for the Faz 0 core. Run: npx supabase test db   (local stack via Docker)
 begin;
-select plan(18);
+select plan(25);
 
 -- Fixtures ------------------------------------------------------------------
 \set ua '00000000-0000-0000-0000-00000000000a'
@@ -38,10 +38,29 @@ select throws_ok(
   '42501', null, 'authenticated role cannot execute award_points'
 );
 
--- Bob onboards --------------------------------------------------------------
+-- Bob onboards (starts as pending: require_approval = true) --------------------
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
 insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
 values (:'ub', 'bob', 'Bob', '00000000-0000-0000-0000-00000000000b/avatar.jpg', now());
+select is((select status from public.profiles where user_id = :'ub'), 'pending', 'new non-admin profile is pending');
+select is((select count(*)::int from public.profiles), 1, 'pending bob sees only his own profile');
+select throws_ok(
+  $$ insert into public.profile_private (user_id, height_cm) values ('00000000-0000-0000-0000-00000000000b', 180) $$,
+  '42501', null, 'pending bob cannot write other tables'
+);
+select throws_ok(
+  $$ select public.admin_set_registration_status('00000000-0000-0000-0000-00000000000b', 'approved') $$,
+  '42501', null, 'non-admin cannot approve'
+);
+-- Alice (admin) approves Bob
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((select count(*)::int from public.admin_list_registrations('pending')), 1, 'admin sees bob in pending list');
+select lives_ok(
+  $$ select public.admin_set_registration_status('00000000-0000-0000-0000-00000000000b', 'approved') $$,
+  'admin approves bob'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select ok(public.can_access(), 'approved bob can access');
 insert into public.profile_private (user_id, height_cm) values (:'ub', 180);
 
 -- 8. bob cannot escalate himself

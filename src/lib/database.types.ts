@@ -4,6 +4,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type Locale = 'tr' | 'en'
 export type Role = 'user' | 'admin'
+export type RegistrationStatus = 'pending' | 'approved' | 'rejected'
 export type Goal = 'lose_fat' | 'build_muscle' | 'maintain' | 'performance'
 export type Sex = 'male' | 'female' | 'other'
 
@@ -13,6 +14,9 @@ type ProfileRow = {
   display_name: string
   avatar_path: string
   role: Role
+  status: RegistrationStatus
+  status_changed_at: string | null
+  status_changed_by: string | null
   is_blocked: boolean
   show_on_leaderboard: boolean
   total_points: number
@@ -140,6 +144,21 @@ export type Database = {
       is_admin: { Args: Record<string, never>; Returns: boolean }
       has_onboarded: { Args: Record<string, never>; Returns: boolean }
       delete_my_account: { Args: Record<string, never>; Returns: undefined }
+      admin_pending_count: { Args: Record<string, never>; Returns: number }
+      admin_set_registration_status: { Args: { p_user: string; p_status: RegistrationStatus }; Returns: undefined }
+      admin_list_registrations: {
+        Args: { p_status?: RegistrationStatus | 'all'; p_limit?: number }
+        Returns: {
+          user_id: string
+          username: string
+          display_name: string
+          avatar_path: string
+          email: string
+          status: RegistrationStatus
+          created_at: string
+          status_changed_at: string | null
+        }[]
+      }
       get_leaderboard: {
         Args: { p_period?: 'week' | 'month' | 'all'; p_limit?: number }
         Returns: {
@@ -164,3 +183,4 @@ export type Profile = ProfileRow
 export type ProfilePrivate = ProfilePrivateRow
 export type UserSettings = UserSettingsRow
 export type LeaderboardRow = Database['public']['Functions']['get_leaderboard']['Returns'][number]
+export type RegistrationRow = Database['public']['Functions']['admin_list_registrations']['Returns'][number]

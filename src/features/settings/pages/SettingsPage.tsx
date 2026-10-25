@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { LogOut } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ChevronRight, LogOut, UserCheck } from 'lucide-react'
+import { usePendingCount } from '@/features/admin/hooks'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -9,9 +11,10 @@ import { useUserSettings } from '../hooks'
 import { cn } from '@/lib/utils'
 
 export function SettingsPage() {
-  const { t, i18n } = useTranslation(['settings', 'auth', 'common'])
+  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'admin'])
   const { user, profile, signOut } = useAuth()
   const { settings, updateSettings } = useUserSettings()
+  const pending = usePendingCount()
   const avatar = avatarUrl(profile?.avatar_path, profile?.updated_at)
 
   const changeLocale = (locale: Locale) => {
@@ -40,6 +43,23 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {profile?.role === 'admin' && (
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('admin:section')}</h2>
+            <Link
+              to="/admin/requests"
+              className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+            >
+              <UserCheck className="size-5 text-ink-muted" aria-hidden />
+              <span className="flex-1 text-[15px]">{t('admin:requests.link')}</span>
+              {(pending.data ?? 0) > 0 && (
+                <span className="tabular rounded-full bg-volt px-2 py-0.5 text-xs font-semibold text-volt-ink">{pending.data}</span>
+              )}
+              <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+            </Link>
+          </section>
+        )}
 
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:language')}</h2>

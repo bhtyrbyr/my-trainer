@@ -26,6 +26,7 @@ export function LoginPage() {
   if (status === 'loading' || status === 'checking') return <FullScreenSpinner />
   if (status === 'ready') return <Navigate to="/" replace />
   if (status === 'onboarding') return <Navigate to="/onboarding" replace />
+  if (status === 'pending' || status === 'rejected') return <Navigate to="/pending" replace />
   if (status === 'blocked') return <Navigate to="/denied" replace />
 
   const proofs = [
