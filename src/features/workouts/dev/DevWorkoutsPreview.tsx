@@ -251,7 +251,7 @@ export function DevTemplateEditor() {
 }
 
 export function DevDashboard() {
-  return <DashboardPage preview={{ points: 1240, streak: 9, burned: { kcal: 412, sessions: 1 } }} />
+  return <DashboardPage preview={{ points: 1240, streak: 9, energy: { burned: { kcal: 412, sessions: 1 }, eaten: { kcal: 1640, entries: 6 } } }} />
 }
 
 export function DevSessionDetail() {

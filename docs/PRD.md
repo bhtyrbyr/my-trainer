@@ -60,7 +60,7 @@ Soru-cevap turlarında netleşen isterler:
 - Kilo (günlük), bel/göğüs/kol/kalça/uyluk ölçüleri (haftalık).
 - Trend grafiği, 7 günlük hareketli ortalama, hedef kilo çizgisi.
 
-**M3 — Beslenme**
+**M3 — Beslenme** (2026-10-25 uygulandı: Takip > Beslenme; Gemini modeli varsayılan `gemini-3.8-flash`, yedek `gemini-3.5-flash-lite`, metin için OpenRouter; ücretsiz katmanda Google içerikleri ürün geliştirmede kullanabildiği için ekranda açık uyarı var)
 - Günlük kalori + protein/karbonhidrat/yağ manuel girişi (öğün bazlı, barkod yok).
 - Kullanıcının kendi "sık yediğim yiyecekler" listesi (hızlı tekrar giriş).
 - **AI besin tahmini (Gemini)**: Yemek ismi yazarak ("2 yumurta, 1 dilim tam buğday ekmek") veya **yemek fotoğrafı** çekerek kalori + protein/karbonhidrat/yağ tahmini alınır; sonuç düzenlenebilir ve tek dokunuşla öğüne eklenir, istenirse sık yiyeceklere kaydedilir. Aynı `ai-coach` Edge Function'ın `food-estimate` aksiyonu üzerinden çalışır (Gemini çok modlu, ücretsiz katman); OpenRouter yedeği yalnızca metin için. Yemek fotoğrafı yalnızca tahmin için gönderilir, saklanmaz. Kota bitince manuel giriş her zaman açık.

@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from '@/app/AppShell'
+import { NutritionPreviewContext, nutritionKeys } from '@/features/nutrition'
+import { NutritionPage } from '@/features/nutrition/pages/NutritionPage'
+import type { Food, MealEntry } from '@/features/nutrition/types'
 import { TrackPage } from '@/features/track/pages/TrackPage'
 import { toLocalDateISO } from '@/lib/dates'
 import { bodyKeys } from '../hooks'
@@ -42,6 +45,8 @@ function seed(empty: boolean) {
   const qc = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } })
   qc.setQueryData(bodyKeys.metrics, empty ? [] : sampleRows())
   qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86 })
+  qc.setQueryData(nutritionKeys.day(toLocalDateISO()), empty ? [] : sampleMeals())
+  qc.setQueryData(nutritionKeys.foods, empty ? [] : sampleFoods())
   return qc
 }
 
@@ -51,7 +56,9 @@ export function DevBodyLayout() {
   return (
     <QueryClientProvider client={client}>
       <BodyPreviewContext.Provider value={true}>
-        <AppShell />
+        <NutritionPreviewContext.Provider value={true}>
+          <AppShell />
+        </NutritionPreviewContext.Provider>
       </BodyPreviewContext.Provider>
     </QueryClientProvider>
   )
@@ -63,4 +70,55 @@ export function DevTrack() {
 
 export function DevBody() {
   return <BodyPage />
+}
+
+export function DevNutrition() {
+  return <NutritionPage preview={{ goals: { kcal: 2200, protein: 140 }, burned: { kcal: 412, sessions: 1 } }} />
+}
+
+function sampleMeals(): MealEntry[] {
+  const day = toLocalDateISO()
+  const at = (h: number, m = 0) => new Date(new Date().setHours(h, m, 0, 0)).toISOString()
+  const row = (id: string, slot: string, name: string, kcal: number, p: number, c: number, f: number, h: number): MealEntry => ({
+    id,
+    user_id: 'preview',
+    eaten_on: day,
+    meal_slot: slot,
+    food_id: null,
+    name,
+    servings: 1,
+    kcal,
+    protein_g: p,
+    carb_g: c,
+    fat_g: f,
+    source: 'ai_text',
+    created_at: at(h),
+    updated_at: at(h),
+  })
+  return [
+    row('m1', 'breakfast', 'Haşlanmış yumurta · 2 adet', 155, 12.6, 1.1, 10.6, 8),
+    row('m2', 'breakfast', 'Beyaz peynir · 1 dilim (30 g)', 93, 5.1, 0.6, 7.8, 8),
+    row('m3', 'breakfast', 'Tam buğday ekmeği · 2 dilim', 160, 7.2, 28.4, 2.2, 8),
+    row('m4', 'lunch', 'Tavuk göğsü ızgara · 200 g', 330, 62, 0, 7.2, 13),
+    row('m5', 'lunch', 'Bulgur pilavı · 1 kase', 260, 7, 50, 4.5, 13),
+    row('m6', 'snack', 'Yoğurt · 1 kase (200 g)', 122, 7, 9.4, 6.4, 16),
+  ]
+}
+
+function sampleFoods(): Food[] {
+  const f = (id: string, name: string, serving: string, kcal: number, p: number, c: number, fat: number): Food => ({
+    id,
+    user_id: 'preview',
+    name,
+    serving_desc: serving,
+    kcal,
+    protein_g: p,
+    carb_g: c,
+    fat_g: fat,
+    use_count: 3,
+    last_used_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+  return [f('f1', 'Yulaf ezmesi', '40 g', 150, 5.3, 27, 2.7), f('f2', 'Muz', '1 orta boy', 105, 1.3, 27, 0.4), f('f3', 'Whey protein', '1 ölçek', 120, 24, 3, 1.5)]
 }

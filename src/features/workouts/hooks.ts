@@ -34,21 +34,22 @@ export const workoutKeys = {
 // -----------------------------------------------------------------------------
 // Reads
 // -----------------------------------------------------------------------------
-/** Estimated kcal burned by today's finished workouts (local calendar day). Never added to eaten calories. */
-export function useBurnedToday(previewValue?: { kcal: number; sessions: number }) {
-  const now = new Date()
-  const day = toLocalDateISO(now)
+/** Estimated kcal burned by the finished workouts of one local day (YYYY-MM-DD). Never added to eaten calories. */
+export function useBurnedOn(day: string, previewValue?: { kcal: number; sessions: number }) {
   return useQuery({
     queryKey: workoutKeys.energy(day),
     queryFn: () => {
-      const from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const to = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
-      return api.burnedBetween(from.toISOString(), to.toISOString())
+      const [y, m, d] = day.split('-').map(Number)
+      return api.burnedBetween(new Date(y, m - 1, d).toISOString(), new Date(y, m - 1, d + 1).toISOString())
     },
     enabled: !previewValue,
     initialData: previewValue,
     staleTime: 60_000,
   })
+}
+
+export function useBurnedToday(previewValue?: { kcal: number; sessions: number }) {
+  return useBurnedOn(toLocalDateISO(), previewValue)
 }
 
 export function useTemplates() {

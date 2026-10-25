@@ -23,6 +23,28 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          day: string
+          request_count: number
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          day: string
+          request_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          request_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       allowed_emails: {
         Row: {
           added_by: string | null
@@ -246,6 +268,112 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      foods: {
+        Row: {
+          carb_g: number
+          created_at: string
+          fat_g: number
+          id: string
+          kcal: number
+          last_used_at: string | null
+          name: string
+          protein_g: number
+          serving_desc: string | null
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          carb_g?: number
+          created_at?: string
+          fat_g?: number
+          id?: string
+          kcal: number
+          last_used_at?: string | null
+          name: string
+          protein_g?: number
+          serving_desc?: string | null
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          carb_g?: number
+          created_at?: string
+          fat_g?: number
+          id?: string
+          kcal?: number
+          last_used_at?: string | null
+          name?: string
+          protein_g?: number
+          serving_desc?: string | null
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meal_entries: {
+        Row: {
+          carb_g: number
+          created_at: string
+          eaten_on: string
+          fat_g: number
+          food_id: string | null
+          id: string
+          kcal: number
+          meal_slot: string
+          name: string
+          protein_g: number
+          servings: number
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          carb_g?: number
+          created_at?: string
+          eaten_on: string
+          fat_g?: number
+          food_id?: string | null
+          id?: string
+          kcal: number
+          meal_slot: string
+          name: string
+          protein_g?: number
+          servings?: number
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carb_g?: number
+          created_at?: string
+          eaten_on?: string
+          fat_g?: number
+          food_id?: string | null
+          id?: string
+          kcal?: number
+          meal_slot?: string
+          name?: string
+          protein_g?: number
+          servings?: number
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'meal_entries_food_id_fkey'
+            columns: ['food_id']
+            isOneToOne: false
+            referencedRelation: 'foods'
+            referencedColumns: ['id']
+          },
+        ]
       }
       muscle_aliases: {
         Row: {
@@ -890,6 +1018,7 @@ export type Database = {
       }
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
+      ai_consume: { Args: Record<PropertyKey, never>; Returns: number }
       award_points: {
         Args: {
           p_kind: string
@@ -965,6 +1094,7 @@ export type Database = {
       recompute_streak: { Args: { p_user: string }; Returns: undefined }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
       strength_met: { Args: { p_avg_rpe: number }; Returns: number }
+      sync_protein_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
       todays_templates: {
         Args: { p_isodow?: number }
         Returns: {

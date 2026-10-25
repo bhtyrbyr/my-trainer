@@ -2,7 +2,7 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(111);
+select plan(123);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -27,7 +27,7 @@ select is(
       and has_function_privilege('authenticated', p.oid, 'execute')
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
-        'admin_set_registration_status', 'can_access', 'delete_my_account', 'finish_workout_session',
+        'admin_set_registration_status', 'ai_consume', 'can_access', 'delete_my_account', 'finish_workout_session',
         'get_leaderboard', 'has_onboarded', 'is_admin', 'rls_auto_enable')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
@@ -389,6 +389,46 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
 delete from public.body_metrics where user_id = :'ub';
 select is((select count(*)::int from public.point_events where user_id = :'ub' and kind in ('weight_log', 'measurement_log') and ref_id like '%:%'), 0, 'body: deleting the row revokes its points');
+reset role;
+
+-- nutrition (Faz 2) ---------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.meal_entries (user_id, eaten_on, meal_slot, name, kcal, protein_g) values (:'ub', (now() at time zone 'Europe/Istanbul')::date, 'breakfast', 'Yumurta', 150, 12);
+select is((select sum(points)::int from public.point_events where user_id = :'ub' and kind = 'meal_log'), 5, 'meals: an entry awards 5 by trigger');
+insert into public.meal_entries (user_id, eaten_on, meal_slot, name, kcal) values
+  (:'ub', (now() at time zone 'Europe/Istanbul')::date, 'lunch', 'a', 100), (:'ub', (now() at time zone 'Europe/Istanbul')::date, 'dinner', 'b', 100), (:'ub', (now() at time zone 'Europe/Istanbul')::date, 'snack', 'c', 100), (:'ub', (now() at time zone 'Europe/Istanbul')::date, 'snack', 'd', 100);
+select is((select sum(points)::int from public.point_events where user_id = :'ub' and kind = 'meal_log'), 20, 'meals: capped at 20 a day');
+update public.user_settings set daily_protein_g = 50 where user_id = :'ub';
+insert into public.meal_entries (id, user_id, eaten_on, meal_slot, name, kcal, protein_g)
+  values ('00000000-0000-0000-0000-0000000000c1', :'ub', (now() at time zone 'Europe/Istanbul')::date, 'dinner', 'Tavuk', 400, 45);
+select is((select points from public.point_events where user_id = :'ub' and kind = 'protein_goal'), 15, 'meals: reaching the protein goal awards 15');
+delete from public.meal_entries where id = '00000000-0000-0000-0000-0000000000c1';
+select is((select count(*)::int from public.point_events where user_id = :'ub' and kind = 'protein_goal'), 0, 'meals: dropping below the protein goal revokes it');
+select throws_like(
+  $$ insert into public.meal_entries (user_id, eaten_on, meal_slot, name, kcal) values ('00000000-0000-0000-0000-00000000000b', current_date + 5, 'lunch', 'x', 1) $$,
+  '%FUTURE_DATE%', 'meals: future days are rejected'
+);
+select is(public.ai_consume(), 39, 'ai: a request is counted against the daily limit');
+select throws_ok(
+  $$ insert into public.ai_usage (user_id, day, request_count) values ('00000000-0000-0000-0000-00000000000b', current_date, 0) $$,
+  '42501', null, 'ai: clients cannot write the usage counter'
+);
+update public.user_settings set ai_daily_limit = 1 where user_id = :'ub';
+select throws_like($$ select public.ai_consume() $$, '%AI_QUOTA%', 'ai: the daily limit is enforced');
+
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+insert into public.foods (id, user_id, name, kcal) values ('00000000-0000-0000-0000-0000000000d1', :'ua', 'Alice yulaf', 300);
+select is((select count(*)::int from public.meal_entries), 0, 'meals IDOR: alice sees none of bob''s meals');
+select throws_ok(
+  $$ insert into public.meal_entries (user_id, eaten_on, meal_slot, name, kcal) values ('00000000-0000-0000-0000-00000000000b', current_date - 1, 'lunch', 'x', 1) $$,
+  '42501', null, 'meals IDOR: alice cannot write a meal for bob'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select is((select count(*)::int from public.foods), 0, 'foods IDOR: bob sees none of alice''s foods');
+insert into public.meal_entries (id, user_id, eaten_on, meal_slot, food_id, name, kcal)
+  values ('00000000-0000-0000-0000-0000000000c2', :'ub', (now() at time zone 'Europe/Istanbul')::date, 'snack', '00000000-0000-0000-0000-0000000000d1', 'x', 1);
+select is((select food_id from public.meal_entries where id = '00000000-0000-0000-0000-0000000000c2'), null::uuid, 'meals: another user''s food id is dropped');
 reset role;
 
 select * from finish();

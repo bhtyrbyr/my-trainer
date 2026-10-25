@@ -29,3 +29,11 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - Secret leakage (`service_role`, provider keys) in client bundle or repo
 - Third-party API calls from the browser (quota theft, key leakage)
 - Unencrypted photo bytes in Storage, Cache API, IndexedDB
+
+## AI food estimate (`supabase/functions/ai-coach`)
+
+- Provider keys (`GEMINI_API_KEY`, optional `OPENROUTER_API_KEY`) live only in Supabase Secrets; the browser calls the Edge Function, never a provider.
+- The function verifies the caller's JWT, calls `ai_consume()` with the caller's token (per-user `user_settings.ai_daily_limit` and global `app_config.ai_global_daily_limit`), and only then calls the provider.
+- Input is limited to a 500-character description and one JPEG/PNG/WebP image (<= ~1.5 MB). The client re-encodes photos to a 1024px JPEG, which drops EXIF/location. Nothing is stored server-side.
+- The user text is wrapped as a quoted food description in the prompt; model output is treated as untrusted data and reduced to short strings and clamped numbers before it reaches the client.
+- Gemini's free tier may use submitted content to improve Google products; the add-food screen says so and asks users not to send photos with faces or personal details.

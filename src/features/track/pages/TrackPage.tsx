@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { useLatestWeight } from '@/features/body'
+import { useEatenOn } from '@/features/nutrition'
 import { cn } from '@/lib/utils'
 
 /**
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils'
 export function TrackPage({ preview = false }: { preview?: boolean }) {
   const { t, i18n } = useTranslation('track')
   const weight = useLatestWeight()
+  const eaten = useEatenOn()
   const nf = new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
   const rows = [
@@ -21,7 +23,12 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
       figure: weight.data != null ? `${nf.format(weight.data)} kg` : null,
       empty: t('body.empty'),
     },
-    { key: 'nutrition' },
+    {
+      key: 'nutrition',
+      to: preview ? '/__dev/track/nutrition' : '/track/nutrition',
+      figure: eaten.data && eaten.data.entries > 0 ? `${new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr').format(eaten.data.kcal)} kcal` : null,
+      empty: t('nutrition.empty'),
+    },
     { key: 'sleepWater' },
     { key: 'photos' },
   ] as const
