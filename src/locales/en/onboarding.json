@@ -1,0 +1,41 @@
+{
+  "title": "Create your profile",
+  "subtitle": "This is how you will appear on the leaderboard.",
+  "cancel": "Cancel and sign out",
+  "optional": "Optional",
+  "choose": "Choose…",
+  "submit": "Let's go",
+  "avatar": {
+    "label": "Profile photo",
+    "takePhoto": "Take photo",
+    "choose": "Choose from library",
+    "useGoogle": "Use my Google photo",
+    "required": "You need to add a profile photo to continue.",
+    "error": "Could not process the photo. Try another image."
+  },
+  "fields": {
+    "username": "Username",
+    "displayName": "Display name",
+    "birthYear": "Birth year",
+    "heightCm": "Height (cm)",
+    "sex": "Sex",
+    "goal": "Goal",
+    "showOnLeaderboard": "Show me on the leaderboard"
+  },
+  "hints": {
+    "username": "3–20 characters; lowercase letters, digits and underscore."
+  },
+  "errors": {
+    "username_invalid": "Only lowercase letters, digits and underscore; 3–20 characters.",
+    "username_taken": "That username is taken.",
+    "display_name_required": "Display name is required.",
+    "display_name_too_long": "At most 40 characters."
+  },
+  "sex": { "male": "Male", "female": "Female", "other": "Other" },
+  "goal": {
+    "lose_fat": "Lose fat",
+    "build_muscle": "Build muscle",
+    "maintain": "Maintain",
+    "performance": "Performance"
+  }
+}

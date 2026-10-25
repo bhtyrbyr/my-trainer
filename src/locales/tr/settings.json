@@ -1,0 +1,13 @@
+{
+  "title": "Ayarlar",
+  "language": "Dil",
+  "languages": { "tr": "Türkçe", "en": "English" },
+  "profile": "Profil",
+  "account": "Hesap",
+  "signedInAs": "Giriş yapılan hesap",
+  "about": "Hakkında",
+  "attribution": "Egzersiz verisi ve GIF'ler: ExerciseDB (açık kaynak). Kas diyagramları: wger (CC-BY-SA).",
+  "version": "Sürüm {{version}}",
+  "saved": "Kaydedildi",
+  "admin": "Yönetici"
+}

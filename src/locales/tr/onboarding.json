@@ -1,0 +1,41 @@
+{
+  "title": "Profilini oluştur",
+  "subtitle": "Liderlik tablosunda böyle görüneceksin.",
+  "cancel": "Vazgeç ve çıkış yap",
+  "optional": "İsteğe bağlı",
+  "choose": "Seç…",
+  "submit": "Başla",
+  "avatar": {
+    "label": "Profil fotoğrafı",
+    "takePhoto": "Fotoğraf çek",
+    "choose": "Galeriden seç",
+    "useGoogle": "Google fotoğrafımı kullan",
+    "required": "Devam etmek için bir profil fotoğrafı eklemen gerekiyor.",
+    "error": "Fotoğraf işlenemedi. Başka bir görsel dene."
+  },
+  "fields": {
+    "username": "Kullanıcı adı",
+    "displayName": "Görünen ad",
+    "birthYear": "Doğum yılı",
+    "heightCm": "Boy (cm)",
+    "sex": "Cinsiyet",
+    "goal": "Hedef",
+    "showOnLeaderboard": "Liderlik tablosunda görün"
+  },
+  "hints": {
+    "username": "3–20 karakter; küçük harf, rakam ve alt çizgi."
+  },
+  "errors": {
+    "username_invalid": "Sadece küçük harf, rakam ve alt çizgi; 3–20 karakter.",
+    "username_taken": "Bu kullanıcı adı alınmış.",
+    "display_name_required": "Görünen ad zorunlu.",
+    "display_name_too_long": "En fazla 40 karakter."
+  },
+  "sex": { "male": "Erkek", "female": "Kadın", "other": "Diğer" },
+  "goal": {
+    "lose_fat": "Yağ yak",
+    "build_muscle": "Kas kazan",
+    "maintain": "Formu koru",
+    "performance": "Performans"
+  }
+}

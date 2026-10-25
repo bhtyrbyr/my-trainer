@@ -1,0 +1,13 @@
+{
+  "title": "Settings",
+  "language": "Language",
+  "languages": { "tr": "Türkçe", "en": "English" },
+  "profile": "Profile",
+  "account": "Account",
+  "signedInAs": "Signed in as",
+  "about": "About",
+  "attribution": "Exercise data and GIFs: ExerciseDB (open source). Muscle diagrams: wger (CC-BY-SA).",
+  "version": "Version {{version}}",
+  "saved": "Saved",
+  "admin": "Admin"
+}

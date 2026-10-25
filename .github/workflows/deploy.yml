@@ -1,0 +1,87 @@
+# Production pipeline: runs only after the CI workflow succeeds on main.
+#   1. Supabase: push migrations, deploy Edge Functions
+#   2. Vercel: build + production deploy
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_ACCESS_TOKEN   personal access token (supabase.com/dashboard/account/tokens)
+#   SUPABASE_PROJECT_REF    e.g. abcdefghijklmnop
+#   SUPABASE_DB_PASSWORD    database password set when the project was created
+#   VERCEL_TOKEN            vercel.com/account/tokens
+#   VERCEL_ORG_ID           from `vercel link` -> .vercel/project.json
+#   VERCEL_PROJECT_ID       from `vercel link` -> .vercel/project.json
+# VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are configured in the Vercel project (pulled by `vercel pull`).
+name: Deploy (production)
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  supabase:
+    name: Supabase migrations + functions
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      - name: Push migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      - name: Deploy Edge Functions (if any)
+        run: |
+          if [ -d supabase/functions ] && [ -n "$(ls -A supabase/functions 2>/dev/null)" ]; then
+            supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+          else
+            echo "no edge functions yet"
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+  vercel:
+    name: Vercel production deploy
+    needs: supabase
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm i -g vercel@latest
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - id: deploy
+        run: echo "url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - run: echo "Deployed to ${{ steps.deploy.outputs.url }}"

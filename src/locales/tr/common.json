@@ -1,0 +1,20 @@
+{
+  "appName": "My Trainer",
+  "nav": {
+    "label": "Ana gezinme",
+    "home": "Özet",
+    "workouts": "Antrenman",
+    "track": "Takip",
+    "today": "Bugün",
+    "leaderboard": "Liderlik",
+    "settings": "Ayarlar"
+  },
+  "comingSoon": "Bu modül bir sonraki fazda geliyor.",
+  "phase": "Faz {{n}}",
+  "loading": "Yükleniyor…",
+  "retry": "Tekrar dene",
+  "error": "Bir şeyler ters gitti.",
+  "points": "{{n}} puan",
+  "level": "Seviye {{n}}",
+  "streakDays": "{{n}} gün seri"
+}

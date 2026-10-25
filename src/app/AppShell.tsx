@@ -1,0 +1,18 @@
+import { Outlet } from 'react-router-dom'
+import { BottomNav } from './BottomNav'
+
+/**
+ * App frame. Mobile (iPhone 16 primary): full-height column with a fixed bottom tab bar.
+ * Desktop (>= lg): same screens, content centered with the nav docked at the bottom of a narrower column
+ * or as a left rail. Keeps one codebase for both targets.
+ */
+export function AppShell() {
+  return (
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col lg:max-w-5xl lg:flex-row">
+      <BottomNav />
+      <main className="flex-1 pb-nav lg:pb-0">
+        <Outlet />
+      </main>
+    </div>
+  )
+}

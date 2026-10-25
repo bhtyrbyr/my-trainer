@@ -1,0 +1,20 @@
+{
+  "appName": "My Trainer",
+  "nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "workouts": "Workouts",
+    "track": "Track",
+    "today": "Today",
+    "leaderboard": "Ranking",
+    "settings": "Settings"
+  },
+  "comingSoon": "This module arrives in the next phase.",
+  "phase": "Phase {{n}}",
+  "loading": "Loading…",
+  "retry": "Retry",
+  "error": "Something went wrong.",
+  "points": "{{n}} pts",
+  "level": "Level {{n}}",
+  "streakDays": "{{n}} day streak"
+}

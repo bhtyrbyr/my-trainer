@@ -1,0 +1,79 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run i18n:check
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder
+      - name: Secret scan (no service_role / provider keys in client code)
+        run: |
+          if grep -rniE "service_role|sk-or-v1-|AIza[0-9A-Za-z_-]{30,}" src scripts .github; then
+            echo "::error::possible secret committed to repo"; exit 1; fi
+      - name: RLS sanity (every table in migrations has RLS enabled)
+        run: |
+          fail=0
+          for f in supabase/migrations/*.sql; do
+            for t in $(grep -oiE "create table (if not exists )?public\.[a-z_]+" "$f" | awk '{print $NF}' | sed 's/public\.//'); do
+              grep -qiE "alter table public\.$t enable row level security" "$f" || { echo "::error file=$f::table $t has no RLS"; fail=1; }
+            done
+          done
+          exit $fail
+
+  preview:
+    name: Vercel preview deploy (PRs)
+    if: github.event_name == 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm i -g vercel@latest
+      - run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - id: deploy
+        run: echo "url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `Preview deployed: ${{ steps.deploy.outputs.url }}`,
+            })
