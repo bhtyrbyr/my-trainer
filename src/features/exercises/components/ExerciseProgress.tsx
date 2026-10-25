@@ -77,7 +77,7 @@ export function ExerciseProgress({ exerciseId }: { exerciseId: string }) {
                 aria-selected={period === p}
                 onClick={() => setPeriod(p)}
                 className={cn(
-                  'h-9 rounded-full text-[13px] font-medium transition-colors',
+                  'h-11 rounded-full text-[13px] font-medium transition-colors',
                   period === p ? 'bg-raised text-ink' : 'text-ink-muted hover:text-ink',
                 )}
               >

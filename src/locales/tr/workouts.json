@@ -144,7 +144,8 @@
     "discardTitle": "Hiç set girilmedi",
     "discardBody": "Bu antrenmanda kayıtlı set yok. Antrenman silinsin mi?",
     "discardConfirm": "Antrenmanı sil",
-    "notFound": "Antrenman bulunamadı"
+    "notFound": "Antrenman bulunamadı",
+    "rpeShort": "RPE"
   },
   "rest": {
     "title": "Mola",

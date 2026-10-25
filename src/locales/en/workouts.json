@@ -144,7 +144,8 @@
     "discardTitle": "No sets logged",
     "discardBody": "This workout has no sets. Delete it?",
     "discardConfirm": "Delete workout",
-    "notFound": "Workout not found"
+    "notFound": "Workout not found",
+    "rpeShort": "RPE"
   },
   "rest": {
     "title": "Rest",

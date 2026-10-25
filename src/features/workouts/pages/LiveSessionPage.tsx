@@ -566,7 +566,7 @@ function SetEntry(props: EntryProps) {
           {t('session.warmup')}
         </button>
         <div role="group" aria-label={t('session.rpe')} className="flex min-w-0 flex-1 items-center justify-end">
-          <span className="eyebrow mr-1 shrink-0">RPE</span>
+          <span className="eyebrow mr-1 shrink-0">{t('session.rpeShort')}</span>
           {RPE_VALUES.map((v) => (
             <button
               key={v}
