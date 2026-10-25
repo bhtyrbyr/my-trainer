@@ -49,7 +49,8 @@
       "chest_cm": "Chest",
       "hip_cm": "Hips",
       "arm_cm": "Arm",
-      "thigh_cm": "Thigh"
+      "thigh_cm": "Thigh",
+      "neck_cm": "Neck"
     },
     "since": "since the previous one",
     "last": "last {{value}}",
@@ -114,5 +115,25 @@
     "note": "BMI does not tell muscle from fat; it can read high for people who lift."
   },
   "lastWeigh": "Last weigh-in",
-  "onDay": "Weigh-in of {{date}}"
+  "onDay": "Weigh-in of {{date}}",
+  "fat": {
+    "title": "Body fat",
+    "method": "U.S. Navy circumference method (height, neck, waist; hips for women). An estimate, about ±3-4 points. Measure the waist at the navel for men, at the narrowest point for women.",
+    "needs": "Missing for the estimate: {{list}}.",
+    "invalid": "The measurements look inconsistent (the waist cannot be smaller than the neck). Check them.",
+    "missing": {
+      "sex": "sex (not set to male/female at sign-up)",
+      "height": "height",
+      "neck": "neck",
+      "waist": "waist",
+      "hip": "hips"
+    },
+    "category": {
+      "essential": "essential fat",
+      "athletes": "athletic",
+      "fitness": "fit",
+      "average": "average",
+      "obese": "high"
+    }
+  }
 }

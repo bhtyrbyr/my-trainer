@@ -74,7 +74,7 @@ export function useSetTargetWeight() {
   return useMutation({
     mutationFn: async (kg: number | null) => {
       if (!preview) return api.setTargetWeight(user!.id, kg)
-      qc.setQueryData<{ target: number | null; start: number | null; height: number | null }>(bodyKeys.target, (w) => ({ start: w?.start ?? null, height: w?.height ?? null, target: kg }))
+      qc.setQueryData<{ target: number | null; start: number | null; height: number | null; sex: string | null }>(bodyKeys.target, (w) => ({ start: w?.start ?? null, height: w?.height ?? null, sex: w?.sex ?? null, target: kg }))
     },
     onSuccess: () => {
       if (!preview) void qc.invalidateQueries({ queryKey: bodyKeys.target })
@@ -93,6 +93,7 @@ function emptyRow(day: string): BodyMetric {
     arm_cm: null,
     hip_cm: null,
     thigh_cm: null,
+    neck_cm: null,
     note: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -106,7 +107,7 @@ export function useSetHeight() {
   return useMutation({
     mutationFn: async (cm: number | null) => {
       if (!preview) return api.setHeight(user!.id, cm)
-      qc.setQueryData<{ target: number | null; start: number | null; height: number | null }>(bodyKeys.target, (w) => ({ target: w?.target ?? null, start: w?.start ?? null, height: cm }))
+      qc.setQueryData<{ target: number | null; start: number | null; height: number | null; sex: string | null }>(bodyKeys.target, (w) => ({ target: w?.target ?? null, start: w?.start ?? null, sex: w?.sex ?? null, height: cm }))
     },
     onSuccess: () => {
       if (!preview) void qc.invalidateQueries({ queryKey: bodyKeys.target })

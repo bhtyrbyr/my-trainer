@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bmi, filterPeriod, latestMeasurements, latestWeightOnOrBefore, summarizeWeight, weightSeries } from './logic'
+import { bmi, filterPeriod, navyBodyFat, latestMeasurements, latestWeightOnOrBefore, summarizeWeight, weightSeries } from './logic'
 import type { BodyMetric } from './types'
 
 const row = (measured_on: string, fields: Partial<BodyMetric>): BodyMetric => ({
@@ -12,6 +12,7 @@ const row = (measured_on: string, fields: Partial<BodyMetric>): BodyMetric => ({
   arm_cm: null,
   hip_cm: null,
   thigh_cm: null,
+  neck_cm: null,
   note: null,
   created_at: '',
   updated_at: '',
@@ -72,5 +73,21 @@ describe('bmi / latestWeightOnOrBefore', () => {
     expect(latestWeightOnOrBefore(rows, '2026-10-26')).toEqual({ day: '2026-10-24', kg: 82.4 })
     expect(latestWeightOnOrBefore(rows, '2026-10-22')).toEqual({ day: '2026-10-20', kg: 83 })
     expect(latestWeightOnOrBefore(rows, '2026-10-01')).toBeNull()
+  })
+})
+
+describe('navyBodyFat (U.S. Navy method)', () => {
+  it('estimates men from height, neck and waist', () => {
+    expect(navyBodyFat({ sex: 'male', heightCm: 180, neckCm: 38, waistCm: 85, hipCm: null })).toEqual({ ok: true, value: 16.1, category: 'fitness' })
+  })
+  it('estimates women with hips', () => {
+    expect(navyBodyFat({ sex: 'female', heightCm: 165, neckCm: 33, waistCm: 70, hipCm: 95 })).toEqual({ ok: true, value: 24.3, category: 'fitness' })
+  })
+  it('says what is missing', () => {
+    expect(navyBodyFat({ sex: 'female', heightCm: 165, neckCm: null, waistCm: 70, hipCm: null })).toEqual({ ok: false, missing: ['neck', 'hip'] })
+    expect(navyBodyFat({ sex: 'other', heightCm: 170, neckCm: 35, waistCm: 80, hipCm: 90 })).toEqual({ ok: false, missing: ['sex'] })
+  })
+  it('rejects impossible measurements', () => {
+    expect(navyBodyFat({ sex: 'male', heightCm: 180, neckCm: 40, waistCm: 38, hipCm: null })).toMatchObject({ ok: false, invalid: true })
   })
 })

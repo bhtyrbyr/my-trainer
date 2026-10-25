@@ -23,11 +23,11 @@ export async function deleteBodyMetric(id: string): Promise<void> {
 }
 
 /** Private body profile: goal weight (chart line), onboarding start weight (first prefill) and height (BMI). */
-export async function getPrivateWeights(): Promise<{ target: number | null; start: number | null; height: number | null }> {
-  const { data, error } = await supabase.from('profile_private').select('target_weight_kg, start_weight_kg, height_cm').maybeSingle()
+export async function getPrivateWeights(): Promise<{ target: number | null; start: number | null; height: number | null; sex: string | null }> {
+  const { data, error } = await supabase.from('profile_private').select('target_weight_kg, start_weight_kg, height_cm, sex').maybeSingle()
   if (error) throw error
   const num = (v: number | null | undefined) => (v == null ? null : Number(v))
-  return { target: num(data?.target_weight_kg), start: num(data?.start_weight_kg), height: num(data?.height_cm) }
+  return { target: num(data?.target_weight_kg), start: num(data?.start_weight_kg), height: num(data?.height_cm), sex: data?.sex ?? null }
 }
 
 /** Height for the body mass index (private profile). */

@@ -10,7 +10,9 @@ import { ErrorNote } from '@/components/ui/ErrorNote'
 import {
   MEASURE_FIELDS,
   bmi,
+  latestMeasurements,
   latestWeightOnOrBefore,
+  navyBodyFat,
   useBodyMetrics,
   usePrivateWeights,
 } from '@/features/body'
@@ -66,6 +68,9 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const measureCount = bodyRow ? MEASURE_FIELDS.filter((k) => bodyRow[k] != null).length : 0
   const lastWeigh = latestWeightOnOrBefore(body.data ?? [], day)
   const bodyIndex = bmi(lastWeigh?.kg, profile.data?.height)
+  const upToDay = latestMeasurements((body.data ?? []).filter((r) => r.measured_on <= day))
+  const measure = (k: string) => upToDay.find((m) => m.field === k)?.value ?? null
+  const fat = navyBodyFat({ sex: profile.data?.sex, heightCm: profile.data?.height, neckCm: measure('neck_cm'), waistCm: measure('waist_cm'), hipCm: measure('hip_cm') })
   const slots = MEAL_SLOTS.map((s) => {
     const rows = entries.filter((e) => e.meal_slot === s)
     return { slot: s as MealSlot, count: rows.length, kcal: rows.reduce((a, e) => a + e.kcal, 0) }
@@ -210,6 +215,11 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
                 sub={bodyIndex ? t(`body:bmi.category.${bodyIndex.category}`) : t('body:bmi.needHeight')}
               />
             </Link>
+            {fat.ok && (
+              <Link to={`${base}/body`} className="block border-t border-line px-4 py-3 text-[13px] text-ink-muted hover:bg-raised/40">
+                {t('track:body.fat', { value: one.format(fat.value), category: t(`body:fat.category.${fat.category}`) })}
+              </Link>
+            )}
             {(measureCount > 0 || bodyRow?.weight_kg == null) && (
               <div className="border-t border-line">
                 {measureCount > 0 ? (

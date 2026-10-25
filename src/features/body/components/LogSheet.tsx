@@ -13,8 +13,9 @@ import { latestMeasurements } from '../logic'
 import { MEASURE_FIELDS, type BodyMetric, type BodyMetricInput, type MeasureField } from '../types'
 
 /** Sensible first values when a circumference has never been logged (cm). */
-const FIRST_GUESS: Record<MeasureField, number> = { waist_cm: 85, chest_cm: 100, hip_cm: 100, arm_cm: 33, thigh_cm: 56 }
+const FIRST_GUESS: Record<MeasureField, number> = { neck_cm: 38, waist_cm: 85, chest_cm: 100, hip_cm: 100, arm_cm: 33, thigh_cm: 56 }
 const LIMITS: Record<MeasureField, [number, number]> = {
+  neck_cm: [20, 80],
   waist_cm: [20, 300],
   chest_cm: [20, 300],
   hip_cm: [20, 300],

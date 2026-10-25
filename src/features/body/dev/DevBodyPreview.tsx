@@ -29,6 +29,7 @@ function sampleRows(): BodyMetric[] {
       user_id: 'preview',
       measured_on: day,
       weight_kg: Math.round((trend + noise) * 10) / 10,
+      neck_cm: weekly ? 39 : null,
       waist_cm: weekly ? Math.round((88 + i / 15) * 2) / 2 : null,
       chest_cm: weekly && i % 14 === 2 ? 102 : null,
       arm_cm: weekly ? 35.5 : null,
@@ -45,7 +46,7 @@ function sampleRows(): BodyMetric[] {
 function seed(empty: boolean, aiClosed: boolean) {
   const qc = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } })
   qc.setQueryData(bodyKeys.metrics, empty ? [] : sampleRows())
-  qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86, height: empty ? null : 180 })
+  qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86, height: empty ? null : 180, sex: 'male' })
   qc.setQueryData(nutritionKeys.day(toLocalDateISO()), empty ? [] : sampleMeals())
   qc.setQueryData(nutritionKeys.foods, empty ? [] : sampleFoods())
   // ?ai=closed shows the "free quota used up" card in the add-food sheet
