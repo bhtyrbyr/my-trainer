@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/AuthProvider'
 import type { RegistrationStatus } from '@/lib/database.types'
-import { aiAppToday, aiLive, aiModelLimits, aiUsage, deleteRejectedUser, listRegistrations, pendingCount, setAiModelLimits, setRegistrationStatus } from './api'
+import { aiAppToday, aiLive, aiModelLimits, aiUsage, deleteRejectedUser, listErrorReports, listRegistrations, pendingCount, setAiModelLimits, setErrorReportStatus, setRegistrationStatus } from './api'
 import { parseLimits, type ModelLimits } from './aiUsageLogic'
+import { useIsAdminPreview } from './previewContext'
 
 export function useDeleteRejectedUser() {
   const qc = useQueryClient()
@@ -21,11 +22,13 @@ export const adminKeys = {
   aiLive: ['admin', 'ai', 'live'] as const,
   aiApp: ['admin', 'ai', 'app'] as const,
   aiLimits: ['admin', 'ai', 'limits'] as const,
+  reports: (status: string) => ['admin', 'reports', status] as const,
 }
 
 export function useIsAdmin() {
   const { profile } = useAuth()
-  return profile?.role === 'admin'
+  const preview = useIsAdminPreview()
+  return profile?.role === 'admin' && !preview
 }
 
 export function usePendingCount() {
@@ -84,6 +87,21 @@ export function useSetAiModelLimits() {
     mutationFn: (limits: ModelLimits) => setAiModelLimits(limits),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.aiLimits })
+    },
+  })
+}
+
+export function useErrorReports(status: 'open' | 'resolved' | 'all') {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.reports(status), queryFn: () => listErrorReports(status), enabled: isAdmin, refetchInterval: 120_000 })
+}
+
+export function useSetErrorReportStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'open' | 'resolved' }) => setErrorReportStatus(id, status),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'reports'] })
     },
   })
 }

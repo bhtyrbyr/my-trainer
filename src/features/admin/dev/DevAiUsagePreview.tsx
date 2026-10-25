@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { adminKeys } from '../hooks'
 import { dayIn, QUOTA_TZ, type UsageRow } from '../aiUsageLogic'
 import { AiUsagePage } from '../pages/AiUsagePage'
+import { AdminPreviewContext } from '../previewContext'
 
 /** Dev-only: the AI usage dashboard with 30 days of sample rows (queries stay disabled without an admin session). */
 function seed() {
@@ -37,7 +38,9 @@ export function DevAiUsagePreview() {
   const [client] = useState(seed)
   return (
     <QueryClientProvider client={client}>
-      <AiUsagePage />
+      <AdminPreviewContext.Provider value={true}>
+        <AiUsagePage />
+      </AdminPreviewContext.Provider>
     </QueryClientProvider>
   )
 }

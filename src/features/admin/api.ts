@@ -79,3 +79,16 @@ export async function setAiModelLimits(value: Record<string, { rpm: number; tpm:
   const { error } = await supabase.from('app_config').update({ value }).eq('key', 'ai_model_limits')
   if (error) throw error
 }
+
+// ---------------------------------------------------------------------------------------------
+// Error reports (admin-only via RLS + admin_error_reports)
+export async function listErrorReports(status: 'open' | 'resolved' | 'all') {
+  const { data, error } = await supabase.rpc('admin_error_reports', { p_status: status, p_limit: 200 })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function setErrorReportStatus(id: number, status: 'open' | 'resolved'): Promise<void> {
+  const { error } = await supabase.from('error_reports').update({ status }).eq('id', id)
+  if (error) throw error
+}

@@ -30,6 +30,7 @@ export function classifyError(err: unknown): AppError {
   if (/AI_NOT_CONFIGURED/.test(message)) return { key: 'errors.aiNotConfigured', code }
   if (/AI_UNAVAILABLE/.test(message)) return { key: 'errors.aiUnavailable', code }
   if (/AI_BAD_INPUT/.test(message)) return { key: 'errors.aiBadInput', code }
+  if (/REPORT_LIMIT/.test(message)) return { key: 'errors.reportLimit', code }
   if (/SEARCH_BUSY/.test(message)) return { key: 'errors.searchBusy', code }
   if (/SEARCH_UNAVAILABLE/.test(message)) return { key: 'errors.searchUnavailable', code }
   if (/FORBIDDEN/.test(message)) return { key: 'errors.forbidden', code }
@@ -55,7 +56,17 @@ export function classifyError(err: unknown): AppError {
       return { key: 'errors.sessionExpired', code }
     case '57014':
       return { key: 'errors.timeout', code }
+    // The app is newer or older than the database for a moment (deploy in progress): function, table or
+    // column not there yet. Users see "updating, try again", never the schema message.
+    case 'PGRST202':
+    case 'PGRST204':
+    case 'PGRST205':
+    case '42883':
+    case '42P01':
+    case '42703':
+      return { key: 'errors.updating', code }
   }
+  if (/schema cache|does not exist/i.test(message)) return { key: 'errors.updating', code }
   if (status === 401) return { key: 'errors.sessionExpired', code }
   if (status === 403) return { key: 'errors.forbidden', code }
   if (status === 404) return { key: 'errors.notFound', code }
@@ -78,7 +89,8 @@ function columnFrom(message: string): string | undefined {
 
 /** Human message for display. `t` must have the `common` namespace loaded. */
 export function errorMessage(err: unknown, t: TFunction): string {
-  const { key, detail } = classifyError(err)
-  const base = t(`common:${key}`)
-  return detail && key === 'errors.unknown' ? `${base} (${detail})` : base
+  const { key } = classifyError(err)
+  // Technical details go to the developer console only; users always get a plain sentence.
+  if (key === 'errors.unknown' || key === 'errors.updating' || key === 'errors.server') console.error('[app error]', err)
+  return t(`common:${key}`)
 }

@@ -223,6 +223,58 @@ export type Database = {
           },
         ]
       }
+      error_reports: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: number
+          message_key: string | null
+          note: string | null
+          request: Json | null
+          resolved_at: string | null
+          response: Json | null
+          route: string | null
+          status: string
+          user_agent: string | null
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: never
+          message_key?: string | null
+          note?: string | null
+          request?: Json | null
+          resolved_at?: string | null
+          response?: Json | null
+          route?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: never
+          message_key?: string | null
+          note?: string | null
+          request?: Json | null
+          resolved_at?: string | null
+          response?: Json | null
+          route?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercise_catalog_meta: {
         Row: {
           created_at: string
@@ -1134,6 +1186,26 @@ export type Database = {
         }[]
       }
       admin_delete_rejected_user: { Args: { p_user: string }; Returns: undefined }
+      admin_error_reports: {
+        Args: { p_limit?: number; p_status?: string }
+        Returns: {
+          app_version: string
+          created_at: string
+          display_name: string
+          error_code: string
+          error_message: string
+          id: number
+          message_key: string
+          note: string
+          request: Json
+          response: Json
+          route: string
+          status: string
+          user_agent: string
+          user_id: string
+          username: string
+        }[]
+      }
       admin_list_registrations: {
         Args: { p_limit?: number; p_status?: string }
         Returns: {
