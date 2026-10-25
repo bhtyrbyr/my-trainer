@@ -55,7 +55,10 @@
     "aiGoogleDaily": "The app's free AI quota for today is used up. Use the nutrition database on the Search tab or enter it by hand.",
     "aiGoogleMinute": "The AI is busy right now. Try again in about a minute.",
     "sleepOrder": "Wake-up must be after bedtime. Check the times.",
-    "sleepTooLong": "A night longer than 20 hours cannot be saved. Check the times."
+    "sleepTooLong": "A night longer than 20 hours cannot be saved. Check the times.",
+    "badPath": "The photo could not be saved: invalid file location. Refresh and try again.",
+    "missingUpload": "The photo did not finish uploading. Check your connection and try again.",
+    "vaultDamaged": "Your album’s key data looks wrong, so it was not opened for your safety. Report it to the admin."
   },
   "update": {
     "title": "New version released",

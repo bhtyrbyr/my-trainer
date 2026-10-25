@@ -3,8 +3,9 @@
  * endpoint failed, with what request and what the server answered. Nothing is persisted; nothing is
  * sent anywhere unless the user taps "report to admin".
  *
- * Privacy: request headers (tokens, keys) are never recorded; auth endpoints keep no bodies; secret-
- * looking fields and long base64 payloads (photos) are redacted; every excerpt is truncated.
+ * Privacy: request headers (tokens, keys) are never recorded; auth, photo-vault, progress-photo and
+ * storage endpoints keep no bodies (wrapped keys, IVs, ciphertext); secret-looking fields and long
+ * base64 payloads are redacted; every excerpt is truncated.
  */
 export type TraceEntry = {
   at: string
@@ -21,6 +22,8 @@ const MAX_ENTRIES = 20
 const MAX_BODY = 1500
 const SECRET_KEYS = /"(password|refresh_token|access_token|code_verifier|token|apikey|api_key|secret|authorization)"\s*:\s*"[^"]*"/gi
 const BASE64_RUN = /[A-Za-z0-9+/=_-]{200,}/g
+// endpoints whose bodies are never recorded, not even redacted
+const NO_BODY_PATH = /^\/(auth\/|storage\/|rest\/v1\/(photo_vault|progress_photos)\b)/
 
 const entries: TraceEntry[] = []
 
@@ -30,13 +33,13 @@ export function sanitizeBody(body: string | null | undefined): string | null {
   return cleaned.length > MAX_BODY ? `${cleaned.slice(0, MAX_BODY)}…` : cleaned
 }
 
-/** Path + query without the host; auth endpoints never keep bodies. */
-export function describeUrl(raw: string): { path: string; isAuth: boolean } {
+/** Path + query without the host; `noBody` endpoints (auth, photos, storage) never keep bodies. */
+export function describeUrl(raw: string): { path: string; noBody: boolean } {
   try {
     const u = new URL(raw)
-    return { path: `${u.pathname}${u.search}`.slice(0, 500), isAuth: u.pathname.startsWith('/auth/') }
+    return { path: `${u.pathname}${u.search}`.slice(0, 500), noBody: NO_BODY_PATH.test(u.pathname) }
   } catch {
-    return { path: raw.slice(0, 500), isAuth: false }
+    return { path: raw.slice(0, 500), noBody: true }
   }
 }
 
@@ -49,13 +52,13 @@ function push(e: TraceEntry) {
 export const tracedFetch: typeof fetch = async (input, init) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
   const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase()
-  const { path, isAuth } = describeUrl(url)
+  const { path, noBody } = describeUrl(url)
   const started = performance.now()
-  const reqBody = !isAuth && typeof init?.body === 'string' ? sanitizeBody(init.body) : null
+  const reqBody = !noBody && typeof init?.body === 'string' ? sanitizeBody(init.body) : null
   try {
     const res = await fetch(input, init)
     let response: string | null = null
-    if (!res.ok && !isAuth) {
+    if (!res.ok && !noBody) {
       response = sanitizeBody(await res.clone().text().catch(() => null))
     }
     push({ at: new Date().toISOString(), method, path, status: res.status, durationMs: Math.round(performance.now() - started), request: reqBody, response, networkError: null })

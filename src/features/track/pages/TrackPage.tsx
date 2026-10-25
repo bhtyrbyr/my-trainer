@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { addDays, format, parseISO } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
-import { CalendarDays, ChevronLeft, ChevronRight, Droplet, Loader2, Plus } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Droplet, ImageIcon, Loader2, Plus } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -18,6 +18,7 @@ import {
 } from '@/features/body'
 import { MEAL_SLOTS, useMeals, type MealSlot } from '@/features/nutrition'
 import { useUserSettings } from '@/features/settings/hooks'
+import { usePhotoList } from '@/features/photos'
 import { DEFAULT_WATER_GOAL, splitDuration, useAddWater, useSleepWeek, useWater, waterTotal } from '@/features/sleepwater'
 import { sessionTitle, useBurnedOn, useSessionsOn } from '@/features/workouts'
 import { toLocalDateISO } from '@/lib/dates'
@@ -57,6 +58,9 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const waterMl = waterTotal(water.data ?? [])
   const waterGoal = settings?.daily_water_ml ?? DEFAULT_WATER_GOAL
   const night = (sleep.data ?? []).find((n) => n.sleep_on === day) ?? null
+  // dates and poses are plaintext, so the count works without unlocking the album
+  const photos = usePhotoList(!preview)
+  const photosToday = (photos.data ?? []).filter((p) => p.taken_on === day).length
   const goalKcal = preview ? 2200 : (settings?.daily_kcal ?? null)
 
   const setDay = (d: string) => setParams(d === today ? {} : { day: d }, { replace: true })
@@ -336,6 +340,21 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
             )}
           </div>
         </section>
+
+        <Link
+          to={`${base}/photos`}
+          aria-label={t('track:photos.open')}
+          className="hairline flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] bg-surface px-4 py-3 hover:bg-raised/40"
+        >
+          <ImageIcon className="size-5 shrink-0 text-ink-muted" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold">{t('track:photos.name')}</span>
+            <span className="block text-[12px] text-ink-faint">
+              {photosToday ? t('track:photos.day', { count: photosToday }) : t('track:photos.none')} · {t('track:photos.hint')}
+            </span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+        </Link>
 
         <p className="px-1 text-[12px] leading-snug text-ink-faint">
           <span className="font-semibold text-ink-muted">{t('track:soon.title')}:</span>{' '}

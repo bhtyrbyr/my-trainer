@@ -31,6 +31,7 @@ const exercises = {
 const body = page(() => import('@/features/body/pages/BodyPage'), 'BodyPage')
 const nutrition = page(() => import('@/features/nutrition/pages/NutritionPage'), 'NutritionPage')
 const sleepWater = page(() => import('@/features/sleepwater/pages/SleepWaterPage'), 'SleepWaterPage')
+const photos = page(() => import('@/features/photos/pages/PhotosPage'), 'PhotosPage')
 const devBody = (name: 'DevBodyLayout' | 'DevTrack' | 'DevBody' | 'DevNutrition' | 'DevSleepWater') => page(() => import('@/features/body/dev/DevBodyPreview'), name)
 const onboarding = page(() => import('@/features/profile/pages/OnboardingPage'), 'OnboardingPage')
 
@@ -126,6 +127,7 @@ export const router = createBrowserRouter([
       { path: 'track/body', lazy: body },
       { path: 'track/nutrition', lazy: nutrition },
       { path: 'track/sleep-water', lazy: sleepWater },
+      { path: 'track/photos', lazy: photos },
       { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },

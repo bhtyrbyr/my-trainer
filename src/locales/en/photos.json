@@ -1,0 +1,115 @@
+{
+  "title": "Progress photos",
+  "back": "Track",
+  "setup": {
+    "title": "Only you can see your photos",
+    "points": [
+      "Photos are cleaned of location and device details on your phone, then encrypted.",
+      "Only encrypted data reaches the server. Neither we nor anyone with database access can open them.",
+      "The key is locked with a photo password you choose. The password never leaves your device."
+    ],
+    "warning": "If you lose both your password and the recovery code we give you, the photos cannot be opened again. Nobody can bring them back.",
+    "password": "Photo password",
+    "confirm": "Repeat the password",
+    "hint": "At least 10 characters. Use something different from your Google password.",
+    "mismatch": "The passwords do not match.",
+    "tooShort": "The password needs at least 10 characters.",
+    "remember": "Keep unlocked on this device",
+    "rememberHint": "When on, you are not asked for the password each time you open the app. Leave it off on shared devices.",
+    "create": "Create the encrypted album",
+    "creating": "Creating the key…",
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "recovery": {
+    "title": "Your recovery code",
+    "body": "If you forget your password, only this code opens the album. It will not be shown again; save it in a password manager or on paper.",
+    "copy": "Copy the code",
+    "copied": "Copied",
+    "saved": "I saved the code somewhere safe",
+    "continue": "Continue"
+  },
+  "unlock": {
+    "title": "Album locked",
+    "body": "Enter your photo password to see your photos. It is only used on this device.",
+    "password": "Photo password",
+    "submit": "Unlock",
+    "working": "Unlocking…",
+    "wrong": "Wrong password. Try again or use your recovery code.",
+    "forgot": "I forgot my password"
+  },
+  "recover": {
+    "title": "Open with the recovery code",
+    "body": "Enter the code from setup and choose a new photo password.",
+    "code": "Recovery code",
+    "codeShape": "The code has 32 characters (dashes and spaces do not matter).",
+    "newPassword": "New photo password",
+    "submit": "Open and change the password",
+    "wrong": "Wrong recovery code.",
+    "back": "Open with the password"
+  },
+  "gallery": {
+    "add": "Add photo",
+    "compare": "Compare",
+    "lock": "Lock the album",
+    "settings": "Album settings",
+    "empty": "No photos yet. Your timeline starts here with the first one.",
+    "points": "One photo a week earns 25 points.",
+    "count_one": "{{count}} photo",
+    "count_other": "{{count}} photos",
+    "decryptFail": "This photo could not be opened."
+  },
+  "poses": {
+    "front": "Front",
+    "side": "Side",
+    "back": "Back",
+    "other": "Other"
+  },
+  "add": {
+    "title": "Add photo",
+    "pick": "Take or choose a photo",
+    "change": "Another photo",
+    "pose": "Pose",
+    "date": "Date",
+    "weight": "Weight (optional)",
+    "note": "Note (optional)",
+    "notePlaceholder": "E.g. cut week 3",
+    "submit": "Encrypt and upload",
+    "working": "Encrypting and uploading…",
+    "privacy": "The photo is resized, stripped of location data and encrypted on your device; only encrypted data reaches the server.",
+    "previewAlt": "Preview of the chosen photo"
+  },
+  "viewer": {
+    "title": "Photo",
+    "delete": "Delete photo",
+    "confirmDelete": "Tap again to delete permanently",
+    "close": "Close",
+    "weight": "{{kg}} kg",
+    "loading": "Decrypting…"
+  },
+  "compare": {
+    "title": "Compare",
+    "pose": "Pose",
+    "before": "Before",
+    "after": "After",
+    "slider": "Comparison slider",
+    "needTwo": "You need at least two photos in this pose to compare.",
+    "days_one": "{{count}} day apart",
+    "days_other": "{{count}} days apart"
+  },
+  "settings": {
+    "title": "Album settings",
+    "change": "Change password",
+    "current": "Current password",
+    "next": "New password",
+    "save": "Change password",
+    "done": "Password changed.",
+    "wrong": "The current password is wrong.",
+    "rememberOn": "This device keeps the album unlocked.",
+    "rememberOff": "This device does not remember the unlock."
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel"
+  }
+}

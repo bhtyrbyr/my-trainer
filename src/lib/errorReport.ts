@@ -3,7 +3,7 @@ import { lastFailure, recentRequests } from './requestTrace'
 import { supabase } from './supabase'
 
 /** Errors the user cannot fix themselves: these get a "report to admin" button. */
-const REPORTABLE = new Set(['errors.unknown', 'errors.server', 'errors.missingReference', 'errors.timeout', 'errors.updating', 'errors.notFound'])
+const REPORTABLE = new Set(['errors.unknown', 'errors.server', 'errors.missingReference', 'errors.timeout', 'errors.updating', 'errors.notFound', 'errors.vaultDamaged'])
 
 export function isReportable(error: unknown): boolean {
   return REPORTABLE.has(classifyError(error).key)

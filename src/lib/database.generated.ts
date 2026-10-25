@@ -650,6 +650,43 @@ export type Database = {
           },
         ]
       }
+      photo_vault: {
+        Row: {
+          created_at: string
+          kdf: NonNullable<Json>
+          recovery_iv: string
+          recovery_kdf: NonNullable<Json>
+          recovery_wrapped_key: string
+          updated_at: string
+          user_id: string
+          wrap_iv: string
+          wrapped_key: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          kdf: NonNullable<Json>
+          recovery_iv: string
+          recovery_kdf: NonNullable<Json>
+          recovery_wrapped_key: string
+          updated_at?: string
+          user_id: string
+          wrap_iv: string
+          wrapped_key: string
+        }
+        Update: {
+          created_at?: string
+          kdf?: NonNullable<Json>
+          recovery_iv?: string
+          recovery_kdf?: NonNullable<Json>
+          recovery_wrapped_key?: string
+          updated_at?: string
+          user_id?: string
+          wrap_iv?: string
+          wrapped_key?: string
+        }
+        Relationships: []
+      }
       point_events: {
         Row: {
           created_at: string
@@ -827,6 +864,49 @@ export type Database = {
           user_id?: string
           username?: string
           username_changed_at?: string | null
+        }
+        Relationships: []
+      }
+      progress_photos: {
+        Row: {
+          created_at: string
+          id: string
+          image_iv: string
+          image_path: string
+          meta_cipher: string | null
+          meta_iv: string | null
+          pose: string
+          taken_on: string
+          thumb_iv: string
+          thumb_path: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          id: string
+          image_iv: string
+          image_path: string
+          meta_cipher?: string | null
+          meta_iv?: string | null
+          pose: string
+          taken_on: string
+          thumb_iv: string
+          thumb_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_iv?: string
+          image_path?: string
+          meta_cipher?: string | null
+          meta_iv?: string | null
+          pose?: string
+          taken_on?: string
+          thumb_iv?: string
+          thumb_path?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1296,7 +1376,6 @@ export type Database = {
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
       ai_availability: { Args: Record<PropertyKey, never>; Returns: Json }
-      ai_consume: { Args: Record<PropertyKey, never>; Returns: number }
       ai_decide: { Args: { p_user: string }; Returns: Json }
       ai_log_usage: {
         Args: {

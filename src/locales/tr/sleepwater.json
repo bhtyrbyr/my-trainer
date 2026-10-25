@@ -25,7 +25,9 @@
     "entries": "Bugün içtiklerin",
     "remove": "{{ml}} ml kaydını sil",
     "none": "Henüz su eklenmedi.",
-    "points": "Günlük hedefi tutturmak 10 puan."
+    "points": "Günlük hedefi tutturmak 10 puan.",
+    "unit": "ml",
+    "amount": "{{ml}} ml"
   },
   "sleep": {
     "title": "Uyku",

@@ -1,0 +1,115 @@
+{
+  "title": "Gelişim fotoğrafları",
+  "back": "Takip",
+  "setup": {
+    "title": "Fotoğraflarını yalnızca sen görebilirsin",
+    "points": [
+      "Fotoğraflar telefonunda konum ve cihaz bilgilerinden temizlenir, sonra şifrelenir.",
+      "Sunucuya yalnızca şifreli veri gider. Ne biz ne de veritabanına erişen biri fotoğraflarını açabilir.",
+      "Şifreyi açan anahtar, belirleyeceğin fotoğraf parolasıyla kilitlenir. Parola cihazından hiç çıkmaz."
+    ],
+    "warning": "Parolanı ve sana vereceğimiz kurtarma kodunu birlikte kaybedersen fotoğraflar kalıcı olarak açılamaz. Bunu kimse geri getiremez.",
+    "password": "Fotoğraf parolası",
+    "confirm": "Parolayı tekrar yaz",
+    "hint": "En az 10 karakter. Google hesabı parolandan farklı olsun.",
+    "mismatch": "Parolalar aynı değil.",
+    "tooShort": "Parola en az 10 karakter olmalı.",
+    "remember": "Bu cihazda kilidi açık tut",
+    "rememberHint": "Açıkken uygulamayı her açtığında parola sorulmaz. Ortak kullanılan cihazlarda kapalı bırak.",
+    "create": "Şifreli albümü oluştur",
+    "creating": "Anahtar oluşturuluyor…",
+    "show": "Parolayı göster",
+    "hide": "Parolayı gizle"
+  },
+  "recovery": {
+    "title": "Kurtarma kodun",
+    "body": "Parolanı unutursan albümü yalnızca bu kodla açabilirsin. Kod bir daha gösterilmeyecek; bir parola yöneticisine ya da kâğıda kaydet.",
+    "copy": "Kodu kopyala",
+    "copied": "Kopyalandı",
+    "saved": "Kodu güvenli bir yere kaydettim",
+    "continue": "Devam et"
+  },
+  "unlock": {
+    "title": "Albüm kilitli",
+    "body": "Fotoğrafları görmek için fotoğraf parolanı gir. Parola yalnızca bu cihazda kullanılır.",
+    "password": "Fotoğraf parolası",
+    "submit": "Kilidi aç",
+    "working": "Açılıyor…",
+    "wrong": "Parola yanlış. Tekrar dene ya da kurtarma kodunu kullan.",
+    "forgot": "Parolamı unuttum"
+  },
+  "recover": {
+    "title": "Kurtarma koduyla aç",
+    "body": "Kurulumda verilen kodu gir ve yeni bir fotoğraf parolası belirle.",
+    "code": "Kurtarma kodu",
+    "codeShape": "Kod 32 karakter olmalı (tireler ve boşluklar önemli değil).",
+    "newPassword": "Yeni fotoğraf parolası",
+    "submit": "Aç ve parolayı değiştir",
+    "wrong": "Kurtarma kodu yanlış.",
+    "back": "Parolayla aç"
+  },
+  "gallery": {
+    "add": "Fotoğraf ekle",
+    "compare": "Karşılaştır",
+    "lock": "Albümü kilitle",
+    "settings": "Albüm ayarları",
+    "empty": "Henüz fotoğraf yok. İlk fotoğrafını eklediğinde zaman çizelgen burada başlar.",
+    "points": "Haftada bir fotoğraf 25 puan.",
+    "count_one": "{{count}} fotoğraf",
+    "count_other": "{{count}} fotoğraf",
+    "decryptFail": "Bu fotoğraf açılamadı."
+  },
+  "poses": {
+    "front": "Ön",
+    "side": "Yan",
+    "back": "Arka",
+    "other": "Diğer"
+  },
+  "add": {
+    "title": "Fotoğraf ekle",
+    "pick": "Fotoğraf çek ya da seç",
+    "change": "Başka fotoğraf",
+    "pose": "Poz",
+    "date": "Tarih",
+    "weight": "Kilo (isteğe bağlı)",
+    "note": "Not (isteğe bağlı)",
+    "notePlaceholder": "Örn. kesim haftası 3",
+    "submit": "Şifrele ve yükle",
+    "working": "Şifreleniyor ve yükleniyor…",
+    "privacy": "Fotoğraf cihazında küçültülür, konum bilgisi silinir ve şifrelenir; sunucuya yalnızca şifreli veri gider.",
+    "previewAlt": "Seçilen fotoğrafın önizlemesi"
+  },
+  "viewer": {
+    "title": "Fotoğraf",
+    "delete": "Fotoğrafı sil",
+    "confirmDelete": "Kalıcı olarak silmek için tekrar dokun",
+    "close": "Kapat",
+    "weight": "{{kg}} kg",
+    "loading": "Çözülüyor…"
+  },
+  "compare": {
+    "title": "Karşılaştır",
+    "pose": "Poz",
+    "before": "Önce",
+    "after": "Sonra",
+    "slider": "Karşılaştırma kaydırıcısı",
+    "needTwo": "Bu pozda karşılaştırmak için en az iki fotoğraf gerekli.",
+    "days_one": "{{count}} gün arayla",
+    "days_other": "{{count}} gün arayla"
+  },
+  "settings": {
+    "title": "Albüm ayarları",
+    "change": "Parolayı değiştir",
+    "current": "Mevcut parola",
+    "next": "Yeni parola",
+    "save": "Parolayı değiştir",
+    "done": "Parola değiştirildi.",
+    "wrong": "Mevcut parola yanlış.",
+    "rememberOn": "Bu cihazda kilit açık tutuluyor.",
+    "rememberOff": "Bu cihaz kilidi hatırlamıyor."
+  },
+  "actions": {
+    "close": "Kapat",
+    "cancel": "Vazgeç"
+  }
+}

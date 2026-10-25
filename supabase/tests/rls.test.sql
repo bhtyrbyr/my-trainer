@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(154);
+select plan(175);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -30,8 +30,8 @@ select is(
       and has_function_privilege('authenticated', p.oid, 'execute')
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
-        'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_consume', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
-        'get_leaderboard', 'has_onboarded', 'is_admin', 'rls_auto_enable')),
+        'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
+        'get_leaderboard', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'rls_auto_enable')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -412,17 +412,26 @@ insert into public.meal_entries (id, user_id, eaten_on, meal_slot, name, kcal, p
 select is((select points from public.point_events where user_id = :'ub' and kind = 'protein_goal'), 15, 'meals: reaching the protein goal awards 15');
 delete from public.meal_entries where id = '00000000-0000-0000-0000-0000000000c1';
 select is((select count(*)::int from public.point_events where user_id = :'ub' and kind = 'protein_goal'), 0, 'meals: dropping below the protein goal revokes it');
+update public.user_settings set daily_protein_g = 5 where user_id = :'ub';
+insert into public.meal_entries (id, user_id, eaten_on, meal_slot, name, kcal, protein_g)
+  values ('00000000-0000-0000-0000-0000000000c3', :'ub', (now() at time zone 'Europe/Istanbul')::date, 'dinner', 'Yumurta', 80, 6);
+select is((select count(*)::int from public.point_events where user_id = :'ub' and kind = 'protein_goal'), 0, 'meals: a token protein goal (< 40 g) earns nothing');
+delete from public.meal_entries where id = '00000000-0000-0000-0000-0000000000c3';
 select throws_like(
   $$ insert into public.meal_entries (user_id, eaten_on, meal_slot, name, kcal) values ('00000000-0000-0000-0000-00000000000b', current_date + 5, 'lunch', 'x', 1) $$,
   '%FUTURE_DATE%', 'meals: future days are rejected'
 );
-select is(public.ai_consume(), 39, 'ai: a request is counted against the daily limit');
+select is((public.ai_reserve() ->> 'user_left')::int, 39, 'ai: a request is counted against the daily limit');
 select throws_ok(
   $$ insert into public.ai_usage (user_id, day, request_count) values ('00000000-0000-0000-0000-00000000000b', current_date, 0) $$,
   '42501', null, 'ai: clients cannot write the usage counter'
 );
+update public.user_settings set ai_daily_limit = 1000 where user_id = :'ub';
+select is((select ai_daily_limit from public.user_settings where user_id = :'ub'), 40, 'ai: users cannot raise their own AI limit');
+reset role;
 update public.user_settings set ai_daily_limit = 1 where user_id = :'ub';
-select throws_like($$ select public.ai_consume() $$, '%AI_QUOTA%', 'ai: the daily limit is enforced');
+set local role authenticated;
+select throws_like($$ select public.ai_reserve() $$, '%AI_QUOTA%', 'ai: the daily limit is enforced');
 
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 insert into public.foods (id, user_id, name, kcal) values ('00000000-0000-0000-0000-0000000000d1', :'ua', 'Alice yulaf', 300);
@@ -443,11 +452,14 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
 select lives_ok($$ select public.ai_log_usage('food_estimate_text', 'gemini', 'gemini-3.8-flash', 120, 80, 200, true) $$, 'ai log: a user can log their own request');
 select throws_like($$ select public.ai_log_usage('catalog_translate', 'gemini', 'x', 1, 1, 2, true) $$, '%BAD_ACTION%', 'ai log: users cannot log system actions');
+select lives_ok($$ select public.ai_log_usage('food_estimate_text', 'gemini', 'gemini-3.5-flash-lite', 1, 1, 2, true) $$, 'ai log: fallback attempts of one request are logged');
+select lives_ok($$ select public.ai_log_usage('food_estimate_text', 'openrouter', 'x', 1, 1, 2, true) $$, 'ai log: up to three attempts per request');
+select throws_like($$ select public.ai_log_usage('food_estimate_text', 'gemini', 'gemini-3.8-flash', 1, 1, 2, true) $$, '%NO_RESERVATION%', 'ai log: rows beyond the reserved requests are refused (no quota flooding)');
 select is((select count(*)::int from public.ai_usage_log), 0, 'ai log: users cannot read the log directly');
 select throws_ok($$ insert into public.ai_usage_log (action, provider, model) values ('coach_chat', 'gemini', 'x') $$, '42501', null, 'ai log: users cannot insert directly');
 select throws_like($$ select * from public.admin_ai_usage(30) $$, '%FORBIDDEN%', 'ai log: non-admins cannot read the dashboard');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
-select is((select sum(total_tokens)::int from public.admin_ai_usage(30) where username = 'bob'), 200, 'ai log: the admin sees who used how many tokens');
+select is((select sum(total_tokens)::int from public.admin_ai_usage(30) where username = 'bob'), 204, 'ai log: the admin sees who used how many tokens');
 select is((select requests_today from public.admin_ai_live() where model = 'gemini-3.8-flash'), 1, 'ai log: the admin sees today''s requests per model');
 select ok((select global_limit > 0 from public.admin_ai_app_today()), 'ai log: the admin sees the app''s daily budget');
 reset role;
@@ -524,6 +536,69 @@ select throws_ok(
   '42501', null, 'sleep/water IDOR: alice cannot log water for bob'
 );
 reset role;
+
+-- encrypted progress photos (Faz 2) -----------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.photo_vault (user_id, kdf, wrapped_key, wrap_iv, recovery_kdf, recovery_wrapped_key, recovery_iv)
+  values (:'ub', '{"alg":"argon2id"}', repeat('A', 64), repeat('B', 16), '{"alg":"argon2id"}', repeat('C', 64), repeat('D', 16));
+update public.photo_vault set wrapped_key = repeat('E', 64), recovery_wrapped_key = repeat('F', 64) where user_id = :'ub';
+select is((select wrapped_key || '/' || recovery_wrapped_key from public.photo_vault), repeat('E', 64) || '/' || repeat('C', 64), 'photos: a password change rewraps, the recovery wrap is immutable');
+delete from public.photo_vault where user_id = :'ub';
+select is((select count(*)::int from public.photo_vault), 1, 'photos: a vault cannot be deleted (photos would be lost)');
+select throws_ok(
+  $$ insert into public.photo_vault (user_id, kdf, wrapped_key, wrap_iv, recovery_kdf, recovery_wrapped_key, recovery_iv)
+     values ('00000000-0000-0000-0000-00000000000b', '{}', repeat('A', 64), repeat('B', 16), '{}', repeat('C', 64), repeat('D', 16)) $$,
+  '23505', null, 'photos: an existing vault cannot be overwritten'
+);
+select throws_like(
+  $$ insert into public.progress_photos (id, user_id, taken_on, pose, image_path, thumb_path, image_iv, thumb_iv)
+     values ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-00000000000b', current_date, 'front',
+             '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e1.img.bin',
+             '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e1.thumb.bin', repeat('i', 16), repeat('t', 16)) $$,
+  '%MISSING_UPLOAD%', 'photos: a row needs its encrypted objects uploaded first'
+);
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name) values ('progress-photos', '00000000-0000-0000-0000-00000000000b/photo.jpg') $$,
+  '42501', null, 'photos: object names must be <uid>/<uuid>.img|thumb.bin'
+);
+insert into storage.objects (bucket_id, name) values
+  ('progress-photos', '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e1.img.bin'),
+  ('progress-photos', '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e1.thumb.bin'),
+  ('progress-photos', '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e2.img.bin'),
+  ('progress-photos', '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e2.thumb.bin');
+select is(public.progress_photo_object_count(), 4, 'photos: the owner''s object count feeds the per-user cap');
+insert into public.progress_photos (id, user_id, taken_on, pose, image_path, thumb_path, image_iv, thumb_iv)
+  values ('00000000-0000-0000-0000-0000000000e1', :'ub', current_date, 'front',
+          '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e1.img.bin',
+          '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e1.thumb.bin', repeat('i', 16), repeat('t', 16));
+select is((select points from public.point_events where user_id = :'ub' and kind = 'progress_photo'), 25, 'photos: a progress photo earns 25');
+insert into public.progress_photos (id, user_id, taken_on, pose, image_path, thumb_path, image_iv, thumb_iv)
+  values ('00000000-0000-0000-0000-0000000000e2', :'ub', current_date, 'side',
+          '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e2.img.bin',
+          '00000000-0000-0000-0000-00000000000b/00000000-0000-0000-0000-0000000000e2.thumb.bin', repeat('i', 16), repeat('t', 16));
+select is((select sum(points)::int from public.point_events where user_id = :'ub' and kind = 'progress_photo'), 25, 'photos: once a week');
+select throws_like(
+  $$ insert into public.progress_photos (id, user_id, taken_on, pose, image_path, thumb_path, image_iv, thumb_iv)
+     values ('00000000-0000-0000-0000-0000000000e3', '00000000-0000-0000-0000-00000000000b', current_date, 'front',
+             '00000000-0000-0000-0000-00000000000a/x.img.bin', '00000000-0000-0000-0000-00000000000a/x.thumb.bin', repeat('i', 16), repeat('t', 16)) $$,
+  '%BAD_PATH%', 'photos: storage paths must be in the owner''s folder'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((select count(*)::int from public.photo_vault), 0, 'photos IDOR: alice cannot read bob''s wrapped key');
+select is((select count(*)::int from public.progress_photos), 0, 'photos IDOR: alice sees none of bob''s photos');
+select is(public.progress_photo_object_count(), 0, 'photos IDOR: the object count covers only the caller''s folder');
+select throws_ok(
+  $$ insert into public.photo_vault (user_id, kdf, wrapped_key, wrap_iv, recovery_kdf, recovery_wrapped_key, recovery_iv)
+     values ('00000000-0000-0000-0000-00000000000b', '{}', repeat('A', 64), repeat('B', 16), '{}', repeat('C', 64), repeat('D', 16)) $$,
+  '42501', null, 'photos IDOR: alice cannot replace bob''s vault'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+delete from public.progress_photos where id = '00000000-0000-0000-0000-0000000000e1';
+select is((select coalesce(sum(points), 0)::int from public.point_events where user_id = :'ub' and kind = 'progress_photo'), 0, 'photos: deleting the photo revokes its points');
+reset role;
+select is((select public from storage.buckets where id = 'progress-photos'), false, 'photos: the bucket is private');
+select is((select allowed_mime_types from storage.buckets where id = 'progress-photos'), array['application/octet-stream'], 'photos: the bucket only accepts ciphertext');
 
 select * from finish();
 rollback;

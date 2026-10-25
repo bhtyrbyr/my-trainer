@@ -77,7 +77,7 @@ export function WaterCard({ day, goal, onGoal }: { day: string; goal: number; on
               onChange={(e) => setCustom(e.target.value)}
               className="tabular w-full bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint"
             />
-            <span className="text-[12px] text-ink-faint">ml</span>
+            <span className="text-[12px] text-ink-faint">{t('water.unit')}</span>
           </label>
           <Button
             variant="secondary"
@@ -99,7 +99,7 @@ export function WaterCard({ day, goal, onGoal }: { day: string; goal: number; on
             {[...rows].reverse().map((r) => (
               <li key={r.id} className="flex h-11 items-center gap-3 pl-5 pr-2">
                 <span className="tabular w-12 text-[13px] text-ink-faint">{format(new Date(r.logged_at), 'HH:mm')}</span>
-                <span className="tabular flex-1 text-[14px] font-medium">{nf.format(r.amount_ml)} ml</span>
+                <span className="tabular flex-1 text-[14px] font-medium">{t('water.amount', { ml: nf.format(r.amount_ml) })}</span>
                 <button
                   type="button"
                   aria-label={t('water.remove', { ml: r.amount_ml })}
