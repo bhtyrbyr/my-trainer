@@ -1,18 +1,30 @@
 import { Component, type ReactNode } from 'react'
 import { withTranslation, type WithTranslation } from 'react-i18next'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { errorMessage } from '@/lib/errors'
+import { sendErrorReport } from '@/lib/errorReport'
 
 type Props = WithTranslation & { children: ReactNode }
-type State = { error: unknown }
+type State = { error: unknown; report: 'idle' | 'sending' | 'sent' | 'failed' }
 
 /** Last line of defence for render-time crashes: a readable screen with a reload action instead of a blank page. */
 class Boundary extends Component<Props, State> {
-  state: State = { error: null }
+  state: State = { error: null, report: 'idle' }
 
-  static getDerivedStateFromError(error: unknown): State {
+  static getDerivedStateFromError(error: unknown): Partial<State> {
     return { error }
+  }
+
+  report = async () => {
+    this.setState({ report: 'sending' })
+    try {
+      const stack = this.state.error instanceof Error ? this.state.error.stack?.slice(0, 1200) : undefined
+      await sendErrorReport(this.state.error, { stack, note: 'render crash' })
+      this.setState({ report: 'sent' })
+    } catch {
+      this.setState({ report: 'failed' })
+    }
   }
 
   componentDidCatch(error: unknown) {
@@ -31,6 +43,14 @@ class Boundary extends Component<Props, State> {
           <RefreshCw className="size-4" aria-hidden />
           {t('common:errors.reload')}
         </Button>
+        {this.state.report === 'sent' ? (
+          <p className="text-sm text-ink-muted">{t('common:errors.reportSent')}</p>
+        ) : (
+          <Button variant="ghost" className="gap-2" disabled={this.state.report === 'sending'} onClick={() => void this.report()}>
+            <Send className="size-4" aria-hidden />
+            {this.state.report === 'failed' ? t('common:errors.reportFailed') : t('common:errors.report')}
+          </Button>
+        )}
       </div>
     )
   }

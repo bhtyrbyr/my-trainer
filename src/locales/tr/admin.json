@@ -77,5 +77,30 @@
       "tpm": "TPM",
       "rpd": "RPD"
     }
+  },
+  "reports": {
+    "link": "Hata bildirimleri",
+    "title": "Hata bildirimleri",
+    "back": "Profil",
+    "tabs": {
+      "open": "Açık",
+      "resolved": "Çözüldü",
+      "all": "Tümü"
+    },
+    "empty": "Bildirim yok.",
+    "by": "{{name}} · {{time}}",
+    "screen": "Ekran",
+    "version": "Sürüm",
+    "error": "Hata",
+    "request": "İstek",
+    "response": "Sunucu yanıtı",
+    "noRequest": "Başarısız bir istek yakalanmadı. Son istekler:",
+    "device": "Cihaz",
+    "resolve": "Çözüldü olarak işaretle",
+    "reopen": "Yeniden aç",
+    "copy": "Ayrıntıyı kopyala",
+    "copied": "Kopyalandı",
+    "unknownUser": "Profili olmayan hesap",
+    "note": "Not"
   }
 }

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
+import { tracedFetch } from './requestTrace'
 
 const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
 const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
@@ -21,5 +22,7 @@ export const supabase = createClient<Database>(
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
+    // keeps an in-memory trace of recent requests for user-initiated error reports (see requestTrace.ts)
+    global: { fetch: tracedFetch },
   },
 )

@@ -43,6 +43,7 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
       { path: '/__dev/pending', element: <PendingApprovalPage preview="pending" /> },
       { path: '/__dev/rejected', element: <PendingApprovalPage preview="rejected" /> },
       { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
+      { path: '/__dev/errors', lazy: page(() => import('./DevErrorsPreview'), 'DevErrorsPreview') },
       { path: '/__dev/streak/:n', lazy: page(() => import('./DevStreakPreview'), 'DevStreakPreview') },
       { path: '/__dev/leaderboard', lazy: page(() => import('./DevLeaderboardPreview'), 'DevLeaderboardPreview') },
       {
@@ -125,6 +126,19 @@ export const router = createBrowserRouter([
       { path: 'today', lazy: page(() => import('@/features/today/pages/TodayPage'), 'TodayPage') },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
+      {
+        path: 'admin/error-reports',
+        lazy: async () => {
+          const { ErrorReportsPage } = await import('@/features/admin/pages/ErrorReportsPage')
+          return {
+            Component: () => (
+              <RequireAdmin>
+                <ErrorReportsPage />
+              </RequireAdmin>
+            ),
+          }
+        },
+      },
       {
         path: 'admin/ai-usage',
         lazy: async () => {

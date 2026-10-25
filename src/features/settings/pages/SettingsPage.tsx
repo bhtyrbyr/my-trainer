@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronRight, LogOut, Sparkles, UserCheck } from 'lucide-react'
-import { useAiLive, usePendingCount } from '@/features/admin/hooks'
+import { Bug, ChevronRight, LogOut, Sparkles, UserCheck } from 'lucide-react'
+import { useAiLive, useErrorReports, usePendingCount } from '@/features/admin/hooks'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -19,6 +19,7 @@ export function SettingsPage() {
   const { settings, updateSettings } = useUserSettings()
   const pending = usePendingCount()
   const aiLive = useAiLive()
+  const openReports = useErrorReports('open')
   const aiToday = (aiLive.data ?? []).reduce((s, m) => s + m.requests_today, 0)
   const avatar = avatarUrl(profile?.avatar_path, profile?.updated_at)
 
@@ -56,6 +57,17 @@ export function SettingsPage() {
               <span className="flex-1 text-[15px]">{t('admin:requests.link')}</span>
               {(pending.data ?? 0) > 0 && (
                 <span className="tabular rounded-full bg-volt px-2 py-0.5 text-xs font-semibold text-volt-ink">{pending.data}</span>
+              )}
+              <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+            </Link>
+            <Link
+              to="/admin/error-reports"
+              className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+            >
+              <Bug className="size-5 text-ink-muted" aria-hidden />
+              <span className="flex-1 text-[15px]">{t('admin:reports.link')}</span>
+              {(openReports.data?.length ?? 0) > 0 && (
+                <span className="tabular rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-ink">{openReports.data?.length}</span>
               )}
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>

@@ -23,6 +23,18 @@ describe('classifyError', () => {
     expect(r.key).toBe('errors.unknown')
     expect(r.detail).toBe('something odd')
   })
+  it('maps schema-cache / missing function errors to "updating"', () => {
+    expect(classifyError({ code: 'PGRST202', message: 'Could not find the function public.admin_ai_live without parameters in the schema cache' }).key).toBe('errors.updating')
+    expect(classifyError({ code: '42P01', message: 'relation "public.x" does not exist' }).key).toBe('errors.updating')
+  })
+  it('never shows technical details to users', async () => {
+    const { errorMessage } = await import('./errors')
+    const t = ((k: string) => k) as unknown as Parameters<typeof errorMessage>[1]
+    const spy = console.error
+    console.error = () => {}
+    expect(errorMessage({ message: 'relation foo violates something internal' }, t)).toBe('common:errors.unknown')
+    console.error = spy
+  })
   it('never prints [object Object]', () => {
     expect(classifyError({ foo: 1 }).detail).toBeUndefined()
   })
