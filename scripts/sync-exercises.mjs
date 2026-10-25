@@ -103,7 +103,7 @@ const supabase = HAS_CREDS
 
 const startedAt = Date.now()
 const stats = {
-  exercisedb: { pages: 0, fetched: 0, unique: 0, upserted: 0, gifsExisting: 0, gifsUploaded: 0, gifsFailed: 0, gifsSkipped: 0, nameTrApplied: 0, nameTrAlreadySet: 0, nameTrMissingIds: 0 },
+  exercisedb: { pages: 0, fetched: 0, unique: 0, upserted: 0, gifsExisting: 0, gifsUploaded: 0, gifsFailed: 0, gifsSkipped: 0, gifsMissingUpstream: 0, nameTrApplied: 0, nameTrAlreadySet: 0, nameTrMissingIds: 0 },
   wger: { muscles: 0, upserted: 0, svgsExisting: 0, svgsUploaded: 0, svgsFailed: 0, svgsSkipped: 0, silhouettesOk: 0, silhouettesMissing: 0, aliasesApplied: 0, aliasesUnmapped: 0 },
   meta: 0,
 }
@@ -170,10 +170,18 @@ async function syncExerciseDb(existing) {
   } else {
     log(`[exercisedb] uploading ${todo.length} GIF(s), ${s.gifsExisting} already present`)
     let done = 0
+    const missingUpstream = []
     await pMap(todo, CONCURRENCY, async (e) => {
       const path = `gifs/${e.exerciseId}.gif`
       try {
-        const buf = await downloadBinary(e.gifUrl, mediaGate)
+        // ExerciseDB has no file for ~12% of its catalog (permanent 404). That is a data gap, not a sync
+        // failure: the exercise row is kept without gif_path and the app falls back to diagram + steps.
+        const buf = await downloadBinary(e.gifUrl, mediaGate, { allow404: true })
+        if (buf === null) {
+          s.gifsMissingUpstream++
+          missingUpstream.push(e.exerciseId)
+          return
+        }
         if (buf.subarray(0, 4).toString('latin1') !== 'GIF8') throw new Error('response is not a GIF')
         await uploadToBucket(path, buf, 'image/gif')
         gifPath.set(e.exerciseId, path)
@@ -183,9 +191,10 @@ async function syncExerciseDb(existing) {
         hardError(`GIF ${e.exerciseId} (${e.name}): ${err.message}`)
       } finally {
         done++
-        if (done % 100 === 0 || done === todo.length) log(`[exercisedb]   ${done}/${todo.length} GIFs processed (${s.gifsUploaded} ok, ${s.gifsFailed} failed)`)
+        if (done % 100 === 0 || done === todo.length) log(`[exercisedb]   ${done}/${todo.length} GIFs processed (${s.gifsUploaded} ok, ${s.gifsMissingUpstream} missing upstream, ${s.gifsFailed} failed)`)
       }
     })
+    if (missingUpstream.length) warn(`${missingUpstream.length} GIF(s) do not exist on ExerciseDB (404); rows kept without gif_path`)
   }
 
   // Rows.
@@ -568,6 +577,7 @@ function printSummary() {
     ['exercisedb', 'GIFs already in bucket', e.gifsExisting],
     ['exercisedb', 'GIFs uploaded', e.gifsUploaded],
     ['exercisedb', 'GIFs skipped', e.gifsSkipped],
+    ['exercisedb', 'GIFs missing upstream (404)', e.gifsMissingUpstream],
     ['exercisedb', 'GIFs failed', e.gifsFailed],
     ['exercisedb', 'name_tr applied / already set', `${e.nameTrApplied} / ${e.nameTrAlreadySet}`],
     ['exercisedb', 'name_tr ids not in catalog', e.nameTrMissingIds],
