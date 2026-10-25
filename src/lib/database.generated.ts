@@ -1007,6 +1007,7 @@ export type Database = {
           daily_protein_g: number | null
           daily_water_ml: number
           locale: string
+          theme: string
           unit_length: string
           unit_weight: string
           updated_at: string
@@ -1022,6 +1023,7 @@ export type Database = {
           daily_protein_g?: number | null
           daily_water_ml?: number
           locale?: string
+          theme?: string
           unit_length?: string
           unit_weight?: string
           updated_at?: string
@@ -1036,6 +1038,7 @@ export type Database = {
           daily_protein_g?: number | null
           daily_water_ml?: number
           locale?: string
+          theme?: string
           unit_length?: string
           unit_weight?: string
           updated_at?: string

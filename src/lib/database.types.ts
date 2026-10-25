@@ -57,6 +57,7 @@ type UserSettingsRow = {
   week_starts_on: number
   ai_provider: 'gemini' | 'openrouter' | 'off'
   ai_daily_limit: number
+  theme: 'dark' | 'light' | 'system'
   created_at: string
   updated_at: string
 }

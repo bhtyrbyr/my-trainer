@@ -1,7 +1,10 @@
 {
   "title": "Profile",
   "language": "Language",
-  "languages": { "tr": "Türkçe", "en": "English" },
+  "languages": {
+    "tr": "Türkçe",
+    "en": "English"
+  },
   "profile": "Profile",
   "account": "Account",
   "signedInAs": "Signed in as",
@@ -10,5 +13,12 @@
   "version": "Version {{version}}",
   "commit": "Source code of this build (commit)",
   "saved": "Saved",
-  "admin": "Admin"
+  "admin": "Admin",
+  "theme": {
+    "title": "Appearance",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "hint": "System follows your device setting. Your choice is saved to your account."
+  }
 }

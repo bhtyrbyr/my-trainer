@@ -43,9 +43,31 @@
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Light theme: warm olive-tinted paper, white surfaces, dark olive ink. The volt accent deepens to a
+   lime green that stays readable as text on white (white text on it for buttons). Applied by
+   src/lib/theme.ts via <html data-theme="light">; dark stays the default. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-bg: oklch(97.4% 0.007 120);
+  --color-surface: oklch(99.6% 0.003 120);
+  --color-raised: oklch(94.2% 0.009 120);
+  --color-line: oklch(25% 0.02 120 / 11%);
+  --color-line-strong: oklch(25% 0.02 120 / 18%);
+  --color-ink: oklch(19% 0.012 120);
+  --color-ink-muted: oklch(40% 0.012 120);
+  --color-ink-faint: oklch(52% 0.01 120);
+  --color-volt: oklch(56% 0.165 132);
+  --color-volt-hover: oklch(51% 0.16 132);
+  --color-volt-ink: oklch(99% 0.01 125);
+  --color-danger: oklch(53% 0.2 25);
+  --color-success: oklch(55% 0.15 150);
+  --atmo-dot: oklch(20% 0.02 120 / 9%);
+}
+
 @layer base {
   :root {
     color-scheme: dark;
+    --atmo-dot: oklch(100% 0 0 / 7%);
     --sat: env(safe-area-inset-top, 0px);
     --sab: env(safe-area-inset-bottom, 0px);
     --nav-h: 4rem;
@@ -140,7 +162,7 @@
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: radial-gradient(circle, oklch(100% 0 0 / 7%) 1px, transparent 1.2px);
+  background-image: radial-gradient(circle, var(--atmo-dot) 1px, transparent 1.2px);
   background-size: 28px 28px;
   mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, black 20%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, black 20%, transparent 100%);
@@ -152,8 +174,8 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60% 40% at 15% 12%, oklch(91% 0.21 125 / 16%), transparent 70%),
-    radial-gradient(50% 35% at 100% 70%, oklch(91% 0.21 125 / 7%), transparent 70%);
+    radial-gradient(60% 40% at 15% 12%, color-mix(in oklch, var(--color-volt) 16%, transparent), transparent 70%),
+    radial-gradient(50% 35% at 100% 70%, color-mix(in oklch, var(--color-volt) 7%, transparent), transparent 70%);
 }
 
 /* Legendary streak flame: slow, subtle flicker */
