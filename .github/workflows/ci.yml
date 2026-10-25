@@ -29,7 +29,11 @@ jobs:
           VITE_SUPABASE_ANON_KEY: placeholder
       - name: Secret scan (no service_role / provider keys in client code)
         run: |
-          if grep -rniE "service_role|sk-or-v1-|AIza[0-9A-Za-z_-]{30,}" src scripts .github; then
+          # 1) the privileged key name must never appear in code shipped to the browser or scripts
+          if grep -rniE "service_role" src scripts; then
+            echo "::error::service_role referenced in client code"; exit 1; fi
+          # 2) real key shapes anywhere (patterns below contain brackets, so they never match themselves)
+          if grep -rnE "AIza[0-9A-Za-z_-]{30,}|sk-or-v1-[0-9a-f]{20,}|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{40,}" src scripts supabase .github --exclude-dir=node_modules; then
             echo "::error::possible secret committed to repo"; exit 1; fi
       - name: RLS sanity (every table in migrations has RLS enabled)
         run: |
