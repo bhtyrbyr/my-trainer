@@ -1,0 +1,48 @@
+# Monthly refresh of the exercise catalog (ExerciseDB exercises + GIFs, wger muscles + SVGs)
+# into Supabase. Idempotent: existing media is skipped, rows are upserted, user edits kept.
+# The service_role key lives only in GitHub Secrets (never in the repo or the browser bundle).
+name: Sync exercise catalog
+on:
+  schedule:
+    - cron: '0 3 1 * *'   # 1st of every month, 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Limit to one source'
+        type: choice
+        options: ['', 'exercisedb', 'wger']
+        default: ''
+      skip_media:
+        description: 'Skip GIF/SVG download and upload'
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Fetch and report only, write nothing'
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-exercises
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          flags=""
+          [ -n "${{ inputs.only }}" ] && flags="$flags --only=${{ inputs.only }}"
+          [ "${{ inputs.skip_media }}" = "true" ] && flags="$flags --skip-media"
+          [ "${{ inputs.dry_run }}" = "true" ] && flags="$flags --dry-run"
+          node scripts/sync-exercises.mjs $flags
