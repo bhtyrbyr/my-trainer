@@ -14,18 +14,18 @@ export function HeaderActions() {
       {profile && (
         <Link
           to="/settings"
-          className="flex items-center gap-2 rounded-full bg-slate-900 py-1 pl-1 pr-3 text-xs font-medium text-slate-300"
+          className="flex items-center gap-2 rounded-full bg-surface py-1 pl-1 pr-3 text-xs font-medium text-ink-muted"
           aria-label={t('nav.settings')}
         >
           {src ? (
             <img src={src} alt="" className="size-7 rounded-full object-cover" />
           ) : (
-            <span className="size-7 rounded-full bg-slate-700" />
+            <span className="size-7 rounded-full bg-raised" />
           )}
           <span>{t('level', { n: profile.level })}</span>
         </Link>
       )}
-      <Link to="/settings" className="touch-target flex items-center justify-center rounded-full text-slate-400 hover:text-slate-100" aria-label={t('nav.settings')}>
+      <Link to="/settings" className="touch-target flex items-center justify-center rounded-full text-ink-muted hover:text-ink" aria-label={t('nav.settings')}>
         <Settings className="size-5" aria-hidden />
       </Link>
     </>

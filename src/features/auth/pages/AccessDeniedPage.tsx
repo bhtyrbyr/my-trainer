@@ -25,7 +25,7 @@ export function AccessDeniedPage() {
         <ShieldOff className="size-10" aria-hidden />
       </div>
       <h1 className="text-2xl font-bold">{t('denied.title')}</h1>
-      <p className="text-slate-400">
+      <p className="text-ink-muted">
         {inviteRejected ? t('denied.inviteOnly') : status === 'blocked' ? t('denied.blocked', { email }) : t('denied.generic')}
       </p>
       <Button

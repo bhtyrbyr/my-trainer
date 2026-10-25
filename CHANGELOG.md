@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+### Added
+- Design system tokens (olive-tinted neutrals, single volt accent, Bricolage Grotesque display + Inter body, radius/spacing scales, atmosphere and motion utilities) in `src/index.css`.
+- `design-director` skill (global) applied to all UI work; frontend agent and CLAUDE.md reference it.
+### Changed
+- Login screen redesigned: editorial headline, proof points as numbers, thumb-zone CTA, desktop split layout.
+- All components migrated from Tailwind slate/cyan defaults to the token system.
 
 ## [0.1.0] - 2026-10-25
 ### Added

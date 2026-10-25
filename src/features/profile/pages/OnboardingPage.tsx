@@ -119,7 +119,7 @@ export function OnboardingPage() {
       <header className="flex items-center justify-between px-6 pt-4">
         <div>
           <h1 className="text-2xl font-bold">{t('onboarding:title')}</h1>
-          <p className="text-sm text-slate-400">{t('onboarding:subtitle')}</p>
+          <p className="text-sm text-ink-muted">{t('onboarding:subtitle')}</p>
         </div>
         <Button variant="ghost" size="icon" aria-label={t('onboarding:cancel')} onClick={() => void signOut()}>
           <X className="size-5" aria-hidden />
@@ -131,18 +131,18 @@ export function OnboardingPage() {
         <section className="flex flex-col items-center gap-3">
           <div
             className={cn(
-              'relative flex size-32 items-center justify-center overflow-hidden rounded-full border-2 bg-slate-900',
-              avatar ? 'border-brand-500' : 'border-dashed border-slate-700',
+              'relative flex size-32 items-center justify-center overflow-hidden rounded-full border-2 bg-surface',
+              avatar ? 'border-volt' : 'border-dashed border-line-strong',
             )}
           >
             {avatar ? (
               <img src={avatar.previewUrl} alt="" className="size-full object-cover" />
             ) : (
-              <Camera className="size-10 text-slate-500" aria-hidden />
+              <Camera className="size-10 text-ink-faint" aria-hidden />
             )}
             {avatarBusy && (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60">
-                <Loader2 className="size-8 animate-spin text-brand-400" aria-hidden />
+              <div className="absolute inset-0 flex items-center justify-center bg-bg/60">
+                <Loader2 className="size-8 animate-spin text-volt" aria-hidden />
               </div>
             )}
           </div>
@@ -181,7 +181,7 @@ export function OnboardingPage() {
                 aria-invalid={Boolean(formState.errors.username) || usernameStatus === 'taken'}
               />
               <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                {usernameStatus === 'checking' && <Loader2 className="size-4 animate-spin text-slate-500" aria-hidden />}
+                {usernameStatus === 'checking' && <Loader2 className="size-4 animate-spin text-ink-faint" aria-hidden />}
                 {usernameStatus === 'ok' && <Check className="size-4 text-emerald-400" aria-hidden />}
                 {usernameStatus === 'taken' && <X className="size-4 text-red-400" aria-hidden />}
               </span>
@@ -197,7 +197,7 @@ export function OnboardingPage() {
 
         {/* Optional */}
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">{t('onboarding:optional')}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('onboarding:optional')}</h2>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('onboarding:fields.birthYear')} error={fieldError('birthYear')}>
               <input {...register('birthYear')} inputMode="numeric" placeholder="1990" className={inputCls} />
@@ -223,9 +223,9 @@ export function OnboardingPage() {
               <option value="performance">{t('onboarding:goal.performance')}</option>
             </select>
           </Field>
-          <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
+          <label className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3">
             <span className="text-sm">{t('onboarding:fields.showOnLeaderboard')}</span>
-            <input type="checkbox" {...register('showOnLeaderboard')} className="size-5 accent-cyan-500" />
+            <input type="checkbox" {...register('showOnLeaderboard')} className="size-5 accent-[#C8FF3D]" />
           </label>
         </section>
 
@@ -239,7 +239,7 @@ export function OnboardingPage() {
           <Button type="submit" size="lg" className="w-full" disabled={!canSubmit}>
             {formState.isSubmitting ? <Loader2 className="size-5 animate-spin" aria-hidden /> : t('onboarding:submit')}
           </Button>
-          {!avatar && <p className="mt-2 text-center text-xs text-slate-500">{t('onboarding:avatar.required')}</p>}
+          {!avatar && <p className="mt-2 text-center text-xs text-ink-faint">{t('onboarding:avatar.required')}</p>}
         </div>
       </form>
     </div>
@@ -247,7 +247,7 @@ export function OnboardingPage() {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-base text-slate-100 placeholder:text-slate-600 focus:border-brand-500 focus:outline-none aria-[invalid=true]:border-red-500'
+  'w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink placeholder:text-ink-faint focus:border-volt focus:outline-none aria-[invalid=true]:border-red-500'
 
 function Field({
   label,
@@ -268,7 +268,7 @@ function Field({
         {label} {required && <span className="text-red-400">*</span>}
       </span>
       {children}
-      {error ? <p className="text-sm text-red-400">{error}</p> : hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
+      {error ? <p className="text-sm text-red-400">{error}</p> : hint ? <p className="text-xs text-ink-faint">{hint}</p> : null}
     </label>
   )
 }

@@ -7,6 +7,9 @@ model: inherit
 
 You build features for **my-trainer**: React 19 + Vite + TypeScript + Tailwind v4 + TanStack Query + Supabase JS + react-i18next.
 
+## Design bar
+Before styling any screen, load and follow the `design-director` skill (`~/.claude/skills/design-director/SKILL.md` and its references). Use only the tokens and utilities defined in `src/index.css` (`bg`, `surface`, `raised`, `line`, `ink`, `ink-muted`, `ink-faint`, `volt`; `display`, `eyebrow`, `hairline`, `inner-glow`, `bg-atmosphere`, `rise-in`, `tabular`). Display type is Bricolage Grotesque, body is Inter. One accent (volt). Verify with a 393x852 screenshot before reporting done.
+
 ## Conventions
 - Feature folder: `src/features/<name>/{api.ts,hooks.ts,schema.ts,components/,pages/}`. `api.ts` holds raw Supabase calls, `hooks.ts` wraps them in TanStack Query (`queryKey: ['<name>', ...]`), `schema.ts` holds zod schemas and inferred types.
 - Supabase client: `import { supabase } from '@/lib/supabase'`. Never import anything `service_role`. Never call third-party AI or exercise APIs from the browser; those go through Edge Functions or sync scripts.

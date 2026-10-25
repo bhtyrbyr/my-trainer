@@ -21,6 +21,7 @@ React 19 + Vite 7 + TypeScript + Tailwind v4 + shadcn-style UI, TanStack Query, 
 5. Progress photos are encrypted client-side (`src/lib/crypto/`) before any upload; the service worker never caches the `progress-photos` bucket; plaintext never touches IndexedDB/localStorage.
 6. All UI text through `t()`; add TR **and** EN keys together; register new namespaces in `src/lib/i18n.ts`.
 7. Mobile first for **iPhone 16** (393x852, safe-area insets); desktop is a wider layout of the same screens. Max 5 bottom tabs.
+7b. **Every screen goes through the `design-director` skill** (`~/.claude/skills/design-director`): functional draft, interrogation, elevation, restraint, rendered verification at 393x852. Use the token system in `src/index.css` (`bg/surface/raised/line/ink/ink-muted/ink-faint/volt`, `display`/`eyebrow`/`hairline`/`inner-glow`/`bg-atmosphere`/`rise-in` utilities). No raw slate/indigo defaults, no four-identical-cards layouts, no drop-shadow boxes.
 8. New migrations only; never edit an applied migration.
 9. Git: develop on a feature branch; commit locally with Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`); **push / open PR only after the user approves**. CI runs on PR, production deploy runs after merge to `main`.
 10. **Anti-IDOR**: never trust a `user_id` from a URL, body or path. Reads rely on RLS (no client-side `user_id` filter needed); Edge Functions derive the user from the JWT and query with the caller's token, never `service_role`. Storage paths start with `auth.uid()`. Details: `docs/SECURITY.md`.
