@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from '@/app/AppShell'
 import { NutritionPreviewContext, nutritionKeys } from '@/features/nutrition'
+import { workoutKeys } from '@/features/workouts'
 import { NutritionPage } from '@/features/nutrition/pages/NutritionPage'
 import type { Food, MealEntry } from '@/features/nutrition/types'
 import { TrackPage } from '@/features/track/pages/TrackPage'
@@ -47,6 +48,22 @@ function seed(empty: boolean) {
   qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86 })
   qc.setQueryData(nutritionKeys.day(toLocalDateISO()), empty ? [] : sampleMeals())
   qc.setQueryData(nutritionKeys.foods, empty ? [] : sampleFoods())
+  const now = new Date()
+  const session = {
+    id: 'preview-session',
+    kind: 'strength',
+    title: null,
+    templateName: 'İtiş: göğüs, omuz',
+    started_at: new Date(now.getTime() - 3 * 3600_000).toISOString(),
+    ended_at: new Date(now.getTime() - 2 * 3600_000).toISOString(),
+    duration_sec: 3120,
+    total_sets: 16,
+    total_volume_kg: 7845,
+    kcal_estimate: 412,
+    template_id: null,
+    cardio: [],
+  }
+  qc.setQueryData(workoutKeys.day(toLocalDateISO()), empty ? [] : [session])
   return qc
 }
 

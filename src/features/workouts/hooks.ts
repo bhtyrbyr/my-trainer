@@ -29,6 +29,7 @@ export const workoutKeys = {
   last: (exerciseId: string) => ['workouts', 'last', exerciseId] as const,
   history: (month: string) => ['workouts', 'history', month] as const,
   energy: (day: string) => ['workouts', 'energy', day] as const,
+  day: (day: string) => ['workouts', 'day', day] as const,
 }
 
 // -----------------------------------------------------------------------------
@@ -44,6 +45,18 @@ export function useBurnedOn(day: string, previewValue?: { kcal: number; sessions
     },
     enabled: !previewValue,
     initialData: previewValue,
+    staleTime: 60_000,
+  })
+}
+
+/** Finished sessions that started on one local day (YYYY-MM-DD). */
+export function useSessionsOn(day: string) {
+  return useQuery({
+    queryKey: workoutKeys.day(day),
+    queryFn: () => {
+      const [y, m, d] = day.split('-').map(Number)
+      return api.listSessionsBetween(new Date(y, m - 1, d).toISOString(), new Date(y, m - 1, d + 1).toISOString())
+    },
     staleTime: 60_000,
   })
 }

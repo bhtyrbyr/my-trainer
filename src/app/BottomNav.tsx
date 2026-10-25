@@ -1,18 +1,18 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CalendarCheck, Dumbbell, LayoutDashboard, LineChart, Trophy, UserRound } from 'lucide-react'
+import { Dumbbell, LayoutDashboard, LineChart, Trophy, UserRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePendingCount } from '@/features/admin/hooks'
 
 /**
- * Six tabs; the profile tab sits at the far right and replaces the old header avatar/gear.
- * On iPhone 16 (393pt) each tab is ~65pt wide, still above the 44pt touch target.
+ * Five tabs: Home, Track, Workouts (centre, the primary action), Ranking, Profile.
+ * On the phone the Workouts tab is a raised volt disc so it reads as the main thing to do;
+ * on desktop the sidebar keeps one quiet style and only highlights Workouts with the accent.
  */
 const tabs = [
   { to: '/', key: 'home', icon: LayoutDashboard },
-  { to: '/workouts', key: 'workouts', icon: Dumbbell },
   { to: '/track', key: 'track', icon: LineChart },
-  { to: '/today', key: 'today', icon: CalendarCheck },
+  { to: '/workouts', key: 'workouts', icon: Dumbbell, featured: true },
   { to: '/leaderboard', key: 'leaderboard', icon: Trophy },
   { to: '/settings', key: 'profile', icon: UserRound },
 ] as const
@@ -38,36 +38,58 @@ export function BottomNav() {
       )}
     >
       <ul className="mx-auto flex h-16 max-w-md items-stretch justify-around lg:h-full lg:max-w-none lg:flex-col lg:justify-start lg:gap-1 lg:p-3">
-        {tabs.map(({ to, key, icon: Icon }) => (
-          <li key={key} className={cn('flex-1 lg:flex-none', key === 'profile' && 'lg:mt-auto')}>
-            <NavLink
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'touch-target flex h-full flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium transition-colors',
-                  'lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-lg lg:px-3 lg:text-sm',
-                  isActive || ALSO_ACTIVE[key]?.some((p) => pathname.startsWith(p))
-                    ? 'text-volt'
-                    : 'text-ink-muted hover:text-ink',
-                )
-              }
-            >
-              <span className="relative">
-                <Icon className="size-6 lg:size-5" aria-hidden />
-                {key === 'profile' && pendingCount > 0 && (
-                  <span
-                    className="absolute -right-1.5 -top-1 flex min-w-4 items-center justify-center rounded-full bg-volt px-1 text-[9px] font-bold leading-4 text-volt-ink ring-2 ring-bg"
-                    aria-label={t('nav.pendingBadge', { n: pendingCount })}
-                  >
-                    {pendingCount}
-                  </span>
-                )}
-              </span>
-              <span>{t(`nav.${key}`)}</span>
-            </NavLink>
-          </li>
-        ))}
+        {tabs.map((tab) => {
+          const { to, key, icon: Icon } = tab
+          const featured = 'featured' in tab && tab.featured
+          return (
+            <li key={key} className={cn('flex-1 lg:flex-none', key === 'profile' && 'lg:mt-auto')}>
+              <NavLink
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) => {
+                  const active = isActive || Boolean(ALSO_ACTIVE[key]?.some((p) => pathname.startsWith(p)))
+                  return cn(
+                    'group touch-target flex h-full flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium transition-colors',
+                    'lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-lg lg:px-3 lg:text-sm',
+                    featured ? (active ? 'text-ink lg:text-volt' : 'text-ink-muted hover:text-ink lg:text-ink') : active ? 'text-volt' : 'text-ink-muted hover:text-ink',
+                  )
+                }}
+              >
+                {({ isActive }) => {
+                  const active = isActive || Boolean(ALSO_ACTIVE[key]?.some((p) => pathname.startsWith(p)))
+                  return (
+                    <>
+                      {featured ? (
+                        <span
+                          className={cn(
+                            'inner-glow -mt-5 flex size-14 items-center justify-center rounded-full bg-volt text-volt-ink ring-4 ring-bg transition-transform duration-150 group-active:scale-95',
+                            'lg:mt-0 lg:size-auto lg:bg-transparent lg:text-current lg:ring-0 lg:[box-shadow:none]',
+                            active && 'scale-105 lg:scale-100',
+                          )}
+                        >
+                          <Icon className="size-7 lg:size-5" strokeWidth={2.25} aria-hidden />
+                        </span>
+                      ) : (
+                        <span className="relative">
+                          <Icon className="size-6 lg:size-5" aria-hidden />
+                          {key === 'profile' && pendingCount > 0 && (
+                            <span
+                              className="absolute -right-1.5 -top-1 flex min-w-4 items-center justify-center rounded-full bg-volt px-1 text-[9px] font-bold leading-4 text-volt-ink ring-2 ring-bg"
+                              aria-label={t('nav.pendingBadge', { n: pendingCount })}
+                            >
+                              {pendingCount}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                      <span className={cn(featured && 'font-semibold', featured && active && 'text-volt')}>{t(`nav.${key}`)}</span>
+                    </>
+                  )
+                }}
+              </NavLink>
+            </li>
+          )
+        })}
       </ul>
     </nav>
   )
