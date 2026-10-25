@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from '@/app/AppShell'
 import { NutritionPreviewContext, nutritionKeys } from '@/features/nutrition'
 import { workoutKeys } from '@/features/workouts'
+import { SleepWaterPreviewContext, sleepWaterKeys } from '@/features/sleepwater'
+import { SleepWaterPage } from '@/features/sleepwater/pages/SleepWaterPage'
 import { NutritionPage } from '@/features/nutrition/pages/NutritionPage'
 import type { Food, MealEntry } from '@/features/nutrition/types'
 import { TrackPage } from '@/features/track/pages/TrackPage'
@@ -68,6 +70,25 @@ function seed(empty: boolean, aiClosed: boolean) {
     cardio: [],
   }
   qc.setQueryData(workoutKeys.day(toLocalDateISO()), empty ? [] : [session])
+  const today = toLocalDateISO()
+  const at = (h: number, m = 0, dayOffset = 0) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayOffset, h, m).toISOString()
+  qc.setQueryData(
+    sleepWaterKeys.water(today),
+    empty
+      ? []
+      : [250, 200, 500, 250].map((ml, i) => ({ id: `w${i}`, user_id: 'preview', drunk_on: today, amount_ml: ml, logged_at: at(8 + i * 2), created_at: at(8 + i * 2) })),
+  )
+  qc.setQueryData(
+    sleepWaterKeys.sleepWeek(today),
+    empty
+      ? []
+      : [-6, -5, -4, -2, -1, 0].map((d, i) => {
+          const dur = [430, 395, 470, 360, 445, 465][i]
+          const wake = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, 7, 15)
+          const bed = new Date(wake.getTime() - dur * 60000)
+          return { id: `s${d}`, user_id: 'preview', sleep_on: toLocalDateISO(wake), bed_at: bed.toISOString(), wake_at: wake.toISOString(), duration_min: dur, quality: [3, 2, 4, 2, 4, 4][i], note: null, created_at: wake.toISOString(), updated_at: wake.toISOString() }
+        }),
+  )
   return qc
 }
 
@@ -78,7 +99,9 @@ export function DevBodyLayout() {
     <QueryClientProvider client={client}>
       <BodyPreviewContext.Provider value={true}>
         <NutritionPreviewContext.Provider value={true}>
-          <AppShell />
+          <SleepWaterPreviewContext.Provider value={true}>
+            <AppShell />
+          </SleepWaterPreviewContext.Provider>
         </NutritionPreviewContext.Provider>
       </BodyPreviewContext.Provider>
     </QueryClientProvider>
@@ -142,4 +165,8 @@ function sampleFoods(): Food[] {
     updated_at: new Date().toISOString(),
   })
   return [f('f1', 'Yulaf ezmesi', '40 g', 150, 5.3, 27, 2.7), f('f2', 'Muz', '1 orta boy', 105, 1.3, 27, 0.4), f('f3', 'Whey protein', '1 ölçek', 120, 24, 3, 1.5)]
+}
+
+export function DevSleepWater() {
+  return <SleepWaterPage />
 }

@@ -940,6 +940,46 @@ export type Database = {
           },
         ]
       }
+      sleep_entries: {
+        Row: {
+          bed_at: string
+          created_at: string
+          duration_min: number
+          id: string
+          note: string | null
+          quality: number | null
+          sleep_on: string
+          updated_at: string
+          user_id: string
+          wake_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          bed_at: string
+          created_at?: string
+          duration_min?: number
+          id?: string
+          note?: string | null
+          quality?: number | null
+          sleep_on: string
+          updated_at?: string
+          user_id: string
+          wake_at: string
+        }
+        Update: {
+          bed_at?: string
+          created_at?: string
+          duration_min?: number
+          id?: string
+          note?: string | null
+          quality?: number | null
+          sleep_on?: string
+          updated_at?: string
+          user_id?: string
+          wake_at?: string
+        }
+        Relationships: []
+      }
       template_exercises: {
         Row: {
           created_at: string
@@ -1047,6 +1087,34 @@ export type Database = {
           updated_at?: string
           user_id?: string
           week_starts_on?: number
+        }
+        Relationships: []
+      }
+      water_entries: {
+        Row: {
+          amount_ml: number
+          created_at: string
+          drunk_on: string
+          id: string
+          logged_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          amount_ml: number
+          created_at?: string
+          drunk_on: string
+          id?: string
+          logged_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_ml?: number
+          created_at?: string
+          drunk_on?: string
+          id?: string
+          logged_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1360,6 +1428,7 @@ export type Database = {
       }
       strength_met: { Args: { p_avg_rpe: number }; Returns: number }
       sync_protein_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
+      sync_water_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
       todays_templates: {
         Args: { p_isodow?: number }
         Returns: {

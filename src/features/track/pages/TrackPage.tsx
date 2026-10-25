@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { addDays, format, parseISO } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
-import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Droplet, Loader2, Plus } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -18,6 +18,7 @@ import {
 } from '@/features/body'
 import { MEAL_SLOTS, useMeals, type MealSlot } from '@/features/nutrition'
 import { useUserSettings } from '@/features/settings/hooks'
+import { DEFAULT_WATER_GOAL, splitDuration, useAddWater, useSleepWeek, useWater, waterTotal } from '@/features/sleepwater'
 import { sessionTitle, useBurnedOn, useSessionsOn } from '@/features/workouts'
 import { toLocalDateISO } from '@/lib/dates'
 import { DayPickerSheet } from '../components/DayPickerSheet'
@@ -50,6 +51,12 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const body = useBodyMetrics()
   const profile = usePrivateWeights()
   const { settings } = useUserSettings()
+  const water = useWater(day)
+  const sleep = useSleepWeek(day)
+  const addWater = useAddWater()
+  const waterMl = waterTotal(water.data ?? [])
+  const waterGoal = settings?.daily_water_ml ?? DEFAULT_WATER_GOAL
+  const night = (sleep.data ?? []).find((n) => n.sleep_on === day) ?? null
   const goalKcal = preview ? 2200 : (settings?.daily_kcal ?? null)
 
   const setDay = (d: string) => setParams(d === today ? {} : { day: d }, { replace: true })
@@ -123,7 +130,7 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           </button>
         </div>
 
-        <ErrorNote error={meals.error ?? sessions.error ?? body.error ?? burned.error ?? profile.error} />
+        <ErrorNote error={meals.error ?? sessions.error ?? body.error ?? burned.error ?? profile.error ?? water.error ?? sleep.error} />
 
         {/* One nutrition card: eaten | burned (never netted) on top, the day's meals by slot below. */}
         <section
@@ -185,6 +192,45 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
                 action={t('track:meals.add')}
                 to={`${base}/nutrition${dayQuery}`}
               />
+            )}
+          </div>
+        </section>
+
+        {/* Water and sleep: the day's water with a one-tap +250 ml, and the night that ended this morning. */}
+        <section aria-label={t('sleepwater:title')} className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
+          <div className="flex items-center gap-3 p-4">
+            <Link to={`${base}/sleep-water${dayQuery}`} aria-label={t('track:water.open')} className="min-w-0 flex-1">
+              <p className="eyebrow">{t('track:water.name')}</p>
+              <p className="mt-2 flex items-baseline gap-1">
+                <span className="display tabular text-[30px] leading-none">{nf.format(waterMl)}</span>
+                <span className="tabular text-[12px] font-medium text-ink-faint">/ {nf.format(waterGoal)} ml</span>
+              </p>
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-raised" aria-hidden>
+                <div className="h-full rounded-full bg-volt" style={{ width: `${Math.min(100, (waterMl / waterGoal) * 100)}%` }} />
+              </div>
+            </Link>
+            <button
+              type="button"
+              aria-label={t('track:water.addLabel')}
+              disabled={addWater.isPending}
+              onClick={() => addWater.mutate({ day, ml: 250 })}
+              className="hairline flex h-14 shrink-0 items-center gap-1.5 rounded-[var(--radius-button)] bg-bg px-4 text-[15px] font-semibold transition-transform active:scale-[0.97] disabled:opacity-60"
+            >
+              {addWater.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Droplet className="size-4 text-volt" aria-hidden />}
+              {t('track:water.add')}
+            </button>
+          </div>
+          <ErrorNote error={addWater.error} className="mx-4 mb-3" />
+          <div className="border-t border-line">
+            {night ? (
+              <Link to={`${base}/sleep-water${dayQuery}`} className="flex min-h-12 items-center gap-3 px-4 py-2.5 hover:bg-raised/40">
+                <span className="eyebrow w-14 shrink-0">{t('track:sleep.name')}</span>
+                <span className="tabular flex-1 text-[15px] font-semibold">{t('sleepwater:sleep.duration', splitDuration(night.duration_min))}</span>
+                {night.quality != null && <span className="text-[12px] text-ink-faint">{t('sleepwater:sleep.qualityN', { n: night.quality })}</span>}
+                <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+              </Link>
+            ) : (
+              <Empty text={t('track:sleep.none')} action={t('track:sleep.log')} to={`${base}/sleep-water${dayQuery}`} />
             )}
           </div>
         </section>

@@ -1,0 +1,70 @@
+{
+  "title": "Sleep and water",
+  "back": "Track",
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "prev": "Previous day",
+    "next": "Next day"
+  },
+  "water": {
+    "title": "Water",
+    "of": "/ {{goal}} ml",
+    "goal": "Goal {{ml}} ml",
+    "editGoal": "Change the water goal",
+    "reached": "Goal reached",
+    "left": "{{ml}} ml to go",
+    "add": "Add {{ml}} ml",
+    "quick": {
+      "200": "Tea glass",
+      "250": "Glass",
+      "500": "Small bottle"
+    },
+    "custom": "Other amount",
+    "customAdd": "Add",
+    "entries": "Drinks today",
+    "remove": "Delete the {{ml}} ml entry",
+    "none": "No water logged yet.",
+    "points": "Reaching the daily goal earns 10 points."
+  },
+  "sleep": {
+    "title": "Sleep",
+    "night": "Last night",
+    "nightOf": "Night ending on the morning of {{date}}",
+    "bed": "Bedtime",
+    "wake": "Wake-up",
+    "duration": "{{h}} h {{m}} min",
+    "quality": "Sleep quality",
+    "qualityN": "Quality {{n}}/5",
+    "qualityLabels": {
+      "1": "Very poor",
+      "2": "Poor",
+      "3": "Okay",
+      "4": "Good",
+      "5": "Great"
+    },
+    "save": "Save",
+    "update": "Update",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Tap again to delete",
+    "week": "Last 7 nights",
+    "average": "Average {{h}} h {{m}} min",
+    "target": "7 hours",
+    "noData": "No entry",
+    "tooShort": "That looks very short; check the times.",
+    "points": "A sleep log earns 5 points, 7 hours or more earns 10.",
+    "barLabel": "{{day}}: {{value}}"
+  },
+  "goalSheet": {
+    "title": "Daily water goal",
+    "hint": "A common guideline is 2-3 litres a day; more on training days.",
+    "save": "Save",
+    "dec": "Lower the goal by 250 ml",
+    "inc": "Raise the goal by 250 ml"
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel"
+  }
+}

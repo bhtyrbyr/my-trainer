@@ -53,7 +53,9 @@
     "reportLimit": "You have sent many reports today. Try again tomorrow.",
     "aiAppLimit": "The app's AI cap for today is used up. Try again tomorrow or enter it by hand.",
     "aiGoogleDaily": "The app's free AI quota for today is used up. Use the nutrition database on the Search tab or enter it by hand.",
-    "aiGoogleMinute": "The AI is busy right now. Try again in about a minute."
+    "aiGoogleMinute": "The AI is busy right now. Try again in about a minute.",
+    "sleepOrder": "Wake-up must be after bedtime. Check the times.",
+    "sleepTooLong": "A night longer than 20 hours cannot be saved. Check the times."
   },
   "update": {
     "title": "New version released",

@@ -53,7 +53,9 @@
     "reportLimit": "Bugün çok fazla hata bildirdin. Yarın tekrar deneyebilirsin.",
     "aiAppLimit": "Uygulamanın bugünkü yapay zekâ sınırı doldu. Yarın tekrar deneyebilir ya da elle girebilirsin.",
     "aiGoogleDaily": "Uygulamanın bugünkü ücretsiz yapay zekâ hakkı doldu. Ara sekmesinden besin veritabanını ya da elle girişi kullanabilirsin.",
-    "aiGoogleMinute": "Yapay zekâ şu an yoğun. Yaklaşık bir dakika sonra tekrar dene."
+    "aiGoogleMinute": "Yapay zekâ şu an yoğun. Yaklaşık bir dakika sonra tekrar dene.",
+    "sleepOrder": "Kalkış saati yatış saatinden sonra olmalı. Saatleri kontrol et.",
+    "sleepTooLong": "20 saatten uzun bir uyku kaydedilemez. Saatleri kontrol et."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",
