@@ -55,7 +55,11 @@
       "high": "Blaze",
       "legendary": "Legendary",
       "mythic": "Mythic"
-    }
+    },
+    "toNextLevel": "{{n}} pts to go",
+    "toNextTier": "{{tier}} in {{n}}d",
+    "startStreak": "Start a streak today",
+    "topTier": "peak"
   },
   "points": "{{n}} pts",
   "level": "Level {{n}}",

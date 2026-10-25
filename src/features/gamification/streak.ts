@@ -23,6 +23,15 @@ export function effectiveStreak(current: number | null | undefined, lastActiveOn
   return diffDays <= 1 ? current : 0
 }
 
+/** 0..1 progress through the current tier (mythic is always full, none is empty). */
+export function tierProgress(days: number): number {
+  const d = Math.max(0, Math.floor(days))
+  const bands: [number, number][] = [[1, 5], [5, 15], [15, 30], [30, 45]]
+  if (d < 1) return 0
+  for (const [start, end] of bands) if (d < end) return (d - start + 1) / (end - start)
+  return 1
+}
+
 /** Days remaining until the next tier, or null at the top tier. */
 export function daysToNextTier(days: number): number | null {
   const d = Math.max(0, Math.floor(days))

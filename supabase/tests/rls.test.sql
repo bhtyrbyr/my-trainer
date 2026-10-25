@@ -2,12 +2,35 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(80);
+select plan(82);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 update public.app_config set value = '""'::jsonb where key = 'admin_bootstrap_email';
 update public.app_config set value = '"open"'::jsonb where key = 'access_mode';
 update public.app_config set value = 'true'::jsonb where key = 'require_approval';
+
+-- Function privileges: security-definer functions are an allow-list, never a default ------------
+select is(
+  (select coalesce(array_agg(p.proname::text order by p.proname), '{}')
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'execute')
+      and p.proname not in ('rls_auto_enable')),
+  '{}'::text[],
+  'anon cannot execute any security-definer function'
+);
+select is(
+  (select coalesce(array_agg(p.proname::text order by p.proname), '{}')
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prosecdef
+      and has_function_privilege('authenticated', p.oid, 'execute')
+      and p.proname not in (
+        'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
+        'admin_set_registration_status', 'can_access', 'delete_my_account', 'finish_workout_session',
+        'get_leaderboard', 'has_onboarded', 'is_admin', 'rls_auto_enable')),
+  '{}'::text[],
+  'authenticated can execute only the allow-listed security-definer RPCs'
+);
 
 -- Fixtures ------------------------------------------------------------------
 \set ua '00000000-0000-0000-0000-00000000000a'
