@@ -37,6 +37,7 @@ export function OnboardingPage() {
       showOnLeaderboard: true,
       birthYear: '',
       heightCm: '',
+      weightKg: '',
       sex: '',
       goal: '',
     },
@@ -198,12 +199,15 @@ export function OnboardingPage() {
         {/* Optional */}
         <section className="space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('onboarding:optional')}</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Field label={t('onboarding:fields.birthYear')} error={fieldError('birthYear')}>
               <input {...register('birthYear')} inputMode="numeric" placeholder="1990" className={inputCls} />
             </Field>
             <Field label={t('onboarding:fields.heightCm')} error={fieldError('heightCm')}>
               <input {...register('heightCm')} inputMode="decimal" placeholder="178" className={inputCls} />
+            </Field>
+            <Field label={t('onboarding:fields.weightKg')} error={fieldError('weightKg')}>
+              <input {...register('weightKg')} inputMode="decimal" placeholder="80" className={inputCls} />
             </Field>
           </div>
           <Field label={t('onboarding:fields.sex')}>

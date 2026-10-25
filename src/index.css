@@ -50,6 +50,11 @@
     --sab: env(safe-area-inset-bottom, 0px);
     --nav-h: 4rem;
   }
+  html {
+    /* iOS Safari inflates text in some layouts; keep sizes exactly as designed */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   html,
   body,
   #root {

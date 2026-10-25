@@ -30,6 +30,7 @@ type ProfilePrivateRow = {
   user_id: string
   birth_year: number | null
   height_cm: number | null
+  start_weight_kg: number | null
   sex: Sex | null
   goal: Goal | null
   created_at: string
@@ -103,7 +104,14 @@ export type Database = {
       }
       profile_private: {
         Row: ProfilePrivateRow
-        Insert: { user_id: string; birth_year?: number | null; height_cm?: number | null; sex?: Sex | null; goal?: Goal | null }
+        Insert: {
+          user_id: string
+          birth_year?: number | null
+          height_cm?: number | null
+          start_weight_kg?: number | null
+          sex?: Sex | null
+          goal?: Goal | null
+        }
         Update: Partial<Omit<ProfilePrivateRow, 'user_id' | 'created_at' | 'updated_at'>>
         Relationships: []
       }

@@ -18,6 +18,7 @@
     "displayName": "Display name",
     "birthYear": "Birth year",
     "heightCm": "Height (cm)",
+    "weightKg": "Weight (kg)",
     "sex": "Sex",
     "goal": "Goal",
     "showOnLeaderboard": "Show me on the leaderboard"

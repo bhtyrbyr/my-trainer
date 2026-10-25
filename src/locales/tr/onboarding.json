@@ -18,6 +18,7 @@
     "displayName": "Görünen ad",
     "birthYear": "Doğum yılı",
     "heightCm": "Boy (cm)",
+    "weightKg": "Kilo (kg)",
     "sex": "Cinsiyet",
     "goal": "Hedef",
     "showOnLeaderboard": "Liderlik tablosunda görün"

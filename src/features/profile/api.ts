@@ -44,6 +44,7 @@ export async function completeOnboarding(userId: string, avatarPath: string, v: 
     user_id: userId,
     birth_year: v.birthYear === '' || v.birthYear === undefined ? null : v.birthYear,
     height_cm: v.heightCm === '' || v.heightCm === undefined ? null : v.heightCm,
+    start_weight_kg: v.weightKg === '' || v.weightKg === undefined ? null : v.weightKg,
     sex: v.sex ? v.sex : null,
     goal: v.goal ? v.goal : null,
   }

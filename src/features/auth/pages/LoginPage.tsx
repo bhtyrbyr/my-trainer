@@ -37,35 +37,39 @@ export function LoginPage() {
   return (
     <div className="bg-atmosphere mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-safe pb-safe lg:max-w-5xl lg:flex-row lg:items-center lg:gap-16 lg:px-12">
       {/* Hero */}
-      <div className="flex flex-1 flex-col justify-end pt-10 lg:justify-center">
+      <div className="flex flex-1 flex-col justify-end pt-8 lg:justify-center">
         <p className="eyebrow rise-in" style={{ '--i': 0 } as React.CSSProperties}>
           {t('eyebrow')}
         </p>
-        <h1 className="display rise-in mt-4 text-[56px] text-ink lg:text-[88px]" style={{ '--i': 1 } as React.CSSProperties}>
+        {/* Fluid size: never wraps a line on 320-430px phones, caps at 56px; 88px on desktop */}
+        <h1
+          className="display rise-in mt-3 text-[clamp(38px,12.5vw,56px)] text-ink lg:text-[88px]"
+          style={{ '--i': 1, textWrap: 'nowrap' } as React.CSSProperties}
+        >
           {t('headline.a')}
           <br />
           <span className="text-volt">{t('headline.b')}</span>
         </h1>
-        <p className="rise-in mt-5 max-w-[34ch] text-[17px] leading-relaxed text-ink-muted" style={{ '--i': 2 } as React.CSSProperties}>
+        <p className="rise-in mt-4 max-w-[34ch] text-[16px] leading-relaxed text-ink-muted" style={{ '--i': 2 } as React.CSSProperties}>
           {t('subtitle')}
         </p>
 
         {/* Proof points: numbers as imagery */}
-        <ul className="rise-in mt-10 divide-y divide-line border-y border-line" style={{ '--i': 3 } as React.CSSProperties}>
+        <ul className="rise-in mt-7 divide-y divide-line border-y border-line" style={{ '--i': 3 } as React.CSSProperties}>
           {proofs.map((p) => (
-            <li key={p.key} className="flex items-center gap-4 py-3.5">
-              <span className="flex w-[96px] shrink-0 flex-col leading-none">
-                <span className="display tabular text-[28px] text-ink">{p.value}</span>
-                {p.unit && <span className="mt-1 text-[11px] font-medium tracking-[0.08em] text-ink-faint uppercase">{p.unit}</span>}
+            <li key={p.key} className="flex items-center gap-4 py-3">
+              <span className="flex w-[88px] shrink-0 flex-col leading-none">
+                <span className="display tabular text-[26px] text-ink">{p.value}</span>
+                {p.unit && <span className="mt-1 text-[10px] font-medium tracking-[0.08em] text-ink-faint uppercase">{p.unit}</span>}
               </span>
-              <span className="text-[15px] leading-snug text-ink-muted">{t(p.key)}</span>
+              <span className="text-[14px] leading-snug text-ink-muted">{t(p.key)}</span>
             </li>
           ))}
         </ul>
       </div>
 
       {/* Action: thumb zone on phone, right column on desktop */}
-      <div className="rise-in mt-10 space-y-4 pb-6 lg:w-[380px] lg:pb-0" style={{ '--i': 4 } as React.CSSProperties}>
+      <div className="rise-in mt-7 space-y-3 pb-5 lg:w-[380px] lg:pb-0" style={{ '--i': 4 } as React.CSSProperties}>
         {error && (
           <p role="alert" className="hairline rounded-[var(--radius-input)] bg-danger/10 px-4 py-3 text-sm text-danger">
             {t('error', { message: error })}
@@ -77,7 +81,7 @@ export function LoginPage() {
             <GoogleGlyph />
           </span>
         </Button>
-        <p className="px-1 text-center text-[12px] leading-relaxed text-ink-faint">{t('privacyNote')}</p>
+        <p className="px-1 text-center text-[11.5px] leading-snug text-ink-faint">{t('privacyNote')}</p>
       </div>
     </div>
   )

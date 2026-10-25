@@ -14,6 +14,7 @@ export const onboardingSchema = z.object({
     .union([z.literal(''), z.coerce.number().int().min(1900).max(new Date().getFullYear())])
     .optional(),
   heightCm: z.union([z.literal(''), z.coerce.number().min(50).max(300)]).optional(),
+  weightKg: z.union([z.literal(''), z.coerce.number().min(20).max(400)]).optional(),
   sex: z.enum(['male', 'female', 'other']).or(z.literal('')).optional(),
   goal: z.enum(['lose_fat', 'build_muscle', 'maintain', 'performance']).or(z.literal('')).optional(),
 })
