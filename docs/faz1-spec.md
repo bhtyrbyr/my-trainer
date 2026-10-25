@@ -82,6 +82,11 @@ Index every table on `(user_id, <date>)`: sessions `(user_id, started_at desc)`,
 - Idempotent, resumable, rate-friendly (concurrency 4, retry 3 with backoff), logs a summary. Exit non-zero on failure.
 - `name_tr` seed: `scripts/exercise-names-tr.json` (external_id -> Turkish name) applied after upsert, never overwriting a non-null `name_tr` that differs (users may edit later).
 
+## 5b. Day-based plans (added 2026-10-26, migration 20261026030000_day_plans.sql)
+- `workout_templates.weekdays smallint[]` (ISO 1 = Monday ... 7 = Sunday), GIN indexed. A template = "my Monday workout"; one template may cover several days.
+- `todays_templates(p_isodow int default null)` RPC: caller's non-archived templates planned for that weekday (default today).
+- `exercise_progress(p_exercise)` now also returns `avg_weight_kg` (average working weight, warmups excluded) and `best_reps`.
+
 ## 6. Frontend scope (after schema + types)
 - Types: regenerate `src/lib/database.types.ts` with `npx supabase gen types typescript --linked`.
 - `features/exercises`: library page (search, filters: body part, target muscle, equipment; infinite list), detail sheet (GIF, muscle diagram front/back with target/secondary overlays, instructions TR/EN), "add custom exercise".
