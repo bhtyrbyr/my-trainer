@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { MEASURE_FIELDS, useBodyMetrics } from '@/features/body'
 import { MEAL_SLOTS, useMeals, type MealSlot } from '@/features/nutrition'
+import { useUserSettings } from '@/features/settings/hooks'
 import { sessionTitle, useBurnedOn, useSessionsOn } from '@/features/workouts'
 import { toLocalDateISO } from '@/lib/dates'
 import { DayPickerSheet } from '../components/DayPickerSheet'
@@ -36,6 +37,8 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const burned = useBurnedOn(day, preview ? { kcal: 412, sessions: 1 } : undefined)
   const sessions = useSessionsOn(day)
   const body = useBodyMetrics()
+  const { settings } = useUserSettings()
+  const goalKcal = preview ? 2200 : (settings?.daily_kcal ?? null)
 
   const setDay = (d: string) => setParams(d === today ? {} : { day: d }, { replace: true })
   const shift = (n: number) => setDay(toLocalDateISO(addDays(parseISO(day), n)))
@@ -84,18 +87,48 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
 
         <ErrorNote error={meals.error ?? sessions.error ?? body.error ?? burned.error} />
 
-        {/* eaten | burned, never netted */}
-        <Link to={`${base}/nutrition${dayQuery}`} aria-label={t('track:energy.open')} className="hairline grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] bg-surface hover:bg-raised/40">
-          <Figure eyebrow={t('nutrition:ledger.eaten')} value={nf.format(eaten)} sub={entries.length ? t('track:meals.items', { count: entries.length }) : t('track:meals.add')} />
-          <Figure
-            eyebrow={t('nutrition:ledger.burned')}
-            value={nf.format(burned.data?.kcal ?? 0)}
-            approx={trained}
-            muted
-            border
-            sub={trained ? t('nutrition:ledger.burnedShort') : t('track:workouts.none')}
-          />
-        </Link>
+        {/* One nutrition card: eaten | burned (never netted) on top, the day's meals by slot below. */}
+        <section aria-label={t('track:nutrition.name')} className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
+          <Link to={`${base}/nutrition${dayQuery}`} aria-label={t('track:energy.open')} className="grid grid-cols-2 hover:bg-raised/40">
+            <Figure
+              eyebrow={t('nutrition:ledger.eaten')}
+              value={nf.format(eaten)}
+              sub={
+                goalKcal
+                  ? `${t('nutrition:ledger.goal', { kcal: nf.format(goalKcal) })} · ${
+                      eaten > goalKcal ? t('nutrition:ledger.over', { kcal: nf.format(eaten - goalKcal) }) : t('nutrition:ledger.left', { kcal: nf.format(goalKcal - eaten) })
+                    }`
+                  : t('track:meals.items', { count: entries.length })
+              }
+              progress={goalKcal ? { value: eaten, goal: goalKcal } : undefined}
+            />
+            <Figure
+              eyebrow={t('nutrition:ledger.burned')}
+              value={nf.format(burned.data?.kcal ?? 0)}
+              approx={trained}
+              muted
+              border
+              sub={trained ? t('nutrition:ledger.burnedShort') : t('track:workouts.none')}
+            />
+          </Link>
+          <div className="border-t border-line">
+            {slots.length > 0 ? (
+              <Link to={`${base}/nutrition${dayQuery}`} aria-label={t('track:meals.open')} className="block hover:bg-raised/40">
+                <ul className="divide-y divide-line">
+                  {slots.map((s) => (
+                    <li key={s.slot} className="flex h-12 items-center gap-3 px-4">
+                      <span className="flex-1 text-[14px] font-medium">{t(`nutrition:slots.${s.slot}`)}</span>
+                      <span className="text-[12px] text-ink-faint">{t('track:meals.items', { count: s.count })}</span>
+                      <span className="tabular w-20 text-right text-[14px] font-semibold">{nf.format(s.kcal)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Link>
+            ) : (
+              <Empty text={t('track:meals.none')} action={t('track:meals.add')} to={`${base}/nutrition${dayQuery}`} />
+            )}
+          </div>
+        </section>
 
         <Block title={t('track:body.name')} to={`${base}/body`} openLabel={t('track:body.open')}>
           {bodyRow?.weight_kg != null || measureCount > 0 ? (
@@ -139,22 +172,6 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           )}
         </Block>
 
-        <Block title={t('track:meals.name')} to={`${base}/nutrition${dayQuery}`} openLabel={t('track:meals.open')}>
-          {slots.length > 0 ? (
-            <ul className="divide-y divide-line">
-              {slots.map((s) => (
-                <li key={s.slot} className="flex h-12 items-center gap-3 px-4">
-                  <span className="flex-1 text-[14px] font-medium">{t(`nutrition:slots.${s.slot}`)}</span>
-                  <span className="text-[12px] text-ink-faint">{t('track:meals.items', { count: s.count })}</span>
-                  <span className="tabular w-20 text-right text-[14px] font-semibold">{nf.format(s.kcal)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Empty text={t('track:meals.none')} action={t('track:meals.add')} to={`${base}/nutrition${dayQuery}`} />
-          )}
-        </Block>
-
         <p className="px-1 text-[12px] leading-snug text-ink-faint">
           <span className="font-semibold text-ink-muted">{t('track:soon.title')}:</span> {t('track:soon.list')}
         </p>
@@ -173,16 +190,46 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   )
 }
 
-function Figure({ eyebrow, value, sub, approx, muted, border }: { eyebrow: string; value: string; sub: string; approx?: boolean; muted?: boolean; border?: boolean }) {
+function Figure({
+  eyebrow,
+  value,
+  sub,
+  approx,
+  muted,
+  border,
+  progress,
+}: {
+  eyebrow: string
+  value: string
+  sub: string
+  approx?: boolean
+  muted?: boolean
+  border?: boolean
+  progress?: { value: number; goal: number }
+}) {
+  const pct = progress ? Math.min(100, (progress.value / progress.goal) * 100) : 0
+  const over = progress ? progress.value > progress.goal : false
   return (
-    <div className={border ? 'border-l border-line p-4' : 'p-4'}>
+    <div className={border ? 'min-w-0 border-l border-line p-4' : 'min-w-0 p-4'}>
       <p className="eyebrow">{eyebrow}</p>
       <p className="mt-2.5 flex items-baseline gap-1">
         {approx && <span className="text-[16px] text-ink-faint">≈</span>}
         <span className={muted ? 'display tabular text-[30px] leading-none text-ink-muted' : 'display tabular text-[30px] leading-none'}>{value}</span>
         <span className="text-[12px] font-medium text-ink-faint">kcal</span>
       </p>
-      <p className="mt-2 truncate text-[12px] text-ink-faint">{sub}</p>
+      {progress && (
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={progress.goal}
+          aria-valuenow={progress.value}
+          aria-label={sub}
+          className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-raised"
+        >
+          <div className={over ? 'h-full rounded-full bg-ink-muted' : 'h-full rounded-full bg-volt'} style={{ width: `${pct}%` }} />
+        </div>
+      )}
+      <p className="tabular mt-2 truncate text-[12px] text-ink-faint">{sub}</p>
     </div>
   )
 }
