@@ -1,5 +1,7 @@
 # my-trainer
 
+Live: https://my-trainer-nine.vercel.app
+
 Fitness, nutrition, habit and to-do tracker with points and a leaderboard. Google sign-in, free-tier only, privacy first (each user sees only their own data; progress photos are end-to-end encrypted).
 Requirements and architecture: [docs/PRD.md](docs/PRD.md).
 
