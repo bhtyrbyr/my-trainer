@@ -4,6 +4,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 ### Added
+- Update banner: when a new version is published, open sessions are told so, count down 15 s and refresh in a controlled way. Sessions check for a new version every minute.
 - Admin approval of registrations: new accounts wait in a "pending" state after onboarding; admins review them under Settings -> Admin -> Registration requests (approve / reject, pending badge). `app_config.require_approval` toggles the behaviour. Pending/rejected users see a dedicated waiting screen and cannot read any data except their own profile.
 - Design system tokens (olive-tinted neutrals, single volt accent, Bricolage Grotesque display + Inter body, radius/spacing scales, atmosphere and motion utilities) in `src/index.css`.
 - `design-director` skill (global) applied to all UI work; frontend agent and CLAUDE.md reference it.
