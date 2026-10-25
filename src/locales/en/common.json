@@ -7,6 +7,8 @@
     "track": "Track",
     "today": "Today",
     "leaderboard": "Ranking",
+    "profile": "Profile",
+    "pendingBadge": "{{n}} pending registration requests",
     "settings": "Settings"
   },
   "comingSoon": "This module arrives in the next phase.",
@@ -40,6 +42,18 @@
     "body": "The app will reload in {{n}} seconds and may be briefly unavailable.",
     "now": "Update now",
     "later": "Later"
+  },
+  "score": {
+    "points": "pts",
+    "streak": "day streak",
+    "summary": "{{points}} points, {{streak}}-day streak",
+    "tier": {
+      "none": "No streak",
+      "low": "Spark",
+      "medium": "Flame",
+      "high": "Blaze",
+      "legendary": "Legendary"
+    }
   },
   "points": "{{n}} pts",
   "level": "Level {{n}}",
