@@ -29,8 +29,9 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'placeholder' }}
       - name: Secret scan (no service_role / provider keys in client code)
         run: |
-          # 1) the privileged key name must never appear in code shipped to the browser or scripts
-          if grep -rniE "service_role" src scripts; then
+          # 1) the privileged key must never be referenced by code shipped to the browser (CLAUDE.md rule 3).
+          #    Server-side scripts (scripts/, GitHub Actions only) legitimately use it via env.
+          if grep -rniE "service_role" src; then
             echo "::error::service_role referenced in client code"; exit 1; fi
           # 2) real key shapes anywhere (patterns below contain brackets, so they never match themselves)
           if grep -rnE "AIza[0-9A-Za-z_-]{30,}|sk-or-v1-[0-9a-f]{20,}|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{40,}" src scripts supabase .github --exclude-dir=node_modules; then
