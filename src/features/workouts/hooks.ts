@@ -85,6 +85,7 @@ export function useWeightUnit() {
   return useMemo(() => {
     const nf = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 })
     const nf0 = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 })
+    const nf1 = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 })
     const toDisplay = (kg: number) => roundWeight(kgToUnit(kg, unit), unit)
     return {
       unit,
@@ -95,6 +96,8 @@ export function useWeightUnit() {
       format: (kg: number) => nf.format(toDisplay(kg)),
       /** large totals (volume): no decimals, grouped */
       formatTotal: (kg: number) => nf0.format(kgToUnit(kg, unit)),
+      /** computed estimates (e1RM): not snapped to plate steps, one decimal */
+      formatEstimate: (kg: number) => nf1.format(kgToUnit(kg, unit)),
       formatNumber: (n: number) => nf.format(n),
     }
   }, [unit, lang])

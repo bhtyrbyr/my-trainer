@@ -62,7 +62,7 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
                         {w.format(pr.weight_kg)} {w.unit} × {pr.reps}
                       </span>
                     )}
-                    <span className="block text-[11px] text-ink-faint">{t('summary.e1rm', { value: w.format(pr.e1rm), unit: w.unit })}</span>
+                    <span className="block text-[11px] text-ink-faint">{t('summary.e1rm', { value: w.formatEstimate(pr.e1rm), unit: w.unit })}</span>
                   </span>
                 </li>
               ))}
