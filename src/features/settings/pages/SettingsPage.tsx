@@ -101,7 +101,19 @@ export function SettingsPage() {
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:about')}</h2>
           <p className="text-sm text-ink-muted">{t('settings:attribution')}</p>
-          <p className="text-xs text-ink-faint">{t('settings:version', { version: __APP_VERSION__ })}</p>
+          <p className="tabular text-xs text-ink-faint">
+            {t('settings:version', { version: __APP_VERSION__ })}
+            <span className="text-ink-faint/60"> · </span>
+            <a
+              href={`https://github.com/bhtyrbyr/my-trainer/commit/${__APP_COMMIT__}`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono hover:text-ink-muted"
+              title={t('settings:commit')}
+            >
+              {__APP_COMMIT__}
+            </a>
+          </p>
         </section>
       </div>
     </PageShell>
