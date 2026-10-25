@@ -76,3 +76,24 @@ export function latestMeasurements(rows: BodyMetric[]): MeasureRow[] {
 }
 
 export const hasMeasurements = (r: Pick<BodyMetric, MeasureField>) => MEASURE_FIELDS.some((f) => r[f] != null)
+
+export type BmiCategory = 'under' | 'normal' | 'over' | 'obese'
+
+/** Body mass index (kg / m², one decimal) and its WHO adult category; null without weight or height. */
+export function bmi(weightKg: number | null | undefined, heightCm: number | null | undefined): { value: number; category: BmiCategory } | null {
+  if (!weightKg || !heightCm || heightCm < 50) return null
+  const m = heightCm / 100
+  const value = Math.round((weightKg / (m * m)) * 10) / 10
+  const category: BmiCategory = value < 18.5 ? 'under' : value < 25 ? 'normal' : value < 30 ? 'over' : 'obese'
+  return { value, category }
+}
+
+/** Latest weigh-in on or before `day` (YYYY-MM-DD). */
+export function latestWeightOnOrBefore(rows: Pick<BodyMetric, 'measured_on' | 'weight_kg'>[], day: string): { day: string; kg: number } | null {
+  let best: { day: string; kg: number } | null = null
+  for (const r of rows) {
+    if (r.weight_kg == null || r.measured_on > day) continue
+    if (!best || r.measured_on > best.day) best = { day: r.measured_on, kg: Number(r.weight_kg) }
+  }
+  return best
+}

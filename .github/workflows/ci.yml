@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.122.0 # pinned: "latest" resolves through the GitHub API and fails when rate-limited
       - name: Start local stack (applies every migration + seed)
         run: supabase start -x studio,imgproxy,inbucket,mailpit,realtime,edge-runtime,logflare,vector,supavisor || supabase start
       - name: Run pgTAP suite

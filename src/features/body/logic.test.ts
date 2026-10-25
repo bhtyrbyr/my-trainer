@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterPeriod, latestMeasurements, summarizeWeight, weightSeries } from './logic'
+import { bmi, filterPeriod, latestMeasurements, latestWeightOnOrBefore, summarizeWeight, weightSeries } from './logic'
 import type { BodyMetric } from './types'
 
 const row = (measured_on: string, fields: Partial<BodyMetric>): BodyMetric => ({
@@ -56,5 +56,21 @@ describe('latestMeasurements', () => {
     expect(waist).toMatchObject({ value: 88, day: '2026-10-15', delta: -2 })
     expect(m.find((r) => r.field === 'arm_cm')).toMatchObject({ value: 35, delta: null })
     expect(m.find((r) => r.field === 'chest_cm')).toMatchObject({ value: null, day: null })
+  })
+})
+
+describe('bmi / latestWeightOnOrBefore', () => {
+  it('computes BMI with the WHO category', () => {
+    expect(bmi(82.8, 180)).toEqual({ value: 25.6, category: 'over' })
+    expect(bmi(70, 180)).toEqual({ value: 21.6, category: 'normal' })
+    expect(bmi(55, 180)?.category).toBe('under')
+    expect(bmi(110, 175)?.category).toBe('obese')
+    expect(bmi(80, null)).toBeNull()
+  })
+  it('finds the latest weigh-in up to a day', () => {
+    const rows = [row('2026-10-20', { weight_kg: 83 }), row('2026-10-24', { weight_kg: 82.4 }), row('2026-10-26', { waist_cm: 80 })]
+    expect(latestWeightOnOrBefore(rows, '2026-10-26')).toEqual({ day: '2026-10-24', kg: 82.4 })
+    expect(latestWeightOnOrBefore(rows, '2026-10-22')).toEqual({ day: '2026-10-20', kg: 83 })
+    expect(latestWeightOnOrBefore(rows, '2026-10-01')).toBeNull()
   })
 })

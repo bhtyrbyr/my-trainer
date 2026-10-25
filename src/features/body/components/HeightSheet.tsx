@@ -1,0 +1,57 @@
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ErrorNote } from '@/components/ui/ErrorNote'
+import { Stepper } from '@/features/workouts'
+import { useSetHeight } from '../hooks'
+
+/** Bottom sheet for height (cm), used for the body mass index. Private to the user. */
+export function HeightSheet({ open, current, onClose }: { open: boolean; current: number | null; onClose: () => void }) {
+  const { t } = useTranslation('body')
+  const setHeight = useSetHeight()
+  const [value, setValue] = useState<number | null>(current ?? 175)
+
+  useEffect(() => {
+    if (open) setValue(current ?? 175)
+  }, [open, current])
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center lg:items-center" role="presentation">
+      <button type="button" aria-label={t('actions.cancel')} className="absolute inset-0 bg-bg/70 backdrop-blur-sm" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-label={t('height.title')} className="rise-in hairline relative w-full max-w-md rounded-t-[var(--radius-sheet)] bg-surface px-5 pb-safe pt-6 lg:rounded-[var(--radius-sheet)] lg:pb-0">
+        <h2 className="display text-[24px]">{t('height.title')}</h2>
+        <p className="mt-1.5 text-[13px] leading-snug text-ink-muted">{t('height.hint')}</p>
+        <Stepper
+          label={t('height.title')}
+          value={value}
+          onChange={setValue}
+          step={1}
+          min={100}
+          max={250}
+          unit={t('units.cm')}
+          decLabel={t('height.dec')}
+          incLabel={t('height.inc')}
+          className="mt-6 [&>label]:sr-only"
+        />
+        <ErrorNote error={setHeight.error} className="mt-4" />
+        <div className="mt-6 grid gap-2 pb-5">
+          <Button size="lg" disabled={value == null || setHeight.isPending} onClick={() => setHeight.mutate(value, { onSuccess: onClose })}>
+            {setHeight.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
+            {t('height.save')}
+          </Button>
+          <Button size="lg" variant="ghost" onClick={onClose}>
+            {t('actions.cancel')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

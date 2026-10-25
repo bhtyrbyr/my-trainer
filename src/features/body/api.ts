@@ -22,12 +22,18 @@ export async function deleteBodyMetric(id: string): Promise<void> {
   if (error) throw error
 }
 
-/** Private weights: the goal (chart line) and the onboarding start weight (first prefill). */
-export async function getPrivateWeights(): Promise<{ target: number | null; start: number | null }> {
-  const { data, error } = await supabase.from('profile_private').select('target_weight_kg, start_weight_kg').maybeSingle()
+/** Private body profile: goal weight (chart line), onboarding start weight (first prefill) and height (BMI). */
+export async function getPrivateWeights(): Promise<{ target: number | null; start: number | null; height: number | null }> {
+  const { data, error } = await supabase.from('profile_private').select('target_weight_kg, start_weight_kg, height_cm').maybeSingle()
   if (error) throw error
   const num = (v: number | null | undefined) => (v == null ? null : Number(v))
-  return { target: num(data?.target_weight_kg), start: num(data?.start_weight_kg) }
+  return { target: num(data?.target_weight_kg), start: num(data?.start_weight_kg), height: num(data?.height_cm) }
+}
+
+/** Height for the body mass index (private profile). */
+export async function setHeight(userId: string, cm: number | null): Promise<void> {
+  const { error } = await supabase.from('profile_private').upsert({ user_id: userId, height_cm: cm }, { onConflict: 'user_id' })
+  if (error) throw error
 }
 
 export async function setTargetWeight(userId: string, kg: number | null): Promise<void> {
