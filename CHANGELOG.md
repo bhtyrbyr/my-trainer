@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+
+## [0.2.0] - 2026-10-25
 ### Added
 - Update banner: when a new version is published, open sessions are told so, count down 15 s and refresh in a controlled way. Sessions check for a new version every minute.
 - Admin approval of registrations: new accounts wait in a "pending" state after onboarding; admins review them under Settings -> Admin -> Registration requests (approve / reject, pending badge). `app_config.require_approval` toggles the behaviour. Pending/rejected users see a dedicated waiting screen and cannot read any data except their own profile.
@@ -23,6 +25,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - **Scoring integrity** (QA review): a strength session earns points only with at least 3 working sets and cardio only from 10 minutes; a session can be finished only once; the first log of an exercise is a baseline, not a PR; custom exercises earn no PR points; PR points capped at 40 per day; client can no longer edit session timestamps or totals or delete PRs; caps are race-safe; streak bonuses are rolled back with the activity that earned them.
 - Signing out, or a different account signing in on the same device, clears the previous user's cached data (query cache, workout drafts, offline API cache).
 - Routes are lazy-loaded and vendor code is split into stable chunks (main bundle 913 KB to 240 KB).
+- Live session shows the movement GIF playing in a 128px card; tap to enlarge it to a full-width stage (remembered per device).
 - Exercise media cache is keyed without the signed-URL token; touch targets and search inputs tuned for iPhone.
 ### Fixed
 - Security: database functions are no longer executable by clients unless explicitly granted (allow-list enforced by pgTAP).

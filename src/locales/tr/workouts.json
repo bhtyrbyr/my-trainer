@@ -145,7 +145,10 @@
     "discardBody": "Bu antrenmanda kayıtlı set yok. Antrenman silinsin mi?",
     "discardConfirm": "Antrenmanı sil",
     "notFound": "Antrenman bulunamadı",
-    "rpeShort": "RPE"
+    "rpeShort": "RPE",
+    "demoEnlarge": "Hareketi büyüt",
+    "demoShrink": "Hareketi küçült",
+    "demoAlt": "{{name}} hareketinin animasyonu"
   },
   "rest": {
     "title": "Mola",

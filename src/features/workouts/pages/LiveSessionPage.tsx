@@ -5,7 +5,9 @@ import { format } from 'date-fns'
 import { Check, Info, Loader2, Plus, SkipForward, Thermometer, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { ExercisePickerSheet, ExerciseThumb, exerciseName, useExercisesByIds, type Exercise } from '@/features/exercises'
+import { ExercisePickerSheet, exerciseName, useExercisesByIds, type Exercise } from '@/features/exercises'
+import { ExerciseDemo } from '../components/ExerciseDemo'
+import { readDemoExpanded, writeDemoExpanded } from '../components/demoPreference'
 import { cn } from '@/lib/utils'
 import { ConfirmSheet } from '../components/ConfirmSheet'
 import { RestTimer } from '../components/RestTimer'
@@ -382,12 +384,19 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
   const lastDate = last.data?.[0]?.started_at
 
   const prefill = prefillNextSet({ lastTime: last.data ?? [], thisSession: exercise.sets, targetRepsLow: target?.target_reps_low })
+  const [demoExpanded, setDemoExpanded] = useState(readDemoExpanded)
+  const toggleDemo = () =>
+    setDemoExpanded((v) => {
+      writeDemoExpanded(!v)
+      return !v
+    })
 
   return (
     <div className="flex flex-1 flex-col lg:grid lg:grid-cols-2 lg:gap-10 lg:px-6">
       <section className="rise-in px-5 pt-5 lg:px-0">
-        <div className="flex items-start gap-4">
-          <ExerciseThumb gifPath={ex?.gif_path ?? null} size={76} className="rounded-[var(--radius-card)]" />
+        {demoExpanded && <ExerciseDemo gifPath={ex?.gif_path ?? null} name={name} expanded onToggle={toggleDemo} />}
+        <div className={cn('flex items-start gap-4', demoExpanded && 'mt-4')}>
+          {!demoExpanded && <ExerciseDemo gifPath={ex?.gif_path ?? null} name={name} expanded={false} onToggle={toggleDemo} />}
           <div className="min-w-0 flex-1">
             <p className="eyebrow tabular">{t('session.exerciseOf', { n: index + 1, total: count })}</p>
             <h1 className="display mt-1.5 line-clamp-3 text-[26px] leading-[1.05]">{name}</h1>
@@ -440,7 +449,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
                   </span>
                   <span className="tabular flex-1 font-medium">
                     {s.weight_kg != null ? `${w.format(s.weight_kg)} ${w.unit} × ${s.reps ?? 0}` : `${s.reps ?? 0} ${t('units.reps')}`}
-                    {s.rpe != null && <span className="ml-2 text-[13px] font-normal text-ink-faint">RPE {w.formatNumber(s.rpe)}</span>}
+                    {s.rpe != null && <span className="ml-2 text-[13px] font-normal text-ink-faint">{t('session.rpeShort')} {w.formatNumber(s.rpe)}</span>}
                   </span>
                   {isLast ? (
                     <button
