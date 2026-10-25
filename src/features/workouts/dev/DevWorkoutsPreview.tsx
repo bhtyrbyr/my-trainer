@@ -192,6 +192,11 @@ function seed(todayMode: string): QueryClient {
   })
   const today = isoWeekday()
   const templates = todayMode === 'none' ? [] : buildTemplates(today, todayMode)
+  // Sample movement GIFs resolve to /dev-media.local/ (gitignored); missing files just show the white card.
+  for (const e of Object.values(EX)) {
+    e.gif_path = 'gifs/EIeI8Vf.gif'
+    qc.setQueryData(exerciseKeys.media(e.gif_path), '/dev-media.local/' + e.gif_path)
+  }
   qc.setQueryData(workoutKeys.templates, templates)
   qc.setQueryData(
     workoutKeys.today(today, toLocalDateISO()),

@@ -145,7 +145,10 @@
     "discardBody": "This workout has no sets. Delete it?",
     "discardConfirm": "Delete workout",
     "notFound": "Workout not found",
-    "rpeShort": "RPE"
+    "rpeShort": "RPE",
+    "demoEnlarge": "Enlarge the movement",
+    "demoShrink": "Shrink the movement",
+    "demoAlt": "Animation of {{name}}"
   },
   "rest": {
     "title": "Rest",

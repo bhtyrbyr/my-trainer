@@ -45,8 +45,8 @@ Skills: `/db-migrate <slug>`, `/new-feature <name>`, `/release-check`.
 The product owner (main session) coordinates; each phase ends with `qa-reviewer` + `/release-check` before user sign-off.
 
 ## Phase status
-- [x] Faz 0: skeleton, Google auth, onboarding (mandatory avatar), access mode, points engine, CI/CD. Live: https://my-trainer-nine.vercel.app (Supabase ref tnamatnobmtxvdtovkzp, GitHub bhtyrbyr/my-trainer). Pending: GitHub Secrets for deploy.yml.
-- [ ] Faz 1: workouts (ExerciseDB + wger sync, guided session flow) + leaderboard UI
+- [x] Faz 0: skeleton, Google auth, onboarding (mandatory avatar), access mode, points engine, CI/CD. Live: https://my-trainer-nine.vercel.app (Supabase ref tnamatnobmtxvdtovkzp, GitHub bhtyrbyr/my-trainer).
+- [x] Faz 1: workouts (ExerciseDB + wger sync, guided session flow) + leaderboard UI (v0.2.0)
 - [ ] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos
 - [ ] Faz 3: habits + todos (shared recurrence engine)
 - [ ] Faz 4: dashboard, AI coach (Edge Function), badges, admin panel, offline queue, export
