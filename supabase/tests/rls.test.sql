@@ -2,10 +2,11 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(82);
+select plan(87);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
-update public.app_config set value = '""'::jsonb where key = 'admin_bootstrap_email';
+-- Alice is the configured admin (independent of whatever profiles already exist in the database)
+update public.app_config set value = '"alice@example.com"'::jsonb where key = 'admin_bootstrap_email';
 update public.app_config set value = '"open"'::jsonb where key = 'access_mode';
 update public.app_config set value = 'true'::jsonb where key = 'require_approval';
 
@@ -53,7 +54,7 @@ values (:'ua', 'Alice_01', 'Alice', '00000000-0000-0000-0000-00000000000a/avatar
 -- 3-5. column protection on insert
 select is((select username::text from public.profiles where user_id = :'ua'), 'alice_01', 'username lower-cased');
 select is((select total_points from public.profiles where user_id = :'ua'), 0, 'client cannot seed points');
-select is((select role from public.profiles where user_id = :'ua'), 'admin', 'first profile becomes admin when no bootstrap email set');
+select is((select role from public.profiles where user_id = :'ua'), 'admin', 'bootstrap email becomes admin');
 
 -- 6. client cannot award itself points (no insert policy)
 select throws_ok(
@@ -136,6 +137,8 @@ select is((select count(*)::int from public.get_leaderboard('week', 50) where us
 \set s2  '00000000-0000-0000-0000-0000000000a2'
 \set s3  '00000000-0000-0000-0000-0000000000a3'
 \set s4  '00000000-0000-0000-0000-0000000000a4'
+\set s5  '00000000-0000-0000-0000-0000000000a5'
+\set se5 '00000000-0000-0000-0000-0000000000b5'
 \set sa1 '00000000-0000-0000-0000-0000000000f1'
 \set se1 '00000000-0000-0000-0000-0000000000b1'
 \set se2 '00000000-0000-0000-0000-0000000000b2'
@@ -243,6 +246,22 @@ select is((select total_points from public.profiles where user_id = :'ub'), 226,
 -- Read RPCs -------------------------------------------------------------------------
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 1)), 1, 'last_sets_for_exercise(limit 1) returns the latest session''s sets');
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 3)), 6, 'last_sets_for_exercise(limit 3) spans three sessions');
+-- A newer finished session that lists the exercise but logged no sets must not hide the real "last time"
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s5', :'ub', 'strength', now() - interval '2 minutes');
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'se5', :'s5', :'ub', :'ex1', 1);
+select public.finish_workout_session(:'s5');
+select is(
+  (select weight_kg from public.last_sets_for_exercise(:'ex1', 1) limit 1),
+  110::numeric, 'last_sets_for_exercise skips sessions with no sets for the exercise'
+);
+-- Calendar-day functions run on Turkish local time, not UTC
+select is(
+  (select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('award_points', 'finish_workout_session', 'get_leaderboard', 'todays_templates', 'effective_streak')
+      and 'TimeZone=Europe/Istanbul' = any (p.proconfig)),
+  5, 'date-deriving functions use Europe/Istanbul'
+);
 select is((select count(*)::int from public.exercise_progress(:'ex1')), 3, 'exercise_progress: one row per finished session');
 select is((select max(best_e1rm) from public.exercise_progress(:'ex1')), 128.33::numeric, 'exercise_progress: best e1rm');
 select is(
@@ -286,6 +305,20 @@ delete from public.workout_sessions where id = :'s3';
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 0, 'PR row cascaded with its set');
 select is((select count(*)::int from public.point_events where user_id = :'ub' and ref_table = 'personal_records'), 0, 'PR point event revoked by cascade');
 select is((select total_points from public.profiles where user_id = :'ub'), 98, 'session + PR points revoked (170 - 52 - 20)');
+
+-- Deleting the only scoring activity of the day also rolls the streak back --------------------
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+insert into public.workout_sessions (id, user_id, kind, started_at)
+  values ('00000000-0000-0000-0000-0000000000a6', :'ua', 'strength', now() - interval '20 minutes');
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position)
+  values ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', :'ex1', 1);
+insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps)
+  values ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', 1, 50, 5);
+select public.finish_workout_session('00000000-0000-0000-0000-0000000000a6');
+select is((select current_streak from public.profiles where user_id = :'ua'), 1, 'a workout starts a 1-day streak');
+delete from public.workout_sessions where id = '00000000-0000-0000-0000-0000000000a6';
+select is((select current_streak from public.profiles where user_id = :'ua'), 0, 'deleting it resets the streak');
+select ok((select last_active_on is null and total_points = 0 from public.profiles where user_id = :'ua'), 'and clears last_active_on and points');
 
 select * from finish();
 rollback;

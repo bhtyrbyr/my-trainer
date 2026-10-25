@@ -79,6 +79,20 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+  build: {
+    rollupOptions: {
+      output: {
+        // Stable vendor chunks: they rarely change, so after a deploy phones re-download only app code.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return 'vendor-react'
+          if (id.includes('node_modules/@supabase/')) return 'vendor-supabase'
+          if (/node_modules\/(@tanstack|i18next|react-i18next|i18next-browser-languagedetector)\//.test(id)) return 'vendor-app'
+          return undefined
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     // Agent worktrees live inside the repo folder; never watch or reload because of them.

@@ -16,13 +16,15 @@ import trLeaderboard from '@/locales/tr/leaderboard.json'
 import enLeaderboard from '@/locales/en/leaderboard.json'
 import trExercises from '@/locales/tr/exercises.json'
 import enExercises from '@/locales/en/exercises.json'
+import trWorkouts from '@/locales/tr/workouts.json'
+import enWorkouts from '@/locales/en/workouts.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts },
 } as const
 
 void i18n
@@ -41,5 +43,7 @@ void i18n
 i18n.on('languageChanged', (lng) => {
   document.documentElement.lang = lng
 })
+// init() may resolve the detected language before the listener above exists; CSS uppercase depends on lang (tr: i -> İ)
+if (i18n.resolvedLanguage) document.documentElement.lang = i18n.resolvedLanguage
 
 export default i18n

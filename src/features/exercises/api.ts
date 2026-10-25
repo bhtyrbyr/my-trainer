@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { EXERCISE_COLUMNS, type Exercise, type ExerciseFilters } from './types'
 import { sanitizeSearch } from './name'
+import type { MuscleCatalog } from './muscles'
+import { toNum, type LoggedSet, type ProgressPoint } from './progress'
 
 export const MEDIA_BUCKET = 'exercise-media'
 export const PAGE_SIZE = 30
@@ -57,4 +59,49 @@ export async function signMedia(paths: string[]): Promise<Record<string, string>
   const out: Record<string, string> = {}
   for (const item of data ?? []) if (item.path && item.signedUrl) out[item.path] = item.signedUrl
   return out
+}
+
+/** wger muscles + ExerciseDB alias table (15 + ~40 rows; cached for a day by the hook). */
+export async function getMuscleCatalog(): Promise<MuscleCatalog> {
+  const [muscles, aliases] = await Promise.all([
+    supabase.from('muscles').select('wger_id, name_latin, name_en, name_tr, is_front, svg_main_path, svg_secondary_path'),
+    supabase.from('muscle_aliases').select('exercisedb_name, wger_id'),
+  ])
+  if (muscles.error) throw muscles.error
+  if (aliases.error) throw aliases.error
+  const map: Record<string, number | null> = {}
+  for (const a of aliases.data ?? []) map[a.exercisedb_name.toLocaleLowerCase('en')] = a.wger_id
+  return { muscles: muscles.data ?? [], aliases: map }
+}
+
+/** Per finished session of the caller: best/avg weight, e1RM, volume (the RPC scopes to auth.uid()). */
+export async function getExerciseProgress(exerciseId: string): Promise<ProgressPoint[]> {
+  const { data, error } = await supabase.rpc('exercise_progress', { p_exercise: exerciseId })
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    session_id: r.session_id,
+    started_at: r.started_at,
+    best_e1rm: toNum(r.best_e1rm),
+    best_weight_kg: toNum(r.best_weight_kg),
+    avg_weight_kg: toNum(r.avg_weight_kg),
+    best_reps: toNum(r.best_reps),
+    total_volume_kg: toNum(r.total_volume_kg),
+    total_sets: toNum(r.total_sets) ?? 0,
+  }))
+}
+
+/** Sets of the caller's last `limit` finished sessions containing this exercise, newest session first. */
+export async function getRecentSets(exerciseId: string, limit: number): Promise<LoggedSet[]> {
+  const { data, error } = await supabase.rpc('last_sets_for_exercise', { p_exercise: exerciseId, p_limit: limit })
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    session_id: r.session_id,
+    started_at: r.started_at,
+    set_id: r.set_id,
+    set_no: r.set_no,
+    weight_kg: toNum(r.weight_kg),
+    reps: toNum(r.reps),
+    rpe: toNum(r.rpe),
+    is_warmup: Boolean(r.is_warmup),
+  }))
 }

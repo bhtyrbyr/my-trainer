@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth, type AuthStatus } from './AuthProvider'
 import { routeFor } from './routeFor'
 import { FullScreenSpinner } from '@/components/layout/FullScreenSpinner'
@@ -19,8 +19,9 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 /** /onboarding: signed in and NOT yet onboarded. */
-export function RequireOnboarding({ children }: { children: ReactNode }) {
-  return <Gate allow={['onboarding']}>{children}</Gate>
+export function RequireOnboarding({ children }: { children?: ReactNode }) {
+  // Without children it acts as a layout route so the onboarding page itself can be lazy-loaded.
+  return <Gate allow={['onboarding']}>{children ?? <Outlet />}</Gate>
 }
 
 /** /pending: onboarded but waiting for (or refused) admin approval. */
