@@ -4,6 +4,7 @@ import { ChevronRight, LogOut, UserCheck } from 'lucide-react'
 import { usePendingCount } from '@/features/admin/hooks'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
+import { ErrorNote } from '@/components/ui/ErrorNote'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { avatarUrl } from '@/features/profile/api'
 import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
@@ -60,6 +61,8 @@ export function SettingsPage() {
             </Link>
           </section>
         )}
+
+        <ErrorNote error={updateSettings.error} />
 
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:language')}</h2>

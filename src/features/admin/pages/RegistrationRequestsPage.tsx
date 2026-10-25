@@ -6,6 +6,7 @@ import { tr as trLocale, enUS } from 'date-fns/locale'
 import { ArrowLeft, Check, Inbox, X } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
+import { ErrorNote } from '@/components/ui/ErrorNote'
 import { avatarUrl } from '@/features/profile/api'
 import { cn } from '@/lib/utils'
 import type { RegistrationStatus } from '@/lib/database.types'
@@ -49,11 +50,7 @@ export function RegistrationRequestsPage() {
         ))}
       </div>
 
-      {error && (
-        <p role="alert" className="hairline rounded-[var(--radius-input)] bg-danger/10 px-4 py-3 text-sm text-danger">
-          {t('common:error')} {error.message}
-        </p>
-      )}
+      <ErrorNote error={error ?? mutation.error} className="mb-4" />
 
       {isLoading ? (
         <p className="py-10 text-center text-sm text-ink-faint">{t('common:loading')}</p>

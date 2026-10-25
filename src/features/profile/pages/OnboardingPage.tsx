@@ -7,6 +7,8 @@ import { Camera, Check, ImagePlus, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { loadImage } from '@/lib/image'
+import { classifyError } from '@/lib/errors'
+import { ErrorNote } from '@/components/ui/ErrorNote'
 import { AvatarCropper } from '../components/AvatarCropper'
 import { cn } from '@/lib/utils'
 import { onboardingSchema, suggestUsername, type OnboardingInput, type OnboardingValues } from '../schema'
@@ -34,7 +36,7 @@ export function OnboardingPage() {
   const [cropSource, setCropSource] = useState<HTMLImageElement | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle')
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<unknown>(null)
 
   const meta = (user?.user_metadata ?? {}) as { full_name?: string; name?: string; avatar_url?: string; picture?: string }
   const googlePhoto = meta.avatar_url ?? meta.picture
@@ -124,9 +126,12 @@ export function OnboardingPage() {
       await refreshProfile()
       navigate('/', { replace: true })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (/duplicate key|unique/i.test(msg)) setFieldError('username', { message: 'username_taken' })
-      else setSubmitError(msg)
+      const info = classifyError(err)
+      if (info.key === 'errors.duplicate' && (info.detail === 'username' || !info.detail)) {
+        setFieldError('username', { message: 'username_taken' })
+      } else {
+        setSubmitError(err)
+      }
     }
   }
 
@@ -265,11 +270,7 @@ export function OnboardingPage() {
           </Group>
         </section>
 
-        {submitError && (
-          <p role="alert" className="hairline rounded-[var(--radius-input)] bg-danger/10 px-4 py-3 text-sm text-danger">
-            {t('common:error')} {submitError}
-          </p>
-        )}
+        <ErrorNote error={submitError} />
 
         {/* Primary action pinned in the thumb zone */}
         <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-bg via-bg/95 to-bg/0 px-6 pt-8 pb-safe">

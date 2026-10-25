@@ -28,18 +28,12 @@ export async function uploadAvatar(userId: string, blob: Blob): Promise<string> 
   return path
 }
 
+/**
+ * Order matters: once the public profile exists the account is "pending" and can_access() denies
+ * every other table, so private details are written FIRST (while no profile exists yet).
+ * Both writes are upserts so a half-finished onboarding can simply be retried.
+ */
 export async function completeOnboarding(userId: string, avatarPath: string, v: OnboardingValues): Promise<Profile> {
-  const profileInsert: Database['public']['Tables']['profiles']['Insert'] = {
-    user_id: userId,
-    username: v.username,
-    display_name: v.displayName,
-    avatar_path: avatarPath,
-    show_on_leaderboard: v.showOnLeaderboard,
-    onboarding_completed_at: new Date().toISOString(),
-  }
-  const { data: profile, error } = await supabase.from('profiles').insert(profileInsert).select('*').single()
-  if (error) throw error
-
   const priv: Database['public']['Tables']['profile_private']['Insert'] = {
     user_id: userId,
     birth_year: v.birthYear === '' || v.birthYear === undefined ? null : v.birthYear,
@@ -49,7 +43,23 @@ export async function completeOnboarding(userId: string, avatarPath: string, v: 
     goal: v.goal ? v.goal : null,
   }
   const { error: privErr } = await supabase.from('profile_private').upsert(priv, { onConflict: 'user_id' })
-  if (privErr) throw privErr
+  // A pending account retrying after a partial failure cannot touch profile_private any more; that is fine,
+  // the row was written on the first attempt. Any other error is real.
+  if (privErr && privErr.code !== '42501') throw privErr
 
+  const profileRow: Database['public']['Tables']['profiles']['Insert'] = {
+    user_id: userId,
+    username: v.username,
+    display_name: v.displayName,
+    avatar_path: avatarPath,
+    show_on_leaderboard: v.showOnLeaderboard,
+    onboarding_completed_at: new Date().toISOString(),
+  }
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .upsert(profileRow, { onConflict: 'user_id' })
+    .select('*')
+    .single()
+  if (error) throw error
   return profile
 }

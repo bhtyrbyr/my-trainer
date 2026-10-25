@@ -2,6 +2,7 @@ import { RouterProvider } from 'react-router-dom'
 import { Providers } from './providers'
 import { router } from './router'
 import { UpdatePrompt } from './UpdatePrompt'
+import { ErrorBoundary } from './ErrorBoundary'
 import { supabaseConfigured } from '@/lib/supabase'
 
 export function App() {
@@ -18,9 +19,11 @@ export function App() {
     )
   }
   return (
-    <Providers>
-      <RouterProvider router={router} />
-      <UpdatePrompt />
-    </Providers>
+    <ErrorBoundary>
+      <Providers>
+        <RouterProvider router={router} />
+        <UpdatePrompt />
+      </Providers>
+    </ErrorBoundary>
   )
 }
