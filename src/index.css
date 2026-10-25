@@ -176,6 +176,21 @@
   }
 }
 
+/* Streak avatar frames: rotating conic rings for legendary / mythic */
+@media (prefers-reduced-motion: no-preference) {
+  .ring-spin {
+    animation: ring-spin 6s linear infinite;
+  }
+  .ring-spin-fast {
+    animation-duration: 3.5s;
+  }
+  @keyframes ring-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
 /* Mythic streak: breathing aura, rising sparks, shimmering label */
 .mythic-text {
   background: linear-gradient(90deg, #fbbf24, #f472b6, #a78bfa, #fbbf24);

@@ -171,6 +171,7 @@ export type Database = {
           points: number
           level: number
           active_days: number
+          streak: number
           is_me: boolean
         }[]
       }

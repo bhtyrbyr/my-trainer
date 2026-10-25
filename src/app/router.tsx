@@ -31,10 +31,10 @@ export const router = createBrowserRouter([
           element: (
             <LeaderboardPage
               previewRows={[
-                { rank: 1, user_id: 'a', username: 'groogy', display_name: 'Bahtiyar BAYIR', avatar_path: '', points: 845, level: 1, active_days: 6, is_me: false },
-                { rank: 2, user_id: 'b', username: 'huseyin_sanlav', display_name: 'Hüseyin Sanlav', avatar_path: '', points: 610, level: 1, active_days: 5, is_me: true },
-                { rank: 3, user_id: 'c', username: 'zeynep', display_name: 'Zeynep K.', avatar_path: '', points: 420, level: 1, active_days: 4, is_me: false },
-                { rank: 4, user_id: 'd', username: 'mert', display_name: 'Mert A.', avatar_path: '', points: 180, level: 1, active_days: 2, is_me: false },
+                { rank: 1, user_id: 'a', username: 'groogy', display_name: 'Bahtiyar BAYIR', avatar_path: '', points: 845, level: 1, active_days: 6, streak: 60, is_me: false },
+                { rank: 2, user_id: 'b', username: 'huseyin_sanlav', display_name: 'Hüseyin Sanlav', avatar_path: '', points: 610, level: 1, active_days: 5, streak: 35, is_me: true },
+                { rank: 3, user_id: 'c', username: 'zeynep', display_name: 'Zeynep K.', avatar_path: '', points: 420, level: 1, active_days: 4, streak: 20, is_me: false },
+                { rank: 4, user_id: 'd', username: 'mert', display_name: 'Mert A.', avatar_path: '', points: 180, level: 1, active_days: 2, streak: 7, is_me: false },
               ]}
             />
           ),

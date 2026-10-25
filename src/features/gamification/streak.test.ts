@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { daysToNextTier, streakTier } from './streak'
+import { daysToNextTier, effectiveStreak, streakTier } from './streak'
+
+describe('effectiveStreak', () => {
+  const today = new Date(2026, 9, 26, 22, 0)
+  it('keeps the streak when active today or yesterday', () => {
+    expect(effectiveStreak(12, '2026-10-26', today)).toBe(12)
+    expect(effectiveStreak(12, '2026-10-25', today)).toBe(12)
+  })
+  it('drops to 0 after a missed day', () => {
+    expect(effectiveStreak(12, '2026-10-24', today)).toBe(0)
+  })
+  it('handles missing data', () => {
+    expect(effectiveStreak(0, '2026-10-26', today)).toBe(0)
+    expect(effectiveStreak(5, null, today)).toBe(0)
+  })
+})
 
 describe('streakTier', () => {
   it.each([

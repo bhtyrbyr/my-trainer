@@ -25,10 +25,10 @@ const OUTER = 'M12 2.5c.6 3.2 2.6 4.9 4.3 6.8 1.6 1.8 2.9 3.8 2.9 6.4A7.2 7.2 0 
 const MIDDLE = 'M12 7.2c.5 2.4 1.9 3.7 3.1 5.1 1.1 1.3 2 2.7 2 4.5a5.1 5.1 0 0 1-10.2 0c0-1.7.7-3 1.7-4.1.2 1.1.7 2 1.5 2.4-.3-2.9.8-5.6 1.9-7.9Z'
 const INNER = 'M12 12.2c.4 1.6 1.4 2.5 2.2 3.4.7.8 1.2 1.6 1.2 2.7a3.4 3.4 0 0 1-6.8 0c0-1.2.5-2.1 1.2-2.9.1.8.5 1.3 1 1.6-.2-1.8.4-3.5 1.2-4.8Z'
 
-export function StreakFlame({ days, className }: { days: number; className?: string }) {
+export function StreakFlame({ days, className, size: sizeOverride }: { days: number; className?: string; size?: number }) {
   const tier = streakTier(days)
   const gid = useId()
-  const size = SIZE[tier]
+  const size = sizeOverride ?? SIZE[tier]
 
   if (tier === 'none') {
     return (
@@ -38,7 +38,7 @@ export function StreakFlame({ days, className }: { days: number; className?: str
     )
   }
 
-  if (tier === 'mythic') return <MythicFlame size={size} gid={gid} className={className} />
+  if (tier === 'mythic') return <MythicFlame size={size} gid={gid} className={className} compact={sizeOverride !== undefined} />
 
   const [core, mid, edge] = STOPS[tier]
   return (
@@ -72,14 +72,16 @@ export function StreakFlame({ days, className }: { days: number; className?: str
 }
 
 /** The top tier. Built from three nested flames so it reads as "more fire", not just a different colour. */
-function MythicFlame({ size, gid, className }: { size: number; gid: string; className?: string }) {
+function MythicFlame({ size, gid, className, compact }: { size: number; gid: string; className?: string; compact?: boolean }) {
   return (
     <span className={cn('relative inline-flex shrink-0', className)} style={{ width: size, height: size }} aria-hidden>
-      {/* aura */}
-      <span
-        className="flame-aura absolute -inset-2 rounded-full"
-        style={{ background: 'radial-gradient(circle at 50% 60%, rgb(236 72 153 / 0.45), rgb(139 92 246 / 0.25) 45%, transparent 70%)' }}
-      />
+      {/* aura (skipped in compact badges, the avatar frame already carries the aura) */}
+      {!compact && (
+        <span
+          className="flame-aura absolute -inset-2 rounded-full"
+          style={{ background: 'radial-gradient(circle at 50% 60%, rgb(236 72 153 / 0.45), rgb(139 92 246 / 0.25) 45%, transparent 70%)' }}
+        />
+      )}
       <svg viewBox="0 0 24 24" width={size} height={size} className="flame-flicker relative overflow-visible drop-shadow-[0_0_10px_rgb(236_72_153/0.75)]">
         <defs>
           <linearGradient id={`${gid}-mo`} x1="12" y1="23" x2="12" y2="2" gradientUnits="userSpaceOnUse">
@@ -101,9 +103,13 @@ function MythicFlame({ size, gid, className }: { size: number; gid: string; clas
         <path d={INNER} fill={`url(#${gid}-mi)`} />
       </svg>
       {/* rising sparks */}
-      <span className="flame-spark absolute left-[22%] top-[30%] size-[3px] rounded-full bg-amber-200" style={{ animationDelay: '0s' }} />
-      <span className="flame-spark absolute left-[70%] top-[20%] size-[2px] rounded-full bg-pink-300" style={{ animationDelay: '0.6s' }} />
-      <span className="flame-spark absolute left-[48%] top-[8%] size-[2px] rounded-full bg-violet-300" style={{ animationDelay: '1.2s' }} />
+      {!compact && (
+        <>
+          <span className="flame-spark absolute left-[22%] top-[30%] size-[3px] rounded-full bg-amber-200" style={{ animationDelay: '0s' }} />
+          <span className="flame-spark absolute left-[70%] top-[20%] size-[2px] rounded-full bg-pink-300" style={{ animationDelay: '0.6s' }} />
+          <span className="flame-spark absolute left-[48%] top-[8%] size-[2px] rounded-full bg-violet-300" style={{ animationDelay: '1.2s' }} />
+        </>
+      )}
     </span>
   )
 }
