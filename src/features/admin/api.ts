@@ -33,3 +33,49 @@ export async function pendingCount(): Promise<number> {
   if (error) throw error
   return data ?? 0
 }
+
+// ---------------------------------------------------------------------------------------------
+// AI usage dashboard (admin-only RPCs; counts only, never prompts or answers)
+export async function aiUsage(days: number) {
+  const { data, error } = await supabase.rpc('admin_ai_usage', { p_days: days })
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    ...r,
+    requests: Number(r.requests),
+    failed: Number(r.failed),
+    prompt_tokens: Number(r.prompt_tokens),
+    output_tokens: Number(r.output_tokens),
+    total_tokens: Number(r.total_tokens),
+  }))
+}
+
+export async function aiLive() {
+  const { data, error } = await supabase.rpc('admin_ai_live')
+  if (error) throw error
+  return (data ?? []).map((r) => ({
+    model: r.model,
+    requests_today: Number(r.requests_today),
+    tokens_today: Number(r.tokens_today),
+    requests_last_minute: Number(r.requests_last_minute),
+    tokens_last_minute: Number(r.tokens_last_minute),
+  }))
+}
+
+export async function aiAppToday(): Promise<{ used: number; limit: number }> {
+  const { data, error } = await supabase.rpc('admin_ai_app_today')
+  if (error) throw error
+  const r = data?.[0]
+  return { used: Number(r?.used ?? 0), limit: Number(r?.global_limit ?? 0) }
+}
+
+export async function aiModelLimits(): Promise<unknown> {
+  const { data, error } = await supabase.from('app_config').select('value').eq('key', 'ai_model_limits').maybeSingle()
+  if (error) throw error
+  return data?.value ?? null
+}
+
+/** Admin-only by RLS (app_config_admin_write). */
+export async function setAiModelLimits(value: Record<string, { rpm: number; tpm: number; rpd: number }>): Promise<void> {
+  const { error } = await supabase.from('app_config').update({ value }).eq('key', 'ai_model_limits')
+  if (error) throw error
+}

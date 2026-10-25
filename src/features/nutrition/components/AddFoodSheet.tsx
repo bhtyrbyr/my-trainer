@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera, ChevronDown, Loader2, Search, Sparkles, Trash2, X } from 'lucide-react'
+import { Camera, ChevronDown, Loader2, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
-import { useAddMeals, useDeleteFood, useEstimateFood, useFoods } from '../hooks'
+import { useAddMeals, useEstimateFood } from '../hooks'
 import { MEAL_SLOTS, type DraftItem, type EntrySource, type EstimateItem, type Food, type MealSlot } from '../types'
 import { AmountInput } from './AmountInput'
+import { SearchPanel } from './SearchPanel'
 
-const TABS = ['describe', 'photo', 'manual', 'saved'] as const
+const TABS = ['search', 'describe', 'photo', 'manual'] as const
 type Tab = (typeof TABS)[number]
 
 type Props = { open: boolean; day: string; slot: MealSlot; onClose: () => void }
@@ -18,13 +19,14 @@ const key = () => `d${Date.now().toString(36)}${(seq++).toString(36)}`
 const fromEstimate = (it: EstimateItem, source: EntrySource): DraftItem => ({ key: key(), ...it, source, food_id: null })
 
 /**
- * Add food. Every way in (AI text, AI photo, manual, saved foods) lands in one editable "to add"
+ * Add food. Every way in (search: saved foods, catalog, packaged products; AI text; AI photo; manual) lands in one editable "to add"
  * list; one button logs the whole list into the chosen meal. AI values are labelled as estimates.
  */
 export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
   const { t } = useTranslation('nutrition')
   const [slot, setSlot] = useState<MealSlot>(initialSlot)
-  const [tab, setTab] = useState<Tab>('describe')
+  const [tab, setTab] = useState<Tab>('search')
+  const [aiSeed, setAiSeed] = useState('')
   const [drafts, setDrafts] = useState<DraftItem[]>([])
   const [usedFoods, setUsedFoods] = useState<Food[]>([])
   const [saveToFoods, setSaveToFoods] = useState(false)
@@ -36,6 +38,8 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
     setDrafts([])
     setUsedFoods([])
     setSaveToFoods(false)
+    setTab('search')
+    setAiSeed('')
     add.reset()
      
   }, [open])
@@ -100,17 +104,23 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
           </div>
 
           <div role="tabpanel">
-            {tab === 'describe' && <EstimatePanel mode="text" onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_text')))} />}
-            {tab === 'photo' && <EstimatePanel mode="photo" onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_photo')))} />}
-            {tab === 'manual' && <ManualPanel onAdd={(d) => append([d])} />}
-            {tab === 'saved' && (
-              <SavedPanel
-                onPick={(f) => {
+            {tab === 'search' && (
+              <SearchPanel
+                makeKey={key}
+                onAdd={(d) => append([d])}
+                onAskAi={(q) => {
+                  setAiSeed(q)
+                  setTab('describe')
+                }}
+                onPickSaved={(f) => {
                   append([{ key: key(), name: f.name, portion: f.serving_desc ?? '', kcal: f.kcal, protein_g: Number(f.protein_g), carb_g: Number(f.carb_g), fat_g: Number(f.fat_g), source: 'food', food_id: f.id }])
                   setUsedFoods((u) => (u.some((x) => x.id === f.id) ? u : [...u, f]))
                 }}
               />
             )}
+            {tab === 'describe' && <EstimatePanel key={aiSeed} mode="text" initialText={aiSeed} onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_text')))} />}
+            {tab === 'photo' && <EstimatePanel mode="photo" onItems={(items) => append(items.map((i) => fromEstimate(i, 'ai_photo')))} />}
+            {tab === 'manual' && <ManualPanel onAdd={(d) => append([d])} />}
           </div>
         </div>
 
@@ -159,10 +169,10 @@ export function AddFoodSheet({ open, day, slot: initialSlot, onClose }: Props) {
   )
 }
 
-function EstimatePanel({ mode, onItems }: { mode: 'text' | 'photo'; onItems: (items: EstimateItem[]) => void }) {
+function EstimatePanel({ mode, initialText = '', onItems }: { mode: 'text' | 'photo'; initialText?: string; onItems: (items: EstimateItem[]) => void }) {
   const { t } = useTranslation('nutrition')
   const estimate = useEstimateFood()
-  const [text, setText] = useState('')
+  const [text, setText] = useState(initialText)
   const [photo, setPhoto] = useState<File | null>(null)
   const [empty, setEmpty] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -294,59 +304,6 @@ function ManualPanel({ onAdd }: { onAdd: (d: DraftItem) => void }) {
       >
         {t('sheet.manualAdd')}
       </Button>
-    </div>
-  )
-}
-
-function SavedPanel({ onPick }: { onPick: (f: Food) => void }) {
-  const { t, i18n } = useTranslation('nutrition')
-  const foods = useFoods()
-  const del = useDeleteFood()
-  const [q, setQ] = useState('')
-  const locale = i18n.resolvedLanguage === 'en' ? 'en' : 'tr'
-  const list = (foods.data ?? []).filter((f) => f.name.toLocaleLowerCase(locale).includes(q.trim().toLocaleLowerCase(locale)))
-  if (foods.isLoading) return <div className="h-32 animate-pulse rounded-[var(--radius-card)] bg-surface" aria-busy="true" />
-  if ((foods.data ?? []).length === 0) return <p className="text-[13px] leading-snug text-ink-muted">{t('sheet.savedEmpty')}</p>
-  return (
-    <div className="space-y-3">
-      <ErrorNote error={foods.error ?? del.error} />
-      <div className="hairline flex h-11 items-center gap-2 rounded-[var(--radius-input)] bg-surface px-3">
-        <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
-        <input
-          type="search"
-          inputMode="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t('sheet.savedSearch')}
-          aria-label={t('sheet.savedSearch')}
-          className="w-full bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint"
-        />
-      </div>
-      {list.length === 0 ? (
-        <p className="text-[13px] text-ink-muted">{t('sheet.savedNone')}</p>
-      ) : (
-        <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
-          {list.map((f) => (
-            <li key={f.id} className="flex items-center">
-              <button type="button" onClick={() => onPick(f)} className="flex min-h-12 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left hover:bg-raised/50">
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-medium">{f.name}</span>
-                  {f.serving_desc && <span className="block truncate text-[12px] text-ink-faint">{f.serving_desc}</span>}
-                </span>
-                <span className="tabular shrink-0 text-[14px] font-semibold">{f.kcal}</span>
-              </button>
-              <button
-                type="button"
-                aria-label={t('sheet.savedRemove', { name: f.name })}
-                onClick={() => del.mutate(f.id)}
-                className="flex size-11 shrink-0 items-center justify-center text-ink-faint hover:text-ink"
-              >
-                <Trash2 className="size-4" aria-hidden />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

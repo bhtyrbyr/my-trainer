@@ -1,0 +1,48 @@
+# Food catalog refresh: curated Turkish list + USDA FoodData Central (CC0) into public.food_catalog,
+# then machine-translates missing Turkish names with Gemini. Run by hand after the first deploy to
+# translate everything at once; also runs monthly. The service role key lives only in GitHub Secrets.
+name: Sync food catalog
+on:
+  schedule:
+    - cron: '0 4 2 * *'   # 2nd of every month, 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      reload_usda:
+        description: 'Download USDA again even if rows exist'
+        type: boolean
+        default: false
+      translate_limit:
+        description: 'Max names to translate in this run'
+        type: string
+        default: '8000'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-foods
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          IN_RELOAD: ${{ inputs.reload_usda }}
+          IN_LIMIT: ${{ inputs.translate_limit }}
+        run: |
+          flags=""
+          [ "$IN_RELOAD" = "true" ] || flags="$flags --if-empty"
+          case "$IN_LIMIT" in ''|*[!0-9]*) limit=8000 ;; *) limit="$IN_LIMIT" ;; esac
+          node scripts/sync-foods.mjs $flags --translate-limit=$limit

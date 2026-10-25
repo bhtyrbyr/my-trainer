@@ -30,6 +30,8 @@ export function classifyError(err: unknown): AppError {
   if (/AI_NOT_CONFIGURED/.test(message)) return { key: 'errors.aiNotConfigured', code }
   if (/AI_UNAVAILABLE/.test(message)) return { key: 'errors.aiUnavailable', code }
   if (/AI_BAD_INPUT/.test(message)) return { key: 'errors.aiBadInput', code }
+  if (/SEARCH_BUSY/.test(message)) return { key: 'errors.searchBusy', code }
+  if (/SEARCH_UNAVAILABLE/.test(message)) return { key: 'errors.searchUnavailable', code }
   if (/FORBIDDEN/.test(message)) return { key: 'errors.forbidden', code }
   if (/NOT_AUTHENTICATED|JWT|jwt expired/i.test(message)) return { key: 'errors.sessionExpired', code }
 

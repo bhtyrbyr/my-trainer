@@ -55,6 +55,21 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Curated Turkish foods every deploy; USDA only on the first load; then a batch of missing Turkish names.
+      # Never blocks the app deploy.
+      - name: Food catalog sync
+        continue-on-error: true
+        timeout-minutes: 20
+        run: node scripts/sync-foods.mjs --if-empty --translate-limit=1500
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   vercel:
     name: Vercel production deploy

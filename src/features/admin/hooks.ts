@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/AuthProvider'
 import type { RegistrationStatus } from '@/lib/database.types'
-import { deleteRejectedUser, listRegistrations, pendingCount, setRegistrationStatus } from './api'
+import { aiAppToday, aiLive, aiModelLimits, aiUsage, deleteRejectedUser, listRegistrations, pendingCount, setAiModelLimits, setRegistrationStatus } from './api'
+import { parseLimits, type ModelLimits } from './aiUsageLogic'
 
 export function useDeleteRejectedUser() {
   const qc = useQueryClient()
@@ -16,6 +17,10 @@ export function useDeleteRejectedUser() {
 export const adminKeys = {
   registrations: (status: string) => ['admin', 'registrations', status] as const,
   pendingCount: ['admin', 'pendingCount'] as const,
+  aiUsage: (days: number) => ['admin', 'ai', 'usage', days] as const,
+  aiLive: ['admin', 'ai', 'live'] as const,
+  aiApp: ['admin', 'ai', 'app'] as const,
+  aiLimits: ['admin', 'ai', 'limits'] as const,
 }
 
 export function useIsAdmin() {
@@ -48,6 +53,37 @@ export function useSetRegistrationStatus() {
     mutationFn: ({ userId, status }: { userId: string; status: RegistrationStatus }) => setRegistrationStatus(userId, status),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: ['admin'] })
+    },
+  })
+}
+
+export function useAiUsage(days: number) {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.aiUsage(days), queryFn: () => aiUsage(days), enabled: isAdmin, staleTime: 60_000 })
+}
+
+/** Today per model + the last minute (RPM/TPM); refreshed every 30 s while the page is open. */
+export function useAiLive() {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.aiLive, queryFn: aiLive, enabled: isAdmin, refetchInterval: 30_000 })
+}
+
+export function useAiAppToday() {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.aiApp, queryFn: aiAppToday, enabled: isAdmin, refetchInterval: 60_000 })
+}
+
+export function useAiModelLimits() {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.aiLimits, queryFn: async () => parseLimits(await aiModelLimits()), enabled: isAdmin })
+}
+
+export function useSetAiModelLimits() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (limits: ModelLimits) => setAiModelLimits(limits),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.aiLimits })
     },
   })
 }

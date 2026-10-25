@@ -10,11 +10,72 @@
       "rejected": "Reddedilmiş kayıt yok."
     }
   },
-  "status": { "pending": "Bekleyen", "approved": "Onaylı", "rejected": "Reddedilen" },
-  "actions": { "approve": "Onayla", "reject": "Reddet", "delete": "Hesabı kalıcı olarak sil" },
+  "status": {
+    "pending": "Bekleyen",
+    "approved": "Onaylı",
+    "rejected": "Reddedilen"
+  },
+  "actions": {
+    "approve": "Onayla",
+    "reject": "Reddet",
+    "delete": "Hesabı kalıcı olarak sil"
+  },
   "delete": {
     "body": "{{name}} hesabı, profil fotoğrafı ve tüm kayıtlarıyla birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz. Kişi isterse Google ile yeniden kayıt isteği gönderebilir.",
     "cancel": "Vazgeç",
     "confirm": "Kalıcı olarak sil"
+  },
+  "ai": {
+    "link": "Yapay zekâ kullanımı",
+    "linkToday": "bugün {{count}} istek",
+    "title": "Yapay zekâ kullanımı",
+    "back": "Profil",
+    "quota": {
+      "title": "Google kotası · bugün",
+      "reset": "Günlük haklar her gün {{time}}'da yenilenir (Pasifik gece yarısı) · {{in}} sonra",
+      "source": "Google kalan hakkı göstermiyor. Bu değerler uygulamanın kendi kayıtlarından; limitleri Google AI Studio > Rate limit sayfasındaki değerlerle karşılaştır.",
+      "requests": "istek",
+      "tokens": "token",
+      "perDay": "/ {{n}} günlük",
+      "lastMinute": "Son 1 dk: {{req}} / {{rpm}} istek · {{tok}} / {{tpm}} token",
+      "noLimit": "Limit girilmemiş",
+      "editLimits": "Limitleri düzenle",
+      "app": "Uygulama içi günlük sınır (tüm kullanıcılar, İstanbul günü)",
+      "appValue": "{{used}} / {{limit}} istek"
+    },
+    "trend": {
+      "title": "Kullanım trendi",
+      "days": "{{n}} gün",
+      "metric": {
+        "tokens": "Token",
+        "requests": "İstek"
+      },
+      "chartLabel": "Günlük yapay zekâ kullanımı",
+      "total": "Toplam {{value}}",
+      "empty": "Bu dönemde kullanım yok."
+    },
+    "log": {
+      "title": "Kim, ne zaman, ne kadar",
+      "empty": "Henüz kayıt yok.",
+      "system": "Sistem",
+      "actions": {
+        "food_estimate_text": "Yemek tahmini (metin)",
+        "food_estimate_photo": "Yemek tahmini (fotoğraf)",
+        "catalog_translate": "Katalog çevirisi",
+        "coach_chat": "Koç sohbeti"
+      },
+      "row": "{{requests}} istek · {{tokens}} token",
+      "failed": "{{count}} başarısız",
+      "inOut": "giriş {{in}} · çıkış {{out}}"
+    },
+    "limits": {
+      "title": "Model limitleri",
+      "hint": "Google AI Studio > Rate limit sayfasındaki ücretsiz katman değerlerini gir. RPM: dakikalık istek, TPM: dakikalık token, RPD: günlük istek.",
+      "save": "Kaydet",
+      "cancel": "Vazgeç",
+      "rpm": "RPM",
+      "tpm": "TPM",
+      "rpd": "RPD"
+    }
   }
 }

@@ -52,10 +52,10 @@
     "title": "Yemek ekle",
     "slot": "Öğün",
     "tabs": {
+      "search": "Ara",
       "describe": "Yaz",
       "photo": "Fotoğraf",
-      "manual": "Elle",
-      "saved": "Kayıtlı"
+      "manual": "Elle"
     },
     "describeLabel": "Ne yedin?",
     "describePlaceholder": "Örn. 2 yumurta, 1 dilim beyaz peynir, 2 dilim tam buğday ekmeği",
@@ -108,5 +108,23 @@
     "protein": "P",
     "carb": "K",
     "fat": "Y"
+  },
+  "search": {
+    "placeholder": "Yiyecek ara: mercimek, yoğurt…",
+    "savedRecent": "Kayıtlı yiyeceklerin",
+    "savedMatches": "Kayıtlı yiyeceklerinde",
+    "catalog": "Besin veritabanı",
+    "products": "Paketli ürünler",
+    "searchProducts": "Paketli ürünlerde ara (Open Food Facts)",
+    "noCatalog": "Besin veritabanında eşleşme yok.",
+    "noProducts": "Paketli ürün bulunamadı.",
+    "notFound": "Bulamadın mı?",
+    "askAi": "Yapay zekâya sor",
+    "approx": "yaklaşık",
+    "per100": "100 g: {{kcal}} kcal",
+    "grams": "Miktar",
+    "addGrams": "Ekle · {{kcal}} kcal",
+    "hint": "Yemeğin adını yaz: önce kayıtlı yiyeceklerine ve besin veritabanına bakılır, bulamazsan paketli ürünlerde ya da yapay zekâyla arayabilirsin.",
+    "offCredit": "Paketli ürün verisi: Open Food Facts (ODbL). Değerler 100 g başınadır."
   }
 }
