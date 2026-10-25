@@ -106,11 +106,11 @@ function LeaderCard({ row }: { row: LeaderboardRow }) {
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="eyebrow">{t('leaderboard:leader')}</p>
-          <p className="mt-1 truncate text-[19px] font-semibold leading-tight">
-            {row.display_name}
-            {row.is_me && <span className="ml-2 text-xs font-medium text-volt">{t('leaderboard:you')}</span>}
+          <p className="flex items-center gap-2">
+            <span className="eyebrow">{t('leaderboard:leader')}</span>
+            {row.is_me && <YouTag />}
           </p>
+          <p className="mt-1 truncate text-[19px] font-semibold leading-tight">{row.display_name}</p>
           <p className="truncate text-xs text-ink-muted">
             @{row.username} · {t('common:level', { n: row.level })}
           </p>
@@ -135,9 +135,9 @@ function Row({ row }: { row: LeaderboardRow }) {
       </span>
       <StreakAvatar src={src} streak={row.streak} size={42} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-medium leading-tight">
-          {row.display_name}
-          {row.is_me && <span className="ml-2 text-xs font-medium text-volt">{t('leaderboard:you')}</span>}
+        <p className="flex min-w-0 items-baseline gap-2 text-[15px] font-medium leading-tight">
+          <span className="truncate">{row.display_name}</span>
+          {row.is_me && <YouTag />}
         </p>
         <p className="truncate text-xs text-ink-faint">
           {t('common:level', { n: row.level })} · {t('leaderboard:activeDaysShort', { n: row.active_days })}
@@ -145,6 +145,14 @@ function Row({ row }: { row: LeaderboardRow }) {
       </div>
       <span className="tabular text-[17px] font-semibold">{row.points}</span>
     </li>
+  )
+}
+
+/** Never truncated: the name shrinks first, the tag always stays visible. */
+function YouTag() {
+  const { t } = useTranslation('leaderboard')
+  return (
+    <span className="shrink-0 rounded-full bg-volt/15 px-1.5 py-px text-[11px] font-semibold text-volt">{t('you')}</span>
   )
 }
 
