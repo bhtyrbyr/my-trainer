@@ -121,6 +121,8 @@ function useAfterPoints() {
     await Promise.all([
       qc.invalidateQueries({ queryKey: workoutKeys.all }),
       qc.invalidateQueries({ queryKey: ['leaderboard'] }),
+      // exercise pages: progress chart and "last sessions" list share the ['exercises','progress'] prefix
+      qc.invalidateQueries({ queryKey: ['exercises', 'progress'] }),
       refreshProfile(),
     ])
   }, [qc, refreshProfile])

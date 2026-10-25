@@ -2,7 +2,7 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(82);
+select plan(84);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 update public.app_config set value = '""'::jsonb where key = 'admin_bootstrap_email';
@@ -136,6 +136,8 @@ select is((select count(*)::int from public.get_leaderboard('week', 50) where us
 \set s2  '00000000-0000-0000-0000-0000000000a2'
 \set s3  '00000000-0000-0000-0000-0000000000a3'
 \set s4  '00000000-0000-0000-0000-0000000000a4'
+\set s5  '00000000-0000-0000-0000-0000000000a5'
+\set se5 '00000000-0000-0000-0000-0000000000b5'
 \set sa1 '00000000-0000-0000-0000-0000000000f1'
 \set se1 '00000000-0000-0000-0000-0000000000b1'
 \set se2 '00000000-0000-0000-0000-0000000000b2'
@@ -243,6 +245,22 @@ select is((select total_points from public.profiles where user_id = :'ub'), 226,
 -- Read RPCs -------------------------------------------------------------------------
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 1)), 1, 'last_sets_for_exercise(limit 1) returns the latest session''s sets');
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 3)), 6, 'last_sets_for_exercise(limit 3) spans three sessions');
+-- A newer finished session that lists the exercise but logged no sets must not hide the real "last time"
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s5', :'ub', 'strength', now() - interval '2 minutes');
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'se5', :'s5', :'ub', :'ex1', 1);
+select public.finish_workout_session(:'s5');
+select is(
+  (select weight_kg from public.last_sets_for_exercise(:'ex1', 1) limit 1),
+  110::numeric, 'last_sets_for_exercise skips sessions with no sets for the exercise'
+);
+-- Calendar-day functions run on Turkish local time, not UTC
+select is(
+  (select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('award_points', 'finish_workout_session', 'get_leaderboard', 'todays_templates', 'effective_streak')
+      and 'TimeZone=Europe/Istanbul' = any (p.proconfig)),
+  5, 'date-deriving functions use Europe/Istanbul'
+);
 select is((select count(*)::int from public.exercise_progress(:'ex1')), 3, 'exercise_progress: one row per finished session');
 select is((select max(best_e1rm) from public.exercise_progress(:'ex1')), 128.33::numeric, 'exercise_progress: best e1rm');
 select is(

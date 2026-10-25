@@ -8,8 +8,24 @@
     "loading": "Yükleniyor…"
   },
   "weekday": {
-    "short": { "1": "Pzt", "2": "Sal", "3": "Çar", "4": "Per", "5": "Cum", "6": "Cmt", "7": "Paz" },
-    "long": { "1": "Pazartesi", "2": "Salı", "3": "Çarşamba", "4": "Perşembe", "5": "Cuma", "6": "Cumartesi", "7": "Pazar" }
+    "short": {
+      "1": "Pzt",
+      "2": "Sal",
+      "3": "Çar",
+      "4": "Per",
+      "5": "Cum",
+      "6": "Cmt",
+      "7": "Paz"
+    },
+    "long": {
+      "1": "Pazartesi",
+      "2": "Salı",
+      "3": "Çarşamba",
+      "4": "Perşembe",
+      "5": "Cuma",
+      "6": "Cumartesi",
+      "7": "Pazar"
+    }
   },
   "units": {
     "min": "dk",
@@ -101,7 +117,6 @@
     "firstTime": "İlk kez: hedefe göre başla",
     "howTo": "Nasıl yapılır",
     "doneSets": "Tamamlanan setler",
-    "warmupShort": "Is",
     "undoSet": "Son seti sil",
     "setN": "Set {{n}}",
     "warmupSet": "Isınma seti",

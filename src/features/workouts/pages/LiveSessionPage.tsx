@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
-import { Check, Info, Loader2, Plus, SkipForward, Trash2, X } from 'lucide-react'
+import { Check, Info, Loader2, Plus, SkipForward, Thermometer, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { ExercisePickerSheet, ExerciseThumb, exerciseName, useExercisesByIds, type Exercise } from '@/features/exercises'
@@ -436,7 +436,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
               return (
                 <li key={s.id} className="flex h-11 items-center gap-3 text-[15px]">
                   <span className={cn('tabular w-6 text-[13px] font-semibold', s.is_warmup ? 'text-ink-faint' : 'text-volt')}>
-                    {s.is_warmup ? t('session.warmupShort') : exercise.sets.filter((x, j) => j <= i && !x.is_warmup).length}
+                    {s.is_warmup ? <Thermometer className="size-3.5" aria-label={t('session.warmup')} /> : exercise.sets.filter((x, j) => j <= i && !x.is_warmup).length}
                   </span>
                   <span className="tabular flex-1 font-medium">
                     {s.weight_kg != null ? `${w.format(s.weight_kg)} ${w.unit} × ${s.reps ?? 0}` : `${s.reps ?? 0} ${t('units.reps')}`}

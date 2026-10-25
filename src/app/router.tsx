@@ -7,7 +7,6 @@ import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { AccessDeniedPage } from '@/features/auth/pages/AccessDeniedPage'
 import { PendingApprovalPage } from '@/features/auth/pages/PendingApprovalPage'
-import { OnboardingPage } from '@/features/profile/pages/OnboardingPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 
 /**
@@ -29,13 +28,15 @@ const exercises = {
   library: page(() => import('@/features/exercises/pages/ExerciseLibraryPage'), 'ExerciseLibraryPage'),
   detail: page(() => import('@/features/exercises/pages/ExerciseDetailPage'), 'ExerciseDetailPage'),
 }
+const onboarding = page(() => import('@/features/profile/pages/OnboardingPage'), 'OnboardingPage')
+
 const devWorkouts = (name: 'DevWorkoutsLayout' | 'DevDashboard' | 'DevTemplateEditor' | 'DevLiveSession' | 'DevSessionDetail') =>
   page(() => import('@/features/workouts/dev/DevWorkoutsPreview'), name)
 
 /** Dev-only previews with sample data: DEV-gated and lazy, so they never reach the production bundle. */
 const devRoutes: RouteObject[] = import.meta.env.DEV
   ? [
-      { path: '/__dev/onboarding', element: <OnboardingPage /> },
+      { path: '/__dev/onboarding', lazy: onboarding },
       { path: '/__dev/pending', element: <PendingApprovalPage preview="pending" /> },
       { path: '/__dev/rejected', element: <PendingApprovalPage preview="rejected" /> },
       { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
@@ -72,11 +73,8 @@ export const router = createBrowserRouter([
   { path: '/denied', element: <AccessDeniedPage /> },
   {
     path: '/onboarding',
-    element: (
-      <RequireOnboarding>
-        <OnboardingPage />
-      </RequireOnboarding>
-    ),
+    element: <RequireOnboarding />,
+    children: [{ index: true, lazy: onboarding }],
   },
   {
     path: '/pending',

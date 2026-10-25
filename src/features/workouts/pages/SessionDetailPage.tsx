@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
-import { ArrowLeft, Play, Trash2 } from 'lucide-react'
+import { ArrowLeft, Play, Thermometer, Trash2 } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -141,7 +141,7 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
                       return (
                         <li key={set.id} className="tabular flex h-11 items-center gap-3 text-[15px]">
                           <span className={set.is_warmup ? 'w-6 text-[13px] font-semibold text-ink-faint' : 'w-6 text-[13px] font-semibold text-volt'}>
-                            {set.is_warmup ? t('session.warmupShort') : n}
+                            {set.is_warmup ? <Thermometer className="size-3.5" aria-label={t('session.warmup')} /> : n}
                           </span>
                           <span className="flex-1 font-medium">
                             {set.weight_kg != null ? `${w.format(set.weight_kg)} ${w.unit} × ${set.reps ?? 0}` : `${set.reps ?? 0} ${t('units.reps')}`}
