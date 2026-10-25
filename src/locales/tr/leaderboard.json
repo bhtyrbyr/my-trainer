@@ -1,0 +1,16 @@
+{
+  "periodLabel": "Dönem",
+  "period": { "week": "Bu hafta", "month": "Bu ay", "all": "Tüm zamanlar" },
+  "leader": "Lider",
+  "you": "sen",
+  "pts": "puan",
+  "activeDays": "{{n}} aktif gün",
+  "activeDaysShort": "{{n}} gün",
+  "notRankedYet": "Bu dönemde henüz puanın yok. İlk antrenmanını kaydet, sıralamaya gir.",
+  "hiddenSelf": "Liderlik tablosunda gizlisin. Ayarlar'dan görünür yapabilirsin.",
+  "footnote": "Puanlar antrenman, beslenme, uyku ve alışkanlık kayıtlarından gelir. Günlük üst sınır 300.",
+  "empty": {
+    "title": "Sıralama henüz boş",
+    "body": "Bu dönemde kimse puan kazanmadı. İlk antrenmanı kaydeden zirveye yerleşir."
+  }
+}

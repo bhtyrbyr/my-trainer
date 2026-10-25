@@ -1,0 +1,16 @@
+{
+  "periodLabel": "Period",
+  "period": { "week": "This week", "month": "This month", "all": "All time" },
+  "leader": "Leader",
+  "you": "you",
+  "pts": "pts",
+  "activeDays": "{{n}} active days",
+  "activeDaysShort": "{{n}} days",
+  "notRankedYet": "No points yet this period. Log your first workout to get ranked.",
+  "hiddenSelf": "You are hidden from the leaderboard. You can change this in Settings.",
+  "footnote": "Points come from workouts, nutrition, sleep and habit logs. Daily cap 300.",
+  "empty": {
+    "title": "No standings yet",
+    "body": "Nobody has earned points this period. The first workout logged takes the top spot."
+  }
+}
