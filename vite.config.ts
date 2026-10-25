@@ -70,6 +70,17 @@ export default defineConfig({
             options: {
               cacheName: 'exercise-media',
               expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              // Signed URLs carry a rotating ?token=; key the cache by path so a GIF is stored once
+              // and the short-lived token is never persisted.
+              plugins: [
+                {
+                  cacheKeyWillBeUsed: async ({ request }) => {
+                    const url = new URL(request.url)
+                    url.search = ''
+                    return url.href
+                  },
+                },
+              ],
             },
           },
           // NOTE: the progress-photos bucket is intentionally NOT cached by the service worker.

@@ -21,6 +21,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 concurrency:
   group: sync-exercises
   cancel-in-progress: false
@@ -40,9 +43,13 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Inputs go through env, never interpolated into the script (no shell injection).
+          IN_ONLY: ${{ inputs.only }}
+          IN_SKIP_MEDIA: ${{ inputs.skip_media }}
+          IN_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           flags=""
-          [ -n "${{ inputs.only }}" ] && flags="$flags --only=${{ inputs.only }}"
-          [ "${{ inputs.skip_media }}" = "true" ] && flags="$flags --skip-media"
-          [ "${{ inputs.dry_run }}" = "true" ] && flags="$flags --dry-run"
+          case "$IN_ONLY" in exercisedb|wger) flags="$flags --only=$IN_ONLY" ;; esac
+          [ "$IN_SKIP_MEDIA" = "true" ] && flags="$flags --skip-media"
+          [ "$IN_DRY_RUN" = "true" ] && flags="$flags --dry-run"
           node scripts/sync-exercises.mjs $flags

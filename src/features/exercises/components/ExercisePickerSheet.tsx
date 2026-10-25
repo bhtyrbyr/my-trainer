@@ -49,6 +49,8 @@ export function ExercisePickerSheet({ open, onClose, onPick, selectedIds = [], t
           <Search className="size-4 text-ink-faint" aria-hidden />
           <input
             ref={inputRef}
+            type="search"
+            inputMode="search"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('picker.searchPlaceholder')}

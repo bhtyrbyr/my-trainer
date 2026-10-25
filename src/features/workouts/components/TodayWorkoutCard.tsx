@@ -90,7 +90,7 @@ export function TodayWorkoutCard({ variant = 'workouts' }: { variant?: 'workouts
                 key={o.id}
                 type="button"
                 onClick={() => setPickedId(o.id)}
-                className="hairline h-9 rounded-full bg-raised px-3.5 text-[13px] font-medium text-ink-muted hover:text-ink"
+                className="hairline h-11 rounded-full bg-raised px-3.5 text-[13px] font-medium text-ink-muted hover:text-ink"
               >
                 {o.name}
               </button>

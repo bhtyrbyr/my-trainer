@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { clearUserData, forgetLastUser, isDifferentUser } from './clearUserData'
 import type { Profile } from '@/lib/database.types'
 
 /**
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [error, setError] = useState<string | null>(null)
+  const qc = useQueryClient()
 
   useEffect(() => {
     let cancelled = false
@@ -64,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
       setStatus('checking')
+      // Another account on the same device: drop the previous user's cached data first.
+      if (isDifferentUser(s.user.id)) await clearUserData(qc)
       const p = await loadProfile(s.user.id)
       if (cancelled) return
       setProfile(p)
@@ -84,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
       sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [qc])
 
   const refreshProfile = useCallback(async () => {
     if (!session) return
@@ -107,10 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
+    await clearUserData(qc)
+    forgetLastUser()
     setSession(null)
     setProfile(null)
     setStatus('signed-out')
-  }, [])
+  }, [qc])
 
   const value = useMemo<AuthContextValue>(
     () => ({

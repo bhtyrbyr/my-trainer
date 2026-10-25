@@ -101,6 +101,7 @@ export function ExerciseLibraryPage() {
           <span className="sr-only">{t('library.searchPlaceholder')}</span>
           <input
             type="search"
+            inputMode="search"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('library.searchPlaceholder')}

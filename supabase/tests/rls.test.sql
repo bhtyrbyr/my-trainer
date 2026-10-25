@@ -2,7 +2,7 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(87);
+select plan(91);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -198,13 +198,13 @@ select is((select count(*)::int from public.session_sets where session_id = :'s1
 insert into t_finish select 's1', public.finish_workout_session(:'s1');
 select is((select (r->>'total_sets')::int from t_finish where label = 's1'), 3, 'finish: warmups excluded from total_sets');
 select is((select (r->>'total_volume_kg')::numeric from t_finish where label = 's1'), 1307.5::numeric, 'finish: total volume');
-select is((select (r->>'points_awarded')::int from t_finish where label = 's1'), 76, 'finish: 50 + 2*3 session points + 20 PR');
-select is((select jsonb_array_length(r->'new_prs') from t_finish where label = 's1'), 1, 'finish: first lift is a PR');
-select is((select (r->'new_prs'->0->>'e1rm')::numeric from t_finish where label = 's1'), 116.67::numeric, 'finish: PR e1rm = 100*(1+5/30)');
+select is((select (r->>'points_awarded')::int from t_finish where label = 's1'), 56, 'finish: 50 + 2*3 session points; first log earns no PR points');
+select is((select jsonb_array_length(r->'new_prs') from t_finish where label = 's1'), 0, 'finish: first log is a baseline, not an announced PR');
+select throws_like($$ select public.finish_workout_session('00000000-0000-0000-0000-0000000000a1') $$, '%ALREADY_FINISHED%', 'a finished session cannot be finished again');
 select ok((select ended_at is not null and duration_sec between 2600 and 2800 from public.workout_sessions where id = :'s1'), 'finish: session closed with wall-clock duration');
 select is((select points from public.point_events where user_id = :'ub' and ref_table = 'workout_sessions' and ref_id = :'s1'), 56, 'point_events: strength session row');
-select is((select points from public.point_events where user_id = :'ub' and ref_table = 'personal_records' and ref_id = :'ex1' || ':' || current_date::text), 20, 'point_events: PR row keyed exercise:date');
-select is((select total_points from public.profiles where user_id = :'ub'), 86, 'profile total = 10 + 56 + 20');
+select is((select count(*)::int from public.point_events where user_id = :'ub' and ref_table = 'personal_records'), 0, 'no PR point event for a baseline');
+select is((select total_points from public.profiles where user_id = :'ub'), 66, 'profile total = 10 + 56');
 select is((select e1rm from public.personal_records where user_id = :'ub' and exercise_id = :'ex1'), 116.67::numeric, 'personal_records row stored');
 
 -- s2: equal e1rm -> no PR --------------------------------------------------------
@@ -213,7 +213,7 @@ insert into public.session_exercises (id, session_id, user_id, exercise_id, posi
 insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps) values (:'se2', :'s2', :'ub', 1, 100, 5);
 insert into t_finish select 's2', public.finish_workout_session(:'s2');
 select is((select jsonb_array_length(r->'new_prs') from t_finish where label = 's2'), 0, 'equal e1rm is not a PR');
-select is((select (r->>'points_awarded')::int from t_finish where label = 's2'), 52, 'second session: 50 + 2*1, no PR points');
+select is((select (r->>'points_awarded')::int from t_finish where label = 's2'), 0, 'a single working set earns no session points (minimum 3)');
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'still one PR row');
 
 -- s3: higher e1rm -> PR, same day -> row upserted, no second PR points -------------
@@ -224,8 +224,8 @@ insert into t_finish select 's3', public.finish_workout_session(:'s3');
 select is((select jsonb_array_length(r->'new_prs') from t_finish where label = 's3'), 1, 'higher e1rm is a PR');
 select is((select e1rm from public.personal_records where user_id = :'ub' and exercise_id = :'ex1'), 128.33::numeric, 'PR row updated to the new best');
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'one PR row per exercise per day');
-select is((select (r->>'points_awarded')::int from t_finish where label = 's3'), 52, 'PR points once per exercise per day');
-select is((select total_points from public.profiles where user_id = :'ub'), 190, 'profile total after three sessions');
+select is((select (r->>'points_awarded')::int from t_finish where label = 's3'), 20, 'real PR earns 20 (single set: no session points)');
+select is((select total_points from public.profiles where user_id = :'ub'), 86, 'profile total after three sessions');
 
 -- s4: cardio -------------------------------------------------------------------------
 insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s4', :'ub', 'cardio', now() - interval '5 minutes');
@@ -233,6 +233,12 @@ insert into public.cardio_entries (session_id, user_id, activity, duration_sec, 
 insert into t_finish select 's4', public.finish_workout_session(:'s4');
 select is((select (r->>'duration_sec')::int from t_finish where label = 's4'), 1800, 'cardio duration taken from cardio_entries');
 select is((select (r->>'points_awarded')::int from t_finish where label = 's4'), 36, 'cardio: 30 + floor(1800/300)');
+select is((select points from public.point_events where user_id = :'ub' and ref_table = 'personal_records' and ref_id = :'ex1' || ':' || (now() at time zone 'Europe/Istanbul')::date::text), 20, 'PR point event keyed exercise:local date');
+-- clients cannot rewrite server-owned session columns or delete PRs
+update public.workout_sessions set kind = 'cardio', ended_at = null, total_sets = 99 where id = :'s3';
+select ok((select kind = 'strength' and ended_at is not null and total_sets = 1 from public.workout_sessions where id = :'s3'), 'client update of kind/ended_at/totals is ignored');
+delete from public.personal_records where user_id = :'ub';
+select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'client cannot delete personal_records');
 
 -- Clients never write PRs or points directly ------------------------------------------
 select throws_ok(
@@ -241,7 +247,7 @@ select throws_ok(
   '42501', null, 'client cannot insert personal_records'
 );
 update public.profiles set total_points = 100000 where user_id = :'ub';
-select is((select total_points from public.profiles where user_id = :'ub'), 226, 'client cannot edit total_points');
+select is((select total_points from public.profiles where user_id = :'ub'), 122, 'client cannot edit total_points');
 
 -- Read RPCs -------------------------------------------------------------------------
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 1)), 1, 'last_sets_for_exercise(limit 1) returns the latest session''s sets');
@@ -299,12 +305,12 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","e
 select is((select count(*)::int from public.workout_sessions where id = :'s1'), 1, 'bob''s session survived alice''s delete attempt');
 delete from public.workout_sessions where id = :'s1';
 select is((select count(*)::int from public.point_events where user_id = :'ub' and ref_table = 'workout_sessions' and ref_id = :'s1'), 0, 'deleting the session removes its point event');
-select is((select total_points from public.profiles where user_id = :'ub'), 170, 'session points revoked (226 - 56)');
+select is((select total_points from public.profiles where user_id = :'ub'), 66, 'session points revoked (122 - 56)');
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'PR row survives (it now points at s3''s set)');
 delete from public.workout_sessions where id = :'s3';
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 0, 'PR row cascaded with its set');
 select is((select count(*)::int from public.point_events where user_id = :'ub' and ref_table = 'personal_records'), 0, 'PR point event revoked by cascade');
-select is((select total_points from public.profiles where user_id = :'ub'), 98, 'session + PR points revoked (170 - 52 - 20)');
+select is((select total_points from public.profiles where user_id = :'ub'), 46, 'PR points revoked with the cascade (66 - 20)');
 
 -- Deleting the only scoring activity of the day also rolls the streak back --------------------
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
@@ -313,12 +319,18 @@ insert into public.workout_sessions (id, user_id, kind, started_at)
 insert into public.session_exercises (id, session_id, user_id, exercise_id, position)
   values ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', :'ex1', 1);
 insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps)
-  values ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', 1, 50, 5);
+  values ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', 1, 50, 5),
+         ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', 2, 50, 5),
+         ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', 3, 50, 5);
 select public.finish_workout_session('00000000-0000-0000-0000-0000000000a6');
 select is((select current_streak from public.profiles where user_id = :'ua'), 1, 'a workout starts a 1-day streak');
 delete from public.workout_sessions where id = '00000000-0000-0000-0000-0000000000a6';
 select is((select current_streak from public.profiles where user_id = :'ua'), 0, 'deleting it resets the streak');
 select ok((select last_active_on is null and total_points = 0 from public.profiles where user_id = :'ua'), 'and clears last_active_on and points');
+-- short cardio earns nothing
+insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'cardio', now() - interval '5 minutes');
+insert into public.cardio_entries (session_id, user_id, activity, duration_sec) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'run', 300);
+select is((public.finish_workout_session('00000000-0000-0000-0000-0000000000a7')->>'points_awarded')::int, 0, 'cardio under 10 minutes earns no points');
 
 select * from finish();
 rollback;

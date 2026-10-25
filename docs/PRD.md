@@ -117,9 +117,9 @@ Soru-cevap turlarında netleşen isterler:
 
 | Olay | Puan | Tavan / kural |
 |---|---|---|
-| Ağırlık antrenmanı seansı tamamlandı | 50 + 2 × set | Seans başına en fazla 100; günde en fazla 2 seans puanlanır |
-| Kardiyo seansı | 30 + 1 puan / 5 dk | Seans başına en fazla 60 |
-| Yeni kişisel rekor (PR) | 20 | Egzersiz başına günde 1 |
+| Ağırlık antrenmanı seansı tamamlandı | 50 + 2 × set | En az 3 çalışma seti (ısınma sayılmaz); seans başına en fazla 100; günde en fazla 2 seans puanlanır |
+| Kardiyo seansı | 30 + 1 puan / 5 dk | En az 10 dk; seans başına en fazla 60 |
+| Yeni kişisel rekor (PR) | 20 | Egzersiz başına günde 1, günde en fazla 40. Bir egzersizin ilk kaydı referans olur (PR puanı yok); kullanıcının kendi eklediği egzersizler PR puanı vermez |
 | Kilo kaydı | 10 | Günde 1 |
 | Vücut ölçüsü kaydı | 15 | Haftada 1 |
 | Öğün kaydı | 5 | Günde en fazla 20 (4 öğün) |
@@ -133,7 +133,7 @@ Soru-cevap turlarında netleşen isterler:
 | 30 gün ardışık aktif gün | 250 bonus | Her 30. günde |
 | **Günlük toplam tavan** | **300** | Bonuslar tavana dahil değil |
 
-"Aktif gün" = o gün en az 1 puanlı olay. AI kullanımı puan kazandırmaz. Kayıt silinirse ilgili puan olayı da silinir (cascade), tavanlar yeniden hesaplanmaz (basitlik).
+"Aktif gün" = o gün en az 1 puanlı olay (seri bonusları sayılmaz). Gün, yerel takvim günüdür (Europe/Istanbul; tüm kullanıcıların Türkiye'de olduğu varsayılır, kullanıcı bazlı saat dilimi ileride). Seans, başladığı yerel güne yazılır; en fazla 2 gün geriye. Bir seans yalnızca bir kez bitirilebilir; istemci seans süresini/toplamlarını değiştiremez. AI kullanımı puan kazandırmaz. Kayıt silinirse ilgili puan olayı da silinir, seri yeniden hesaplanır ve artık hak edilmeyen seri bonusları geri alınır; günlük tavanlar yeniden hesaplanmaz (basitlik).
 - Veri dışa aktarma (JSON/CSV indirme) — kullanıcı verisinin kilidi her zaman kullanıcıda.
 
 ### 1.2 Fonksiyonel olmayan isterler
