@@ -28,11 +28,29 @@ export const workoutKeys = {
   session: (id: string) => ['workouts', 'session', id] as const,
   last: (exerciseId: string) => ['workouts', 'last', exerciseId] as const,
   history: (month: string) => ['workouts', 'history', month] as const,
+  energy: (day: string) => ['workouts', 'energy', day] as const,
 }
 
 // -----------------------------------------------------------------------------
 // Reads
 // -----------------------------------------------------------------------------
+/** Estimated kcal burned by today's finished workouts (local calendar day). Never added to eaten calories. */
+export function useBurnedToday(previewValue?: { kcal: number; sessions: number }) {
+  const now = new Date()
+  const day = toLocalDateISO(now)
+  return useQuery({
+    queryKey: workoutKeys.energy(day),
+    queryFn: () => {
+      const from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const to = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      return api.burnedBetween(from.toISOString(), to.toISOString())
+    },
+    enabled: !previewValue,
+    initialData: previewValue,
+    staleTime: 60_000,
+  })
+}
+
 export function useTemplates() {
   return useQuery({ queryKey: workoutKeys.templates, queryFn: api.listTemplates })
 }
@@ -250,6 +268,8 @@ export function useFinishSession() {
         duration_sec: bundle ? Math.round((Date.now() - new Date(bundle.session.started_at).getTime()) / 1000) : 0,
         total_sets: total,
         total_volume_kg: sessionVolumeKg(sets),
+        kcal_estimate: null,
+        kcal_weight_kg: null,
         points_awarded: total ? Math.min(100, 50 + 2 * total) : 0,
         new_prs: [],
       })
@@ -282,6 +302,8 @@ export function useLogCardio() {
             duration_sec: Math.round(input.minutes * 60),
             total_sets: 0,
             total_volume_kg: 0,
+            kcal_estimate: null,
+            kcal_weight_kg: null,
             points_awarded: Math.min(60, 30 + Math.floor(input.minutes / 5)),
             new_prs: [],
           })

@@ -221,5 +221,16 @@
     "delete": "Delete workout",
     "deleteTitle": "Delete this workout?",
     "deleteBody": "Its sets, the records set in it and the points you earned are removed. This cannot be undone."
+  },
+  "energy": {
+    "label": "Energy burned",
+    "basis": "Estimated for {{kg}} kg body weight. Not added to eaten calories.",
+    "assumedWeight": "Estimated with an assumed 70 kg. Add your weight for a better estimate.",
+    "short": "≈ {{kcal}} kcal",
+    "todayEyebrow": "Burned today",
+    "todaySessions_one": "Estimated from {{count}} workout",
+    "todaySessions_other": "Estimated from {{count}} workouts",
+    "todayNone": "No finished workout today. It shows up here once you finish one.",
+    "todayAria": "About {{kcal}} kilocalories burned today"
   }
 }

@@ -126,10 +126,11 @@ function HistoryRow({ item, href }: { item: HistoryItem; href: string }) {
   const d = new Date(item.started_at)
   const minutes = Math.max(1, Math.round((item.duration_sec ?? 0) / 60))
   const distance = item.cardio.reduce((m, c) => m + (c.distance_m ?? 0), 0)
+  const kcal = item.kcal_estimate != null ? t('energy.short', { kcal: w.formatNumber(item.kcal_estimate) }) : null
   const meta =
     item.kind === 'cardio'
-      ? [t('units.minN', { n: minutes }), distance > 0 ? `${w.formatNumber(Math.round(distance / 100) / 10)} ${t('units.km')}` : null]
-      : [t('units.minN', { n: minutes }), t('history.setsN', { count: item.total_sets }), `${w.formatTotal(Number(item.total_volume_kg))} ${w.unit}`]
+      ? [t('units.minN', { n: minutes }), distance > 0 ? `${w.formatNumber(Math.round(distance / 100) / 10)} ${t('units.km')}` : null, kcal]
+      : [t('units.minN', { n: minutes }), kcal, t('history.setsN', { count: item.total_sets }), `${w.formatTotal(Number(item.total_volume_kg))} ${w.unit}`]
   return (
     <li>
       <Link to={href} className="flex items-center gap-4 px-4 py-3.5 hover:bg-raised/50">

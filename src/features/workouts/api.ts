@@ -228,7 +228,22 @@ export async function finishSession(id: string, emptyExerciseIds: string[]): Pro
   }
   const { data, error } = await supabase.rpc('finish_workout_session', { p_session: id })
   if (error) throw error
-  return finishSummary.parse(data ?? {})
+  // The energy estimate is written by a trigger during finish; read it back (best effort).
+  const { data: energy } = await supabase.from('workout_sessions').select('kcal_estimate, kcal_weight_kg').eq('id', id).maybeSingle()
+  return finishSummary.parse({ ...(data as object | null), ...(energy ?? {}) })
+}
+
+/** Estimated energy burned by finished sessions that started in [fromISO, toISO). Own rows only (RLS). */
+export async function burnedBetween(fromISO: string, toISO: string): Promise<{ kcal: number; sessions: number }> {
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('kcal_estimate')
+    .not('ended_at', 'is', null)
+    .gte('started_at', fromISO)
+    .lt('started_at', toISO)
+  if (error) throw error
+  const rows = data ?? []
+  return { kcal: rows.reduce((sum, r) => sum + (r.kcal_estimate ?? 0), 0), sessions: rows.length }
 }
 
 /** Deleting a session cascades to its sets/PRs; the server revokes the related points. */
@@ -283,7 +298,7 @@ export async function listSessionsBetween(fromISO: string, toISO: string): Promi
   const { data, error } = await supabase
     .from('workout_sessions')
     .select(
-      'id, kind, title, started_at, ended_at, duration_sec, total_sets, total_volume_kg, template_id, workout_templates(name), cardio_entries(activity, duration_sec, distance_m)',
+      'id, kind, title, started_at, ended_at, duration_sec, total_sets, total_volume_kg, kcal_estimate, template_id, workout_templates(name), cardio_entries(activity, duration_sec, distance_m)',
     )
     .not('ended_at', 'is', null)
     .gte('started_at', fromISO)

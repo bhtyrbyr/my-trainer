@@ -723,6 +723,8 @@ export type Database = {
           duration_sec: number | null
           ended_at: string | null
           id: string
+          kcal_estimate: number | null
+          kcal_weight_kg: number | null
           kind: string
           notes: string | null
           started_at: string
@@ -739,6 +741,8 @@ export type Database = {
           duration_sec?: number | null
           ended_at?: string | null
           id?: string
+          kcal_estimate?: number | null
+          kcal_weight_kg?: number | null
           kind: string
           notes?: string | null
           started_at?: string
@@ -754,6 +758,8 @@ export type Database = {
           duration_sec?: number | null
           ended_at?: string | null
           id?: string
+          kcal_estimate?: number | null
+          kcal_weight_kg?: number | null
           kind?: string
           notes?: string | null
           started_at?: string

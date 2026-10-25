@@ -3,6 +3,7 @@ import { Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useWeightUnit } from '../hooks'
 import { formatClock } from '../logic'
+import { EnergyLine } from './EnergyLine'
 import type { FinishSummary } from '../schema'
 
 type Props = {
@@ -41,6 +42,7 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
           <Stat label={t('summary.sets')} value={String(summary.total_sets)} border />
           <Stat label={t('summary.volume', { unit: w.unit })} value={w.formatTotal(summary.total_volume_kg)} border />
         </dl>
+        <EnergyLine kcal={summary.kcal_estimate} weightKg={summary.kcal_weight_kg} className="rise-in" />
 
         {summary.new_prs.length > 0 && (
           <section className="mt-8" aria-labelledby="prs">

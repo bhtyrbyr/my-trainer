@@ -28,7 +28,7 @@ export type SessionBundle = {
 
 export type HistoryItem = Pick<
   WorkoutSession,
-  'id' | 'kind' | 'title' | 'started_at' | 'ended_at' | 'duration_sec' | 'total_sets' | 'total_volume_kg' | 'template_id'
+  'id' | 'kind' | 'title' | 'started_at' | 'ended_at' | 'duration_sec' | 'total_sets' | 'total_volume_kg' | 'template_id' | 'kcal_estimate'
 > & {
   templateName: string | null
   cardio: Pick<CardioEntry, 'activity' | 'duration_sec' | 'distance_m'>[]
@@ -86,5 +86,9 @@ export const finishSummary = z.object({
       }),
     )
     .default([]),
+  /** server-side energy estimate, read back from the session after finishing (null: no estimate) */
+  kcal_estimate: z.number().nullable().default(null),
+  /** body weight the estimate used; null when the 70 kg default was assumed */
+  kcal_weight_kg: z.coerce.number().nullable().default(null),
 })
 export type FinishSummary = z.infer<typeof finishSummary>
