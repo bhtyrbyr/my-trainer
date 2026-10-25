@@ -38,6 +38,22 @@ export async function toSquareJpeg(src: Blob | string, size = 512, quality = 0.8
   })
 }
 
+export type CropRect = { sx: number; sy: number; sw: number; sh: number }
+
+/** Crop a region of an already-loaded image into a square JPEG of `size`. */
+export async function cropToSquareJpeg(img: HTMLImageElement, rect: CropRect, size = 512, quality = 0.86): Promise<Blob> {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('CANVAS_UNSUPPORTED')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(img, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, size, size)
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('ENCODE_FAILED'))), 'image/jpeg', quality)
+  })
+}
+
 /** Downscale so the longest edge is <= maxEdge. Keeps aspect ratio. Returns JPEG. */
 export async function downscaleJpeg(src: Blob, maxEdge = 1600, quality = 0.85): Promise<Blob> {
   const img = await loadImage(src)

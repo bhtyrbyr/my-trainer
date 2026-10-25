@@ -1,6 +1,9 @@
 {
-  "title": "Profilini oluştur",
-  "subtitle": "Liderlik tablosunda böyle görüneceksin.",
+  "eyebrow": "Profil",
+  "title": "Seni tanıyalım.",
+  "subtitle": "Liderlik tablosunda tam olarak böyle görüneceksin.",
+  "ready": "Hazırsın. Profilini sonra Ayarlar'dan değiştirebilirsin.",
+  "preview": { "namePlaceholder": "Adın" },
   "cancel": "Vazgeç ve çıkış yap",
   "optional": "İsteğe bağlı",
   "choose": "Seç…",
@@ -10,8 +13,16 @@
     "takePhoto": "Fotoğraf çek",
     "choose": "Galeriden seç",
     "useGoogle": "Google fotoğrafımı kullan",
+    "google": "Google",
     "required": "Devam etmek için bir profil fotoğrafı eklemen gerekiyor.",
     "error": "Fotoğraf işlenemedi. Başka bir görsel dene."
+  },
+  "crop": {
+    "title": "Fotoğrafı ayarla",
+    "hint": "Sürükleyerek konumlandır, iki parmakla veya kaydırıcıyla yakınlaştır.",
+    "zoom": "Yakınlaştırma",
+    "cancel": "Vazgeç",
+    "done": "Kullan"
   },
   "fields": {
     "username": "Kullanıcı adı",
@@ -24,7 +35,8 @@
     "showOnLeaderboard": "Liderlik tablosunda görün"
   },
   "hints": {
-    "username": "3–20 karakter; küçük harf, rakam ve alt çizgi."
+    "username": "3–20 karakter; küçük harf, rakam ve alt çizgi.",
+    "leaderboard": "Kapalıysa sıralamada görünmezsin, kendi sıranı yine görürsün."
   },
   "errors": {
     "username_invalid": "Sadece küçük harf, rakam ve alt çizgi; 3–20 karakter.",

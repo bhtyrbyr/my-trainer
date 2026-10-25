@@ -14,6 +14,8 @@ import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  // Dev-only: render gated screens without a session for design verification. Stripped from production builds.
+  ...(import.meta.env.DEV ? [{ path: '/__dev/onboarding', element: <OnboardingPage /> }] : []),
   { path: '/auth/callback', element: <AuthCallbackPage /> },
   { path: '/denied', element: <AccessDeniedPage /> },
   {

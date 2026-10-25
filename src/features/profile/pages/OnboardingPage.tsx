@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
@@ -6,13 +6,22 @@ import { useNavigate } from 'react-router-dom'
 import { Camera, Check, ImagePlus, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
-import { toSquareJpeg } from '@/lib/image'
+import { loadImage } from '@/lib/image'
+import { AvatarCropper } from '../components/AvatarCropper'
 import { cn } from '@/lib/utils'
 import { onboardingSchema, suggestUsername, type OnboardingInput, type OnboardingValues } from '../schema'
 import { completeOnboarding, isUsernameAvailable, uploadAvatar } from '../api'
 
 type AvatarState = { blob: Blob; previewUrl: string } | null
 
+const SEX_OPTIONS = ['male', 'female', 'other'] as const
+const GOAL_OPTIONS = ['lose_fat', 'build_muscle', 'maintain', 'performance'] as const
+
+/**
+ * Point of view: the form IS the leaderboard row. The live preview card at the top shows exactly
+ * what others will see; everything below is grouped, borderless rows (iOS inset-grouped rhythm),
+ * one accent, one primary action pinned in the thumb zone.
+ */
 export function OnboardingPage() {
   const { t } = useTranslation(['onboarding', 'common'])
   const { user, refreshProfile, signOut } = useAuth()
@@ -22,6 +31,7 @@ export function OnboardingPage() {
 
   const [avatar, setAvatar] = useState<AvatarState>(null)
   const [avatarBusy, setAvatarBusy] = useState(false)
+  const [cropSource, setCropSource] = useState<HTMLImageElement | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -42,8 +52,12 @@ export function OnboardingPage() {
       goal: '',
     },
   })
-  const { register, handleSubmit, watch, formState, setError: setFieldError } = form
+  const { register, handleSubmit, watch, setValue, formState, setError: setFieldError } = form
   const username = watch('username')
+  const displayName = watch('displayName')
+  const sex = watch('sex')
+  const goal = watch('goal')
+  const showOnLeaderboard = watch('showOnLeaderboard')
 
   // Debounced availability check
   useEffect(() => {
@@ -63,22 +77,30 @@ export function OnboardingPage() {
 
   useEffect(() => () => { if (avatar) URL.revokeObjectURL(avatar.previewUrl) }, [avatar])
 
+  /** Load the picked file / Google photo and open the cropper so the user chooses the framing. */
   const setAvatarFrom = async (src: Blob | string) => {
     setAvatarBusy(true)
     setAvatarError(null)
     try {
-      const blob = await toSquareJpeg(src, 512)
-      setAvatar((prev) => {
-        if (prev) URL.revokeObjectURL(prev.previewUrl)
-        return { blob, previewUrl: URL.createObjectURL(blob) }
-      })
+      const url = typeof src === 'string' ? src : URL.createObjectURL(src)
+      setCropSource(await loadImage(url))
     } catch {
       setAvatarError(t('onboarding:avatar.error'))
     } finally {
       setAvatarBusy(false)
     }
   }
-
+  const closeCropper = () => {
+    if (cropSource?.src.startsWith('blob:')) URL.revokeObjectURL(cropSource.src)
+    setCropSource(null)
+  }
+  const onCropConfirm = (blob: Blob) => {
+    setAvatar((prev) => {
+      if (prev) URL.revokeObjectURL(prev.previewUrl)
+      return { blob, previewUrl: URL.createObjectURL(blob) }
+    })
+    closeCropper()
+  }
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     e.target.value = ''
@@ -112,148 +134,170 @@ export function OnboardingPage() {
     const m = formState.errors[key]?.message
     return m ? t(`onboarding:errors.${m}`) : null
   }
-
+  const usernameError = fieldError('username') ?? (usernameStatus === 'taken' ? t('onboarding:errors.username_taken') : null)
   const canSubmit = Boolean(avatar) && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !formState.isSubmitting
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col pt-safe pb-safe">
-      <header className="flex items-center justify-between px-6 pt-4">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col pt-safe lg:max-w-lg">
+      {/* Header */}
+      <header className="flex items-start justify-between px-6 pt-5">
         <div>
-          <h1 className="text-2xl font-bold">{t('onboarding:title')}</h1>
-          <p className="text-sm text-ink-muted">{t('onboarding:subtitle')}</p>
+          <p className="eyebrow">{t('onboarding:eyebrow')}</p>
+          <h1 className="display mt-2 text-[32px] text-ink">{t('onboarding:title')}</h1>
         </div>
-        <Button variant="ghost" size="icon" aria-label={t('onboarding:cancel')} onClick={() => void signOut()}>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          aria-label={t('onboarding:cancel')}
+          className="touch-target -mr-2 -mt-1 flex items-center justify-center rounded-full text-ink-faint hover:text-ink"
+        >
           <X className="size-5" aria-hidden />
-        </Button>
+        </button>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-6 px-6 py-6" noValidate>
-        {/* Avatar (required) */}
-        <section className="flex flex-col items-center gap-3">
-          <div
-            className={cn(
-              'relative flex size-32 items-center justify-center overflow-hidden rounded-full border-2 bg-surface',
-              avatar ? 'border-volt' : 'border-dashed border-line-strong',
-            )}
-          >
-            {avatar ? (
-              <img src={avatar.previewUrl} alt="" className="size-full object-cover" />
-            ) : (
-              <Camera className="size-10 text-ink-faint" aria-hidden />
-            )}
-            {avatarBusy && (
-              <div className="absolute inset-0 flex items-center justify-center bg-bg/60">
-                <Loader2 className="size-8 animate-spin text-volt" aria-hidden />
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-7 px-6 pt-6 pb-36" noValidate>
+        {/* Live leaderboard-row preview = avatar picker */}
+        <section className="space-y-2">
+          <div className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
+            <div className="flex items-center gap-4 p-4">
+              <button
+                type="button"
+                onClick={() => (avatar ? fileRef.current?.click() : cameraRef.current?.click())}
+                aria-label={t('onboarding:avatar.label')}
+                className={cn(
+                  'relative size-[72px] shrink-0 rounded-full',
+                  !avatar && 'border border-dashed border-line-strong bg-raised',
+                )}
+              >
+                {avatar ? (
+                  <img src={avatar.previewUrl} alt="" className="size-full rounded-full object-cover" />
+                ) : (
+                  <Camera className="absolute inset-0 m-auto size-6 text-ink-faint" aria-hidden />
+                )}
+                <span className="inner-glow absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full bg-volt text-volt-ink ring-[3px] ring-surface">
+                  {avatarBusy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Camera className="size-3.5" aria-hidden />}
+                </span>
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className={cn('truncate text-[17px] font-semibold leading-tight', !displayName && 'text-ink-faint')}>
+                  {displayName || t('onboarding:preview.namePlaceholder')}
+                </p>
+                <p className="truncate text-sm text-ink-muted">@{username || '…'}</p>
+                <p className="tabular mt-1 text-xs text-ink-faint">
+                  {t('common:level', { n: 1 })} · {t('common:points', { n: 0 })}
+                </p>
               </div>
-            )}
+            </div>
+            <div className="flex divide-x divide-line border-t border-line">
+              <SourceButton icon={Camera} label={t('onboarding:avatar.takePhoto')} onClick={() => cameraRef.current?.click()} />
+              <SourceButton icon={ImagePlus} label={t('onboarding:avatar.choose')} onClick={() => fileRef.current?.click()} />
+              {googlePhoto && (
+                <SourceButton icon={GoogleG} label={t('onboarding:avatar.google')} onClick={() => void setAvatarFrom(googlePhoto)} />
+              )}
+            </div>
           </div>
-          <p className="text-sm font-medium">
-            {t('onboarding:avatar.label')} <span className="text-red-400">*</span>
+          <p className={cn('px-1 text-xs', avatarError ? 'text-danger' : 'text-ink-faint')} role={avatarError ? 'alert' : undefined}>
+            {avatarError ?? t('onboarding:subtitle')}
           </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button type="button" variant="secondary" size="sm" className="gap-2" onClick={() => cameraRef.current?.click()}>
-              <Camera className="size-4" aria-hidden /> {t('onboarding:avatar.takePhoto')}
-            </Button>
-            <Button type="button" variant="secondary" size="sm" className="gap-2" onClick={() => fileRef.current?.click()}>
-              <ImagePlus className="size-4" aria-hidden /> {t('onboarding:avatar.choose')}
-            </Button>
-            {googlePhoto && (
-              <Button type="button" variant="ghost" size="sm" onClick={() => void setAvatarFrom(googlePhoto)}>
-                {t('onboarding:avatar.useGoogle')}
-              </Button>
-            )}
-          </div>
           <input ref={cameraRef} type="file" accept="image/*" capture="user" className="hidden" onChange={onFile} />
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
-          {avatarError && <p role="alert" className="text-sm text-red-400">{avatarError}</p>}
         </section>
 
         {/* Identity */}
-        <section className="space-y-4">
-          <Field label={t('onboarding:fields.username')} required error={fieldError('username')} hint={t('onboarding:hints.username')}>
-            <div className="relative">
-              <input
-                {...register('username')}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                inputMode="text"
-                className={inputCls}
-                aria-invalid={Boolean(formState.errors.username) || usernameStatus === 'taken'}
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                {usernameStatus === 'checking' && <Loader2 className="size-4 animate-spin text-ink-faint" aria-hidden />}
-                {usernameStatus === 'ok' && <Check className="size-4 text-emerald-400" aria-hidden />}
-                {usernameStatus === 'taken' && <X className="size-4 text-red-400" aria-hidden />}
-              </span>
-            </div>
-            {usernameStatus === 'taken' && !formState.errors.username && (
-              <p className="text-sm text-red-400">{t('onboarding:errors.username_taken')}</p>
-            )}
-          </Field>
-          <Field label={t('onboarding:fields.displayName')} required error={fieldError('displayName')}>
-            <input {...register('displayName')} className={inputCls} maxLength={40} />
-          </Field>
-        </section>
+        <Group>
+          <Row label={t('onboarding:fields.username')} required error={usernameError} hint={t('onboarding:hints.username')}>
+            <input
+              {...register('username')}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              className={rowInput}
+              aria-invalid={Boolean(usernameError)}
+            />
+            <span className="flex size-6 shrink-0 items-center justify-center">
+              {usernameStatus === 'checking' && <Loader2 className="size-4 animate-spin text-ink-faint" aria-hidden />}
+              {usernameStatus === 'ok' && <Check className="size-4 text-success" aria-hidden />}
+              {usernameStatus === 'taken' && <X className="size-4 text-danger" aria-hidden />}
+            </span>
+          </Row>
+          <Row label={t('onboarding:fields.displayName')} required error={fieldError('displayName')}>
+            <input {...register('displayName')} className={rowInput} maxLength={40} />
+          </Row>
+        </Group>
 
         {/* Optional */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('onboarding:optional')}</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <Field label={t('onboarding:fields.birthYear')} error={fieldError('birthYear')}>
-              <input {...register('birthYear')} inputMode="numeric" placeholder="1990" className={inputCls} />
-            </Field>
-            <Field label={t('onboarding:fields.heightCm')} error={fieldError('heightCm')}>
-              <input {...register('heightCm')} inputMode="decimal" placeholder="178" className={inputCls} />
-            </Field>
-            <Field label={t('onboarding:fields.weightKg')} error={fieldError('weightKg')}>
-              <input {...register('weightKg')} inputMode="decimal" placeholder="80" className={inputCls} />
-            </Field>
-          </div>
-          <Field label={t('onboarding:fields.sex')}>
-            <select {...register('sex')} className={inputCls}>
-              <option value="">{t('onboarding:choose')}</option>
-              <option value="male">{t('onboarding:sex.male')}</option>
-              <option value="female">{t('onboarding:sex.female')}</option>
-              <option value="other">{t('onboarding:sex.other')}</option>
-            </select>
-          </Field>
-          <Field label={t('onboarding:fields.goal')}>
-            <select {...register('goal')} className={inputCls}>
-              <option value="">{t('onboarding:choose')}</option>
-              <option value="lose_fat">{t('onboarding:goal.lose_fat')}</option>
-              <option value="build_muscle">{t('onboarding:goal.build_muscle')}</option>
-              <option value="maintain">{t('onboarding:goal.maintain')}</option>
-              <option value="performance">{t('onboarding:goal.performance')}</option>
-            </select>
-          </Field>
-          <label className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3">
-            <span className="text-sm">{t('onboarding:fields.showOnLeaderboard')}</span>
-            <input type="checkbox" {...register('showOnLeaderboard')} className="size-5 accent-[#C8FF3D]" />
-          </label>
+        <section className="space-y-3">
+          <p className="eyebrow px-1">{t('onboarding:optional')}</p>
+          <Group>
+            <div className="grid grid-cols-3 divide-x divide-line">
+              <Cell label={t('onboarding:fields.birthYear')} error={fieldError('birthYear')}>
+                <input {...register('birthYear')} inputMode="numeric" placeholder="1990" className={cellInput} />
+              </Cell>
+              <Cell label={t('onboarding:fields.heightCm')} error={fieldError('heightCm')}>
+                <input {...register('heightCm')} inputMode="decimal" placeholder="178" className={cellInput} />
+              </Cell>
+              <Cell label={t('onboarding:fields.weightKg')} error={fieldError('weightKg')}>
+                <input {...register('weightKg')} inputMode="decimal" placeholder="80" className={cellInput} />
+              </Cell>
+            </div>
+            <ChipRow label={t('onboarding:fields.sex')}>
+              {SEX_OPTIONS.map((v) => (
+                <Chip key={v} active={sex === v} onClick={() => setValue('sex', sex === v ? '' : v, { shouldDirty: true })}>
+                  {t(`onboarding:sex.${v}`)}
+                </Chip>
+              ))}
+            </ChipRow>
+            <ChipRow label={t('onboarding:fields.goal')}>
+              {GOAL_OPTIONS.map((v) => (
+                <Chip key={v} active={goal === v} onClick={() => setValue('goal', goal === v ? '' : v, { shouldDirty: true })}>
+                  {t(`onboarding:goal.${v}`)}
+                </Chip>
+              ))}
+            </ChipRow>
+            <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[15px]">{t('onboarding:fields.showOnLeaderboard')}</p>
+                <p className="text-xs text-ink-faint">{t('onboarding:hints.leaderboard')}</p>
+              </div>
+              <Switch checked={Boolean(showOnLeaderboard)} onChange={(v) => setValue('showOnLeaderboard', v, { shouldDirty: true })} />
+            </div>
+          </Group>
         </section>
 
         {submitError && (
-          <p role="alert" className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <p role="alert" className="hairline rounded-[var(--radius-input)] bg-danger/10 px-4 py-3 text-sm text-danger">
             {t('common:error')} {submitError}
           </p>
         )}
 
-        <div className="mt-auto pt-2">
-          <Button type="submit" size="lg" className="w-full" disabled={!canSubmit}>
-            {formState.isSubmitting ? <Loader2 className="size-5 animate-spin" aria-hidden /> : t('onboarding:submit')}
-          </Button>
-          {!avatar && <p className="mt-2 text-center text-xs text-ink-faint">{t('onboarding:avatar.required')}</p>}
+        {/* Primary action pinned in the thumb zone */}
+        <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-bg via-bg/95 to-bg/0 px-6 pt-8 pb-safe">
+          <div className="mx-auto max-w-md space-y-2 pb-5 lg:max-w-lg">
+            <Button type="submit" size="lg" className="w-full" disabled={!canSubmit}>
+              {formState.isSubmitting ? <Loader2 className="size-5 animate-spin" aria-hidden /> : t('onboarding:submit')}
+            </Button>
+            <p className="text-center text-[11.5px] text-ink-faint">{avatar ? t('onboarding:ready') : t('onboarding:avatar.required')}</p>
+          </div>
         </div>
       </form>
+
+      {cropSource && <AvatarCropper image={cropSource} onConfirm={onCropConfirm} onCancel={closeCropper} />}
     </div>
   )
 }
 
-const inputCls =
-  'w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink placeholder:text-ink-faint focus:border-volt focus:outline-none aria-[invalid=true]:border-red-500'
+/* ---------- local building blocks (grouped-list rhythm) ---------- */
 
-function Field({
+const rowInput =
+  'min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-ink-faint focus:outline-none'
+const cellInput =
+  'w-full bg-transparent text-[17px] text-ink tabular placeholder:text-ink-faint focus:outline-none'
+
+function Group({ children }: { children: ReactNode }) {
+  return <div className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">{children}</div>
+}
+
+function Row({
   label,
   required,
   error,
@@ -264,15 +308,102 @@ function Field({
   required?: boolean
   error?: string | null
   hint?: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="text-sm font-medium">
-        {label} {required && <span className="text-red-400">*</span>}
+    <label className="block px-4 py-3">
+      <span className="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+        {label}
+        {required && <span className="size-1.5 rounded-full bg-volt" aria-hidden />}
       </span>
-      {children}
-      {error ? <p className="text-sm text-red-400">{error}</p> : hint ? <p className="text-xs text-ink-faint">{hint}</p> : null}
+      <span className="mt-1 flex items-center gap-2">{children}</span>
+      {error ? (
+        <span className="mt-1 block text-xs text-danger">{error}</span>
+      ) : hint ? (
+        <span className="mt-1 block text-xs text-ink-faint">{hint}</span>
+      ) : null}
     </label>
+  )
+}
+
+function Cell({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
+  return (
+    <label className="block px-4 py-3">
+      <span className="block text-xs font-medium text-ink-muted">{label}</span>
+      <span className="mt-1 block">{children}</span>
+      {error && <span className="mt-1 block text-[11px] text-danger">{error}</span>}
+    </label>
+  )
+}
+
+function ChipRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="px-4 py-3">
+      <p className="text-xs font-medium text-ink-muted">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">{children}</div>
+    </div>
+  )
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={cn(
+        'h-9 rounded-full border px-3.5 text-sm font-medium transition-colors',
+        active ? 'border-volt bg-volt text-volt-ink' : 'border-line-strong text-ink-muted hover:text-ink',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Switch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'relative h-7 w-12 shrink-0 rounded-full transition-colors',
+        checked ? 'bg-volt' : 'bg-raised',
+      )}
+    >
+      <span
+        className={cn(
+          'absolute top-0.5 size-6 rounded-full bg-ink shadow transition-transform',
+          checked ? 'translate-x-[22px] bg-volt-ink' : 'translate-x-0.5',
+        )}
+      />
+    </button>
+  )
+}
+
+function SourceButton({ icon: Icon, label, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-11 flex-1 items-center justify-center gap-1.5 text-[13px] font-medium text-ink-muted transition-colors hover:bg-raised hover:text-ink"
+    >
+      <Icon className="size-4" aria-hidden />
+      {label}
+    </button>
+  )
+}
+
+function GoogleG({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.9 1.5l2.6-2.6C16.9 3.1 14.7 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.8 0 9.6-4.1 9.6-9.8 0-.7-.1-1.2-.2-1.7H12z"
+      />
+    </svg>
   )
 }

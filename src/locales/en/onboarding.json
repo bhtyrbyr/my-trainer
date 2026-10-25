@@ -1,6 +1,9 @@
 {
-  "title": "Create your profile",
-  "subtitle": "This is how you will appear on the leaderboard.",
+  "eyebrow": "Profile",
+  "title": "Let's meet.",
+  "subtitle": "This is exactly how you will appear on the leaderboard.",
+  "ready": "All set. You can change your profile later in Settings.",
+  "preview": { "namePlaceholder": "Your name" },
   "cancel": "Cancel and sign out",
   "optional": "Optional",
   "choose": "Choose…",
@@ -10,8 +13,16 @@
     "takePhoto": "Take photo",
     "choose": "Choose from library",
     "useGoogle": "Use my Google photo",
+    "google": "Google",
     "required": "You need to add a profile photo to continue.",
     "error": "Could not process the photo. Try another image."
+  },
+  "crop": {
+    "title": "Adjust photo",
+    "hint": "Drag to position, pinch or use the slider to zoom.",
+    "zoom": "Zoom",
+    "cancel": "Cancel",
+    "done": "Use photo"
   },
   "fields": {
     "username": "Username",
@@ -24,7 +35,8 @@
     "showOnLeaderboard": "Show me on the leaderboard"
   },
   "hints": {
-    "username": "3–20 characters; lowercase letters, digits and underscore."
+    "username": "3–20 characters; lowercase letters, digits and underscore.",
+    "leaderboard": "When off, you are hidden from the ranking but still see your own rank."
   },
   "errors": {
     "username_invalid": "Only lowercase letters, digits and underscore; 3–20 characters.",
