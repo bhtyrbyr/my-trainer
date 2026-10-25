@@ -75,10 +75,16 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Vercel "Sensitive" env vars are not downloadable by `vercel pull`, so the client config
+      # comes from GitHub Secrets here (public anon key + URL; nothing privileged).
       - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      - name: Verify the bundle contains the Supabase URL
+        run: grep -rq "supabase.co" .vercel/output/static/assets/*.js || (echo "::error::VITE_SUPABASE_URL missing from build" && exit 1)
       - id: deploy
         run: echo "url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
         env:
