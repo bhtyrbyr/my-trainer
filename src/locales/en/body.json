@@ -1,0 +1,95 @@
+{
+  "title": "Body",
+  "back": "Track",
+  "hero": {
+    "eyebrow": "Last weigh-in · {{date}}",
+    "empty": "No weight logged yet",
+    "emptyHint": "Log your first weigh-in; the trend and target line start here.",
+    "avg7": "7-day average",
+    "change": "{{value}} kg · {{period}}",
+    "changeFlat": "No change · {{period}}",
+    "target": "Target {{kg}} kg",
+    "toTargetAbove": "{{kg}} kg to go",
+    "toTargetBelow": "{{kg}} kg below target",
+    "atTarget": "On target",
+    "addTarget": "Add a target weight"
+  },
+  "quick": {
+    "today": "Today's weigh-in",
+    "saved": "Logged today",
+    "save": "Save",
+    "update": "Update",
+    "more": "Add another day or measurements",
+    "weightDec": "Decrease weight by 0.1",
+    "weightInc": "Increase weight by 0.1",
+    "points": "One weight log a day earns 10 points."
+  },
+  "trend": {
+    "title": "Trend",
+    "periodLabel": "Period",
+    "period": {
+      "1m": "1 month",
+      "3m": "3 months",
+      "1y": "1 year",
+      "all": "All"
+    },
+    "chartLabel": "Weight chart",
+    "legendDaily": "Weigh-in",
+    "legendAvg": "7-day average",
+    "legendTarget": "Target",
+    "emptyPeriod": "No entries in this period.",
+    "needMore": "The trend needs at least two weigh-ins."
+  },
+  "measure": {
+    "title": "Measurements",
+    "add": "Add measurements",
+    "empty": "No measurements yet. One set a week earns 15 points.",
+    "fields": {
+      "waist_cm": "Waist",
+      "chest_cm": "Chest",
+      "hip_cm": "Hips",
+      "arm_cm": "Arm",
+      "thigh_cm": "Thigh"
+    },
+    "since": "since the previous one",
+    "last": "last {{value}}",
+    "tapToAdd": "Tap to add",
+    "remove": "Remove {{field}}",
+    "dec": "Decrease {{field}} by 0.5",
+    "inc": "Increase {{field}} by 0.5"
+  },
+  "entries": {
+    "title": "Entries",
+    "edit": "Edit the entry for {{date}}",
+    "measures_one": "{{count}} measurement",
+    "measures_other": "{{count}} measurements"
+  },
+  "sheet": {
+    "title": "Entry",
+    "date": "Date",
+    "weight": "Weight",
+    "measures": "Measurements (cm)",
+    "save": "Save",
+    "delete": "Delete this day's entry",
+    "confirmDelete": "Tap again to delete",
+    "deleted": "Deleted",
+    "removeWeight": "Remove weight",
+    "addWeight": "Add weight",
+    "oldDayNote": "Entries older than 2 days earn no points.",
+    "nothing": "Nothing to save yet."
+  },
+  "targetSheet": {
+    "title": "Target weight",
+    "save": "Save target",
+    "clear": "Remove target",
+    "hint": "Shown as a dashed line on the chart. Only you can see it."
+  },
+  "units": {
+    "kg": "kg",
+    "cm": "cm"
+  },
+  "actions": {
+    "close": "Close",
+    "cancel": "Cancel"
+  }
+}

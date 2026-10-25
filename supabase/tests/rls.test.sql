@@ -2,7 +2,7 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(100);
+select plan(111);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -352,6 +352,44 @@ insert into public.cardio_entries (session_id, user_id, activity, duration_sec, 
 select is((select kcal from public.estimate_session_kcal('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', 1800)), 441, 'kcal: heart-rate equation when weight, sex, age and HR are known');
 select is((select weight_kg from public.estimate_session_kcal('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', 1800)), 80::numeric, 'kcal: known weight is reported');
 select ok(not has_function_privilege('authenticated', 'public.estimate_session_kcal(uuid, uuid, text, integer)', 'execute'), 'clients cannot call the estimator directly');
+
+-- body metrics (Faz 2) ------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.body_metrics (user_id, measured_on, weight_kg) values (:'ub', ((now() at time zone 'Europe/Istanbul')::date - 1), 82.4);
+select is((select points from public.point_events where user_id = :'ub' and kind = 'weight_log' and ref_id like '%:w'), 10, 'body: a weight row awards 10 by trigger');
+update public.body_metrics set weight_kg = 82.0 where user_id = :'ub';
+select is((select count(*)::int from public.point_events where user_id = :'ub' and kind = 'weight_log' and ref_id like '%:w'), 1, 'body: correcting the weight does not award twice');
+update public.body_metrics set waist_cm = 84 where user_id = :'ub';
+select is((select points from public.point_events where user_id = :'ub' and kind = 'measurement_log'), 15, 'body: measurements award 15');
+-- the client saves with an upsert that sends only the edited columns: other columns are kept
+insert into public.body_metrics (user_id, measured_on, weight_kg) values (:'ub', ((now() at time zone 'Europe/Istanbul')::date - 1), 81.8)
+  on conflict (user_id, measured_on) do update set weight_kg = excluded.weight_kg;
+select ok((select weight_kg = 81.8 and waist_cm = 84 from public.body_metrics where user_id = :'ub'), 'body: upsert merges into the day''s row');
+update public.body_metrics set weight_kg = 82.0 where user_id = :'ub';
+update public.body_metrics set measured_on = current_date - 30, user_id = :'ua' where user_id = :'ub';
+select ok((select measured_on = ((now() at time zone 'Europe/Istanbul')::date - 1) from public.body_metrics where user_id = :'ub'), 'body: day and owner of a row are frozen');
+select throws_like(
+  $$ insert into public.body_metrics (user_id, measured_on, weight_kg) values ('00000000-0000-0000-0000-00000000000b', current_date + 5, 80) $$,
+  '%FUTURE_DATE%', 'body: future days are rejected'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((select count(*)::int from public.body_metrics), 0, 'body IDOR: alice sees none of bob''s rows');
+select throws_ok(
+  $$ insert into public.body_metrics (user_id, measured_on, weight_kg) values ('00000000-0000-0000-0000-00000000000b', current_date - 1, 50) $$,
+  '42501', null, 'body IDOR: alice cannot write a row for bob'
+);
+update public.body_metrics set weight_kg = 40;
+delete from public.body_metrics;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select is((select weight_kg from public.body_metrics where user_id = :'ub'), 82.0::numeric, 'body IDOR: bob''s row is untouched by alice''s update/delete');
+reset role;
+select is(public.body_weight_for(:'ub', (now() at time zone 'Europe/Istanbul')::date), 82.0::numeric, 'energy weight: latest logged weight wins');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+delete from public.body_metrics where user_id = :'ub';
+select is((select count(*)::int from public.point_events where user_id = :'ub' and kind in ('weight_log', 'measurement_log') and ref_id like '%:%'), 0, 'body: deleting the row revokes its points');
+reset role;
 
 select * from finish();
 rollback;

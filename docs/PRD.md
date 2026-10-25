@@ -56,7 +56,7 @@ Soru-cevap turlarında netleşen isterler:
 - **Günlük kalori takibi**: "Yenilen" (M3) ve "Yakılan" (antrenmanlar) günlük olarak **ayrı ayrı** gösterilir; antrenman kalorisi yeme hedefine eklenmez, birbirinden düşülmez (kullanıcı kararı). Kalori puan kazandırmaz.
 - Faz 2 sırası: 1) antrenman kalorisi, 2) vücut ölçüleri/kilo, 3) beslenme + Gemini + günlük enerji kartı (yenilen | yakılan), 4) uyku/su, 5) şifreli fotoğraflar.
 
-**M2 — Vücut metrikleri**
+**M2 — Vücut metrikleri** (2026-10-25 uygulandı: Takip > Vücut; günde tek satır, hedef kilo `profile_private.target_weight_kg`, yalnızca kg/cm)
 - Kilo (günlük), bel/göğüs/kol/kalça/uyluk ölçüleri (haftalık).
 - Trend grafiği, 7 günlük hareketli ortalama, hedef kilo çizgisi.
 

@@ -39,6 +39,7 @@ type ProfilePrivateRow = {
   birth_year: number | null
   height_cm: number | null
   start_weight_kg: number | null
+  target_weight_kg: number | null
   sex: Sex | null
   goal: Goal | null
   created_at: string
@@ -117,6 +118,7 @@ type HandDatabase = {
           birth_year?: number | null
           height_cm?: number | null
           start_weight_kg?: number | null
+          target_weight_kg?: number | null
           sex?: Sex | null
           goal?: Goal | null
         }

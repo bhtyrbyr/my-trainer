@@ -28,6 +28,8 @@ const exercises = {
   library: page(() => import('@/features/exercises/pages/ExerciseLibraryPage'), 'ExerciseLibraryPage'),
   detail: page(() => import('@/features/exercises/pages/ExerciseDetailPage'), 'ExerciseDetailPage'),
 }
+const body = page(() => import('@/features/body/pages/BodyPage'), 'BodyPage')
+const devBody = (name: 'DevBodyLayout' | 'DevTrack' | 'DevBody') => page(() => import('@/features/body/dev/DevBodyPreview'), name)
 const onboarding = page(() => import('@/features/profile/pages/OnboardingPage'), 'OnboardingPage')
 
 const devWorkouts = (name: 'DevWorkoutsLayout' | 'DevDashboard' | 'DevTemplateEditor' | 'DevLiveSession' | 'DevSessionDetail') =>
@@ -48,6 +50,15 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         children: [
           { index: true, lazy: page(() => import('./DevExercisePreview'), 'DevExerciseLibraryPreview') },
           { path: ':id', lazy: page(() => import('./DevExercisePreview'), 'DevExerciseDetailPreview') },
+        ],
+      },
+      {
+        // body metrics with sample data: ?empty=1 for a user without entries
+        path: '/__dev/track',
+        lazy: devBody('DevBodyLayout'),
+        children: [
+          { index: true, lazy: devBody('DevTrack') },
+          { path: 'body', lazy: devBody('DevBody') },
         ],
       },
       {
@@ -102,6 +113,7 @@ export const router = createBrowserRouter([
       { path: 'exercises', lazy: exercises.library },
       { path: 'exercises/:id', lazy: exercises.detail },
       { path: 'track', lazy: page(() => import('@/features/track/pages/TrackPage'), 'TrackPage') },
+      { path: 'track/body', lazy: body },
       { path: 'today', lazy: page(() => import('@/features/today/pages/TodayPage'), 'TodayPage') },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },

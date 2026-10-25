@@ -1,0 +1,95 @@
+{
+  "title": "Vücut",
+  "back": "Takip",
+  "hero": {
+    "eyebrow": "Son tartı · {{date}}",
+    "empty": "Henüz kilo kaydın yok",
+    "emptyHint": "İlk tartını gir; trend ve hedef çizgisi buradan başlar.",
+    "avg7": "7 günlük ortalama",
+    "change": "{{value}} kg · {{period}}",
+    "changeFlat": "Değişim yok · {{period}}",
+    "target": "Hedef {{kg}} kg",
+    "toTargetAbove": "{{kg}} kg kaldı",
+    "toTargetBelow": "Hedefin {{kg}} kg altında",
+    "atTarget": "Hedeftesin",
+    "addTarget": "Hedef kilo ekle"
+  },
+  "quick": {
+    "today": "Bugünün tartısı",
+    "saved": "Bugün kaydedildi",
+    "save": "Kaydet",
+    "update": "Güncelle",
+    "more": "Başka gün ya da ölçü ekle",
+    "weightDec": "Kiloyu 0,1 azalt",
+    "weightInc": "Kiloyu 0,1 artır",
+    "points": "Günde bir kilo kaydı 10 puan."
+  },
+  "trend": {
+    "title": "Trend",
+    "periodLabel": "Dönem",
+    "period": {
+      "1m": "1 ay",
+      "3m": "3 ay",
+      "1y": "1 yıl",
+      "all": "Tümü"
+    },
+    "chartLabel": "Kilo grafiği",
+    "legendDaily": "Tartı",
+    "legendAvg": "7 günlük ortalama",
+    "legendTarget": "Hedef",
+    "emptyPeriod": "Bu dönemde kayıt yok.",
+    "needMore": "Trend için en az iki tartı gerekli."
+  },
+  "measure": {
+    "title": "Ölçüler",
+    "add": "Ölçü ekle",
+    "empty": "Henüz ölçü yok. Haftada bir ölçü 15 puan.",
+    "fields": {
+      "waist_cm": "Bel",
+      "chest_cm": "Göğüs",
+      "hip_cm": "Kalça",
+      "arm_cm": "Kol",
+      "thigh_cm": "Uyluk"
+    },
+    "since": "önceki ölçüye göre",
+    "last": "son {{value}}",
+    "tapToAdd": "Eklemek için dokun",
+    "remove": "{{field}} değerini kaldır",
+    "dec": "{{field}} 0,5 azalt",
+    "inc": "{{field}} 0,5 artır"
+  },
+  "entries": {
+    "title": "Kayıtlar",
+    "edit": "{{date}} kaydını düzenle",
+    "measures_one": "{{count}} ölçü",
+    "measures_other": "{{count}} ölçü"
+  },
+  "sheet": {
+    "title": "Kayıt",
+    "date": "Tarih",
+    "weight": "Kilo",
+    "measures": "Ölçüler (cm)",
+    "save": "Kaydet",
+    "delete": "Bu günün kaydını sil",
+    "confirmDelete": "Silmek için tekrar dokun",
+    "deleted": "Silindi",
+    "removeWeight": "Kiloyu kaldır",
+    "addWeight": "Kilo ekle",
+    "oldDayNote": "2 günden eski kayıtlar puan kazandırmaz.",
+    "nothing": "Kaydedilecek bir değer yok."
+  },
+  "targetSheet": {
+    "title": "Hedef kilo",
+    "save": "Hedefi kaydet",
+    "clear": "Hedefi kaldır",
+    "hint": "Grafikte kesikli çizgi olarak görünür. Sadece sen görürsün."
+  },
+  "units": {
+    "kg": "kg",
+    "cm": "cm"
+  },
+  "actions": {
+    "close": "Kapat",
+    "cancel": "Vazgeç"
+  }
+}

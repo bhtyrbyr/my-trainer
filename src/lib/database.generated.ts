@@ -64,6 +64,52 @@ export type Database = {
         }
         Relationships: []
       }
+      body_metrics: {
+        Row: {
+          arm_cm: number | null
+          chest_cm: number | null
+          created_at: string
+          hip_cm: number | null
+          id: string
+          measured_on: string
+          note: string | null
+          thigh_cm: number | null
+          updated_at: string
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          arm_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          hip_cm?: number | null
+          id?: string
+          measured_on: string
+          note?: string | null
+          thigh_cm?: number | null
+          updated_at?: string
+          user_id: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          arm_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          hip_cm?: number | null
+          id?: string
+          measured_on?: string
+          note?: string | null
+          thigh_cm?: number | null
+          updated_at?: string
+          user_id?: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       cardio_entries: {
         Row: {
           activity: string
@@ -407,6 +453,7 @@ export type Database = {
           height_cm: number | null
           sex: string | null
           start_weight_kg: number | null
+          target_weight_kg: number | null
           updated_at: string
           user_id: string
         }
@@ -418,6 +465,7 @@ export type Database = {
           height_cm?: number | null
           sex?: string | null
           start_weight_kg?: number | null
+          target_weight_kg?: number | null
           updated_at?: string
           user_id: string
         }
@@ -428,6 +476,7 @@ export type Database = {
           height_cm?: number | null
           sex?: string | null
           start_weight_kg?: number | null
+          target_weight_kg?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -852,10 +901,19 @@ export type Database = {
         }
         Returns: number
       }
+      body_weight_for: { Args: { p_on: string; p_user: string }; Returns: number }
       can_access: { Args: Record<PropertyKey, never>; Returns: boolean }
+      cardio_met: { Args: { p_activity: string; p_speed_kmh: number }; Returns: number }
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined }
       e1rm: { Args: { p_reps: number; p_weight: number }; Returns: number }
       effective_streak: { Args: { p_current: number; p_last_active: string }; Returns: number }
+      estimate_session_kcal: {
+        Args: { p_duration: number; p_kind: string; p_session: string; p_user: string }
+        Returns: {
+          kcal: number
+          weight_kg: number
+        }[]
+      }
       exercise_progress: {
         Args: { p_exercise: string }
         Returns: {
@@ -904,7 +962,9 @@ export type Database = {
           weight_kg: number
         }[]
       }
+      recompute_streak: { Args: { p_user: string }; Returns: undefined }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
+      strength_met: { Args: { p_avg_rpe: number }; Returns: number }
       todays_templates: {
         Args: { p_isodow?: number }
         Returns: {

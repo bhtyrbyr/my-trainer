@@ -24,6 +24,7 @@ export function classifyError(err: unknown): AppError {
   if (/CANNOT_CHANGE_SELF/.test(message)) return { key: 'errors.cannotChangeSelf', code }
   if (/NOT_REJECTED/.test(message)) return { key: 'errors.notRejected', code }
   if (/ALREADY_FINISHED/.test(message)) return { key: 'errors.alreadyFinished', code }
+  if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
   if (/FORBIDDEN/.test(message)) return { key: 'errors.forbidden', code }
   if (/NOT_AUTHENTICATED|JWT|jwt expired/i.test(message)) return { key: 'errors.sessionExpired', code }
 

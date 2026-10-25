@@ -37,7 +37,8 @@
     "unknown": "Beklenmeyen bir hata oluştu.",
     "crashTitle": "Bir şeyler ters gitti.",
     "reload": "Yeniden yükle",
-    "alreadyFinished": "Bu antrenman zaten bitirilmiş."
+    "alreadyFinished": "Bu antrenman zaten bitirilmiş.",
+    "futureDate": "Gelecek bir tarihe kayıt eklenemez."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",
