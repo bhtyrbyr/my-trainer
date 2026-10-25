@@ -1224,7 +1224,9 @@ export type Database = {
       }
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
+      ai_availability: { Args: Record<PropertyKey, never>; Returns: Json }
       ai_consume: { Args: Record<PropertyKey, never>; Returns: number }
+      ai_decide: { Args: { p_user: string }; Returns: Json }
       ai_log_usage: {
         Args: {
           p_action: string
@@ -1237,6 +1239,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      ai_model_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          day_ok: boolean
+          minute_ok: boolean
+          model: string
+          rpd: number
+          rpm: number
+          tokens_minute: number
+          tpm: number
+          used_minute: number
+          used_today: number
+        }[]
+      }
+      ai_reserve: { Args: Record<PropertyKey, never>; Returns: Json }
       award_points: {
         Args: {
           p_kind: string

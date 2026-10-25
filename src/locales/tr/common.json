@@ -50,7 +50,10 @@
     "reportHint": "Bu senin düzeltebileceğin bir sorun değil.",
     "reportSent": "Yöneticiye bildirildi, teşekkürler.",
     "reportFailed": "Bildirim gönderilemedi, tekrar dene.",
-    "reportLimit": "Bugün çok fazla hata bildirdin. Yarın tekrar deneyebilirsin."
+    "reportLimit": "Bugün çok fazla hata bildirdin. Yarın tekrar deneyebilirsin.",
+    "aiAppLimit": "Uygulamanın bugünkü yapay zekâ sınırı doldu. Yarın tekrar deneyebilir ya da elle girebilirsin.",
+    "aiGoogleDaily": "Uygulamanın bugünkü ücretsiz yapay zekâ hakkı doldu. Ara sekmesinden besin veritabanını ya da elle girişi kullanabilirsin.",
+    "aiGoogleMinute": "Yapay zekâ şu an yoğun. Yaklaşık bir dakika sonra tekrar dene."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

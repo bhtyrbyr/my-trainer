@@ -126,5 +126,26 @@
     "addGrams": "Ekle · {{kcal}} kcal",
     "hint": "Yemeğin adını yaz: önce kayıtlı yiyeceklerine ve besin veritabanına bakılır, bulamazsan paketli ürünlerde ya da yapay zekâyla arayabilirsin.",
     "offCredit": "Paketli ürün verisi: Open Food Facts (ODbL). Değerler 100 g başınadır."
+  },
+  "aiStatus": {
+    "user_daily": {
+      "title": "Bugünkü yapay zekâ hakkın doldu",
+      "body": "Kişi başı günlük tahmin hakkını kullandın. Hakkın {{time}}’da ({{in}} sonra) yenilenir."
+    },
+    "app_daily": {
+      "title": "Uygulamanın günlük yapay zekâ sınırı doldu",
+      "body": "Bütün kullanıcılar için koyduğumuz günlük sınıra ulaşıldı. {{time}}’da ({{in}} sonra) yenilenir."
+    },
+    "google_daily": {
+      "title": "Ücretsiz yapay zekâ hakkı bugün için doldu",
+      "body": "Google’ın ücretsiz katmanı bütün kullanıcılar için günde sınırlı istek veriyor (Gemini Flash 20, Flash Lite 500). Haklar {{time}}’da ({{in}} sonra) yenilenir."
+    },
+    "google_minute": {
+      "title": "Yapay zekâ şu an yoğun",
+      "body": "Google dakikada sınırlı istek kabul ediyor. Yaklaşık bir dakika sonra tekrar dene."
+    },
+    "meanwhile": "Bu sürede Ara sekmesindeki besin veritabanını ya da elle girişi kullanabilirsin.",
+    "left": "Bugün {{count}} tahmin hakkın kaldı.",
+    "toSearch": "Ara sekmesine geç"
   }
 }

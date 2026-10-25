@@ -26,6 +26,9 @@ export function classifyError(err: unknown): AppError {
   if (/ALREADY_FINISHED/.test(message)) return { key: 'errors.alreadyFinished', code }
   if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
   // Codes returned by the ai-coach Edge Function
+  if (/AI_GOOGLE_DAILY/.test(message)) return { key: 'errors.aiGoogleDaily', code }
+  if (/AI_GOOGLE_MINUTE/.test(message)) return { key: 'errors.aiGoogleMinute', code }
+  if (/AI_APP_LIMIT/.test(message)) return { key: 'errors.aiAppLimit', code }
   if (/AI_QUOTA/.test(message)) return { key: 'errors.aiQuota', code }
   if (/AI_NOT_CONFIGURED/.test(message)) return { key: 'errors.aiNotConfigured', code }
   if (/AI_UNAVAILABLE/.test(message)) return { key: 'errors.aiUnavailable', code }

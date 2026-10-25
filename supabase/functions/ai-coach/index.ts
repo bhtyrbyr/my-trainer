@@ -71,13 +71,17 @@ Deno.serve(async (req) => {
   const openRouterKey = Deno.env.get('OPENROUTER_API_KEY')
   if (!geminiKey && !(openRouterKey && !image)) return json({ error: 'AI_NOT_CONFIGURED' }, 503)
 
-  const { data: remaining, error: quotaError } = await supabase.rpc('ai_consume')
-  if (quotaError) {
-    if (/AI_QUOTA/.test(quotaError.message)) return json({ error: 'AI_QUOTA' }, 429)
-    if (/FORBIDDEN/.test(quotaError.message)) return json({ error: 'FORBIDDEN' }, 403)
-    console.error('ai_consume failed', quotaError.message)
+  // Gate: user limit, app cap and Google's shared free-tier quota (per model, per day and minute).
+  const { data: gate, error: gateError } = await supabase.rpc('ai_reserve')
+  if (gateError) {
+    const code = /AI_QUOTA|AI_APP_LIMIT|AI_GOOGLE_DAILY|AI_GOOGLE_MINUTE/.exec(gateError.message)?.[0]
+    if (code) return json({ error: code }, 429)
+    if (/FORBIDDEN/.test(gateError.message)) return json({ error: 'FORBIDDEN' }, 403)
+    console.error('ai_reserve failed', gateError.message)
     return json({ error: 'AI_UNAVAILABLE' }, 502)
   }
+  const allowed: string[] = Array.isArray(gate?.models) ? gate.models : []
+  const remaining: number | null = typeof gate?.user_left === 'number' ? gate.user_left : null
 
   const prompt = buildPrompt(text, locale, Boolean(image))
   const action = image ? 'food_estimate_photo' : 'food_estimate_text'
@@ -94,7 +98,8 @@ Deno.serve(async (req) => {
     })
     if (error) console.error('ai_log_usage failed', error.message)
   }
-  const models = [Deno.env.get('GEMINI_MODEL') || 'gemini-3.8-flash', Deno.env.get('GEMINI_FALLBACK_MODEL') || 'gemini-3.5-flash-lite']
+  // models with quota left, in the configured order (app_config.ai_model_order)
+  const models = allowed.length ? allowed : [Deno.env.get('GEMINI_FALLBACK_MODEL') || 'gemini-3.5-flash-lite']
   const failures: string[] = []
 
   if (geminiKey) {
@@ -123,6 +128,8 @@ Deno.serve(async (req) => {
     }
   }
   console.error('food-estimate failed', failures.join(' | '))
+  // every allowed model answered 429: Google's quota is spent even though our count disagreed
+  if (failures.length && failures.every((f) => / 429$/.test(f))) return json({ error: 'AI_GOOGLE_DAILY' }, 429)
   return json({ error: 'AI_UNAVAILABLE' }, 502)
 })
 

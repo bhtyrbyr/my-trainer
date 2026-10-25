@@ -42,12 +42,15 @@ function sampleRows(): BodyMetric[] {
   return rows.reverse()
 }
 
-function seed(empty: boolean) {
+function seed(empty: boolean, aiClosed: boolean) {
   const qc = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } })
   qc.setQueryData(bodyKeys.metrics, empty ? [] : sampleRows())
   qc.setQueryData(bodyKeys.target, { target: empty ? null : 78, start: empty ? 84 : 86 })
   qc.setQueryData(nutritionKeys.day(toLocalDateISO()), empty ? [] : sampleMeals())
   qc.setQueryData(nutritionKeys.foods, empty ? [] : sampleFoods())
+  // ?ai=closed shows the "free quota used up" card in the add-food sheet
+  const pacificMidnight = new Date(Date.now() + 9 * 3600_000)
+  qc.setQueryData(['nutrition', 'ai-availability'], aiClosed ? { available: false, reason: 'google_daily', resets_at: pacificMidnight.toISOString(), user_left: 38 } : { available: true, reason: 'ok', resets_at: null, user_left: 38 })
   const now = new Date()
   const session = {
     id: 'preview-session',
@@ -69,7 +72,7 @@ function seed(empty: boolean) {
 
 export function DevBodyLayout() {
   const [params] = useSearchParams()
-  const [client] = useState(() => seed(params.get('empty') === '1'))
+  const [client] = useState(() => seed(params.get('empty') === '1', params.get('ai') === 'closed'))
   return (
     <QueryClientProvider client={client}>
       <BodyPreviewContext.Provider value={true}>

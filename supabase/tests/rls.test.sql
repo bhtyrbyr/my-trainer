@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(138);
+select plan(144);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -30,7 +30,7 @@ select is(
       and has_function_privilege('authenticated', p.oid, 'execute')
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
-        'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_consume', 'ai_log_usage', 'can_access', 'delete_my_account', 'finish_workout_session',
+        'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_consume', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
         'get_leaderboard', 'has_onboarded', 'is_admin', 'rls_auto_enable')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
@@ -464,6 +464,33 @@ select is((select username from public.admin_error_reports('open', 10) limit 1),
 update public.error_reports set status = 'resolved';
 select ok((select resolved_at is not null from public.error_reports limit 1), 'reports: resolving stamps the time');
 select is((select count(*)::int from public.admin_error_reports('open', 10)), 0, 'reports: resolved reports leave the open list');
+reset role;
+
+-- AI gate: Google free-tier quota is shared by all users ------------------------------------
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((public.ai_availability() ->> 'available')::boolean, true, 'gate: AI available with quota left');
+reset role;
+insert into public.ai_usage_log (user_id, action, provider, model, total_tokens)
+  select null, 'catalog_translate', 'gemini', 'gemini-3.8-flash', 10 from generate_series(1, 19);
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is(public.ai_reserve() -> 'models', '["gemini-3.5-flash-lite"]'::jsonb, 'gate: Flash daily quota used up -> only Lite is offered');
+reset role;
+insert into public.ai_usage_log (user_id, action, provider, model, total_tokens)
+  select null, 'catalog_translate', 'gemini', 'gemini-3.5-flash-lite', 10 from generate_series(1, 15);
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is(public.ai_availability() ->> 'reason', 'google_minute', 'gate: per-minute limit reached -> wait a minute');
+select throws_like($$ select public.ai_reserve() $$, '%AI_GOOGLE_MINUTE%', 'gate: reserve refuses during the minute limit');
+reset role;
+insert into public.ai_usage_log (user_id, action, provider, model, total_tokens, created_at)
+  select null, 'catalog_translate', 'gemini', 'gemini-3.5-flash-lite', 10, now() - interval '5 minutes' from generate_series(1, 485);
+update public.ai_usage_log set created_at = now() - interval '5 minutes';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is(public.ai_availability() ->> 'reason', 'google_daily', 'gate: every model''s daily quota used up');
+select throws_like($$ select public.ai_reserve() $$, '%AI_GOOGLE_DAILY%', 'gate: reserve refuses until the Pacific reset');
 reset role;
 
 select * from finish();
