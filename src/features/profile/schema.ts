@@ -15,8 +15,13 @@ export const onboardingSchema = z.object({
     .optional(),
   heightCm: z.union([z.literal(''), z.coerce.number().min(50).max(300)]).optional(),
   weightKg: z.union([z.literal(''), z.coerce.number().min(20).max(400)]).optional(),
-  sex: z.enum(['male', 'female', 'other']).or(z.literal('')).optional(),
-  goal: z.enum(['lose_fat', 'build_muscle', 'maintain', 'performance']).or(z.literal('')).optional(),
+  // Required (chips start empty, so '' is the "not chosen" state and is rejected on submit)
+  sex: z
+    .union([z.literal(''), z.enum(['male', 'female', 'other'])])
+    .refine((v) => v !== '', { message: 'sex_required' }),
+  goal: z
+    .union([z.literal(''), z.enum(['lose_fat', 'build_muscle', 'maintain', 'performance'])])
+    .refine((v) => v !== '', { message: 'goal_required' }),
 })
 
 export type OnboardingInput = z.input<typeof onboardingSchema>

@@ -227,7 +227,7 @@ export function OnboardingPage() {
 
         {/* Optional */}
         <section className="space-y-3">
-          <p className="eyebrow px-1">{t('onboarding:optional')}</p>
+          <p className="eyebrow px-1">{t('onboarding:about')}</p>
           <Group>
             <div className="grid grid-cols-3 divide-x divide-line">
               <Cell label={t('onboarding:fields.birthYear')} error={fieldError('birthYear')}>
@@ -240,14 +240,14 @@ export function OnboardingPage() {
                 <input {...register('weightKg')} inputMode="decimal" placeholder="80" className={cellInput} />
               </Cell>
             </div>
-            <ChipRow label={t('onboarding:fields.sex')}>
+            <ChipRow label={t('onboarding:fields.sex')} required error={fieldError('sex')}>
               {SEX_OPTIONS.map((v) => (
                 <Chip key={v} active={sex === v} onClick={() => setValue('sex', sex === v ? '' : v, { shouldDirty: true })}>
                   {t(`onboarding:sex.${v}`)}
                 </Chip>
               ))}
             </ChipRow>
-            <ChipRow label={t('onboarding:fields.goal')}>
+            <ChipRow label={t('onboarding:fields.goal')} required error={fieldError('goal')}>
               {GOAL_OPTIONS.map((v) => (
                 <Chip key={v} active={goal === v} onClick={() => setValue('goal', goal === v ? '' : v, { shouldDirty: true })}>
                   {t(`onboarding:goal.${v}`)}
@@ -259,6 +259,7 @@ export function OnboardingPage() {
                 <p className="text-[15px]">{t('onboarding:fields.showOnLeaderboard')}</p>
                 <p className="text-xs text-ink-faint">{t('onboarding:hints.leaderboard')}</p>
               </div>
+              <input type="checkbox" className="sr-only" tabIndex={-1} aria-hidden {...register('showOnLeaderboard')} />
               <Switch checked={Boolean(showOnLeaderboard)} onChange={(v) => setValue('showOnLeaderboard', v, { shouldDirty: true })} />
             </div>
           </Group>
@@ -336,11 +337,25 @@ function Cell({ label, error, children }: { label: string; error?: string | null
   )
 }
 
-function ChipRow({ label, children }: { label: string; children: ReactNode }) {
+function ChipRow({
+  label,
+  required,
+  error,
+  children,
+}: {
+  label: string
+  required?: boolean
+  error?: string | null
+  children: ReactNode
+}) {
   return (
-    <div className="px-4 py-3">
-      <p className="text-xs font-medium text-ink-muted">{label}</p>
+    <div className="px-4 py-3" role="radiogroup" aria-label={label} aria-invalid={Boolean(error)}>
+      <p className="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+        {label}
+        {required && <span className="size-1.5 rounded-full bg-volt" aria-hidden />}
+      </p>
       <div className="mt-2 flex flex-wrap gap-2">{children}</div>
+      {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   )
 }
@@ -376,8 +391,8 @@ function Switch({ checked, onChange }: { checked: boolean; onChange: (v: boolean
     >
       <span
         className={cn(
-          'absolute top-0.5 size-6 rounded-full bg-ink shadow transition-transform',
-          checked ? 'translate-x-[22px] bg-volt-ink' : 'translate-x-0.5',
+          'absolute left-0 top-0.5 size-6 rounded-full shadow transition-[translate] duration-200',
+          checked ? 'translate-x-[22px] bg-volt-ink' : 'translate-x-0.5 bg-ink',
         )}
       />
     </button>

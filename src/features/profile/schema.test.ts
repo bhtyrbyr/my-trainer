@@ -9,14 +9,19 @@ describe('username rules', () => {
     expect(USERNAME_RE.test('Ali')).toBe(false)
     expect(USERNAME_RE.test('ali-1')).toBe(false)
   })
+  const base = { username: 'ali', displayName: 'Ali', showOnLeaderboard: true, sex: 'male', goal: 'maintain' }
   it('schema lower-cases and trims before validating', () => {
-    const r = onboardingSchema.safeParse({ username: '  Ali_01 ', displayName: 'Ali', showOnLeaderboard: true })
+    const r = onboardingSchema.safeParse({ ...base, username: '  Ali_01 ' })
     expect(r.success).toBe(true)
     if (r.success) expect(r.data.username).toBe('ali_01')
   })
   it('rejects empty display name', () => {
-    const r = onboardingSchema.safeParse({ username: 'ali', displayName: '  ', showOnLeaderboard: true })
-    expect(r.success).toBe(false)
+    expect(onboardingSchema.safeParse({ ...base, displayName: '  ' }).success).toBe(false)
+  })
+  it('requires sex and goal, but not year/height/weight', () => {
+    expect(onboardingSchema.safeParse({ ...base, sex: '' }).success).toBe(false)
+    expect(onboardingSchema.safeParse({ ...base, goal: '' }).success).toBe(false)
+    expect(onboardingSchema.safeParse({ ...base, birthYear: '', heightCm: '', weightKg: '' }).success).toBe(true)
   })
 })
 

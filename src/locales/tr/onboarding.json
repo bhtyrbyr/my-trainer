@@ -6,6 +6,7 @@
   "preview": { "namePlaceholder": "Adın" },
   "cancel": "Vazgeç ve çıkış yap",
   "optional": "İsteğe bağlı",
+  "about": "Senin hakkında",
   "choose": "Seç…",
   "submit": "Başla",
   "avatar": {
@@ -42,7 +43,9 @@
     "username_invalid": "Sadece küçük harf, rakam ve alt çizgi; 3–20 karakter.",
     "username_taken": "Bu kullanıcı adı alınmış.",
     "display_name_required": "Görünen ad zorunlu.",
-    "display_name_too_long": "En fazla 40 karakter."
+    "display_name_too_long": "En fazla 40 karakter.",
+    "sex_required": "Cinsiyet seçimi zorunlu.",
+    "goal_required": "Bir hedef seç."
   },
   "sex": { "male": "Erkek", "female": "Kadın", "other": "Diğer" },
   "goal": {
