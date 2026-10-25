@@ -14,13 +14,15 @@ import trAdmin from '@/locales/tr/admin.json'
 import enAdmin from '@/locales/en/admin.json'
 import trLeaderboard from '@/locales/tr/leaderboard.json'
 import enLeaderboard from '@/locales/en/leaderboard.json'
+import trExercises from '@/locales/tr/exercises.json'
+import enExercises from '@/locales/en/exercises.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises },
 } as const
 
 void i18n

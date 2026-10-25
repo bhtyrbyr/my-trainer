@@ -1,5 +1,9 @@
-// Hand-written for Faz 0. Replace with generated output once the project is linked:
-//   npx supabase gen types typescript --project-id <ref> > src/lib/database.types.ts
+// Hand-written, narrower types for the core tables (literal unions for role/status/locale, ...).
+// Everything else comes from database.generated.ts (regenerate with
+//   npx supabase gen types typescript --local > src/lib/database.generated.ts).
+// The exported Database merges both: hand-written definitions win where they exist.
+import type { Database as GeneratedDatabase } from './database.generated'
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Locale = 'tr' | 'en'
@@ -78,7 +82,7 @@ type PointRuleRow = {
   description: string | null
 }
 
-export type Database = {
+type HandDatabase = {
   public: {
     Tables: {
       app_config: {
@@ -180,6 +184,23 @@ export type Database = {
     CompositeTypes: Record<string, never>
   }
 }
+
+type Gen = GeneratedDatabase['public']
+type Hand = HandDatabase['public']
+
+export type Database = {
+  public: {
+    Tables: Omit<Gen['Tables'], keyof Hand['Tables']> & Hand['Tables']
+    Views: Gen['Views']
+    Functions: Omit<Gen['Functions'], keyof Hand['Functions']> & Hand['Functions']
+    Enums: Gen['Enums']
+    CompositeTypes: Gen['CompositeTypes']
+  }
+}
+
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+export type TablesInsert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
+export type RpcReturns<F extends keyof Database['public']['Functions']> = Database['public']['Functions'][F]['Returns']
 
 export type Profile = ProfileRow
 export type ProfilePrivate = ProfilePrivateRow

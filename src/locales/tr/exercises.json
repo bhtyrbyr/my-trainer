@@ -1,0 +1,10 @@
+{
+  "picker": {
+    "title": "Egzersiz ekle",
+    "searchPlaceholder": "Egzersiz ara (ör. bench, squat, şınav)",
+    "close": "Kapat",
+    "empty": "Eşleşen egzersiz yok.",
+    "more": "Daha fazla göster",
+    "added": "Eklendi"
+  }
+}
