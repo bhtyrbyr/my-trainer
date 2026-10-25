@@ -14,6 +14,12 @@
   "loading": "Loading…",
   "retry": "Retry",
   "error": "Something went wrong.",
+  "update": {
+    "title": "New version released",
+    "body": "The app will reload in {{n}} seconds and may be briefly unavailable.",
+    "now": "Update now",
+    "later": "Later"
+  },
   "points": "{{n}} pts",
   "level": "Level {{n}}",
   "streakDays": "{{n}} day streak"

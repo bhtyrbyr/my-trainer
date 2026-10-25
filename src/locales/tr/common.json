@@ -14,6 +14,12 @@
   "loading": "Yükleniyor…",
   "retry": "Tekrar dene",
   "error": "Bir şeyler ters gitti.",
+  "update": {
+    "title": "Yeni sürüm yayınlandı",
+    "body": "Uygulama {{n}} saniye içinde yenilenecek; kısa süreliğine erişilemeyebilir.",
+    "now": "Şimdi güncelle",
+    "later": "Sonra"
+  },
   "points": "{{n}} puan",
   "level": "Seviye {{n}}",
   "streakDays": "{{n}} gün seri"
