@@ -1,0 +1,10 @@
+{
+  "picker": {
+    "title": "Add exercise",
+    "searchPlaceholder": "Search exercises (e.g. bench, squat, push-up)",
+    "close": "Close",
+    "empty": "No matching exercises.",
+    "more": "Show more",
+    "added": "Added"
+  }
+}

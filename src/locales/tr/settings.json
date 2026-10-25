@@ -8,6 +8,7 @@
   "about": "Hakkında",
   "attribution": "Egzersiz verisi ve GIF'ler: ExerciseDB (açık kaynak). Kas diyagramları: wger (CC-BY-SA).",
   "version": "Sürüm {{version}}",
+  "commit": "Bu sürümün kaynak kodu (commit)",
   "saved": "Kaydedildi",
   "admin": "Yönetici"
 }

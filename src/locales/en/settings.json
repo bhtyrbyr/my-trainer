@@ -8,6 +8,7 @@
   "about": "About",
   "attribution": "Exercise data and GIFs: ExerciseDB (open source). Muscle diagrams: wger (CC-BY-SA).",
   "version": "Version {{version}}",
+  "commit": "Source code of this build (commit)",
   "saved": "Saved",
   "admin": "Admin"
 }
