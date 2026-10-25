@@ -36,7 +36,8 @@
     "notRejected": "Yalnızca reddedilmiş hesaplar silinebilir.",
     "unknown": "Beklenmeyen bir hata oluştu.",
     "crashTitle": "Bir şeyler ters gitti.",
-    "reload": "Yeniden yükle"
+    "reload": "Yeniden yükle",
+    "alreadyFinished": "Bu antrenman zaten bitirilmiş."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

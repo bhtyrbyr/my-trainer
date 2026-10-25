@@ -36,7 +36,8 @@
     "notRejected": "Only rejected accounts can be deleted.",
     "unknown": "An unexpected error occurred.",
     "crashTitle": "Something went wrong.",
-    "reload": "Reload"
+    "reload": "Reload",
+    "alreadyFinished": "This workout has already been finished."
   },
   "update": {
     "title": "New version released",
