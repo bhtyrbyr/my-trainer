@@ -33,6 +33,7 @@
     "server": "Sunucu tarafında geçici bir sorun var. Biraz sonra tekrar dene.",
     "usernameCooldown": "Kullanıcı adını 30 günde yalnızca bir kez değiştirebilirsin.",
     "cannotChangeSelf": "Kendi hesabının durumunu değiştiremezsin.",
+    "notRejected": "Yalnızca reddedilmiş hesaplar silinebilir.",
     "unknown": "Beklenmeyen bir hata oluştu.",
     "crashTitle": "Bir şeyler ters gitti.",
     "reload": "Yeniden yükle"
@@ -52,7 +53,8 @@
       "low": "Kıvılcım",
       "medium": "Alev",
       "high": "Yangın",
-      "legendary": "Efsanevi"
+      "legendary": "Efsanevi",
+      "mythic": "Mitik"
     }
   },
   "points": "{{n}} puan",

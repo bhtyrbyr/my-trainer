@@ -11,7 +11,9 @@ describe('streakTier', () => {
     [15, 'high'],
     [29, 'high'],
     [30, 'legendary'],
-    [365, 'legendary'],
+    [44, 'legendary'],
+    [45, 'mythic'],
+    [365, 'mythic'],
     [-3, 'none'],
   ] as const)('%i days -> %s', (days, tier) => {
     expect(streakTier(days)).toBe(tier)
@@ -24,6 +26,8 @@ describe('daysToNextTier', () => {
     expect(daysToNextTier(3)).toBe(2)
     expect(daysToNextTier(5)).toBe(10)
     expect(daysToNextTier(29)).toBe(1)
-    expect(daysToNextTier(30)).toBeNull()
+    expect(daysToNextTier(30)).toBe(15)
+    expect(daysToNextTier(44)).toBe(1)
+    expect(daysToNextTier(45)).toBeNull()
   })
 })

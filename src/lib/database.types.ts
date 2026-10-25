@@ -145,6 +145,7 @@ export type Database = {
       has_onboarded: { Args: Record<string, never>; Returns: boolean }
       delete_my_account: { Args: Record<string, never>; Returns: undefined }
       admin_pending_count: { Args: Record<string, never>; Returns: number }
+      admin_delete_rejected_user: { Args: { p_user: string }; Returns: undefined }
       admin_set_registration_status: { Args: { p_user: string; p_status: RegistrationStatus }; Returns: undefined }
       admin_list_registrations: {
         Args: { p_status?: RegistrationStatus | 'all'; p_limit?: number }

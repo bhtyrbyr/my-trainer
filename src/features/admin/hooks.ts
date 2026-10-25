@@ -1,7 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/AuthProvider'
 import type { RegistrationStatus } from '@/lib/database.types'
-import { listRegistrations, pendingCount, setRegistrationStatus } from './api'
+import { deleteRejectedUser, listRegistrations, pendingCount, setRegistrationStatus } from './api'
+
+export function useDeleteRejectedUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => deleteRejectedUser(userId),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ['admin'] })
+    },
+  })
+}
 
 export const adminKeys = {
   registrations: (status: string) => ['admin', 'registrations', status] as const,

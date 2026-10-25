@@ -176,6 +176,63 @@
   }
 }
 
+/* Mythic streak: breathing aura, rising sparks, shimmering label */
+.mythic-text {
+  background: linear-gradient(90deg, #fbbf24, #f472b6, #a78bfa, #fbbf24);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.flame-spark {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mythic-text {
+    animation: mythic-shimmer 4s linear infinite;
+  }
+  @keyframes mythic-shimmer {
+    to {
+      background-position: 300% 0;
+    }
+  }
+  .flame-aura {
+    animation: flame-aura 2.4s ease-in-out infinite;
+  }
+  @keyframes flame-aura {
+    0%,
+    100% {
+      opacity: 0.7;
+      transform: scale(0.95);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+  .flame-spark {
+    animation: flame-spark 1.8s ease-out infinite;
+  }
+  @keyframes flame-spark {
+    0% {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-14px);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flame-spark {
+    opacity: 0.8;
+  }
+}
+
 /* Entrance motion (quiet, respects reduced motion) */
 @utility rise-in {
   opacity: 1;

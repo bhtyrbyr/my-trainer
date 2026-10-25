@@ -33,6 +33,7 @@
     "server": "Temporary problem on the server. Please try again shortly.",
     "usernameCooldown": "You can change your username only once every 30 days.",
     "cannotChangeSelf": "You cannot change your own account status.",
+    "notRejected": "Only rejected accounts can be deleted.",
     "unknown": "An unexpected error occurred.",
     "crashTitle": "Something went wrong.",
     "reload": "Reload"
@@ -52,7 +53,8 @@
       "low": "Spark",
       "medium": "Flame",
       "high": "Blaze",
-      "legendary": "Legendary"
+      "legendary": "Legendary",
+      "mythic": "Mythic"
     }
   },
   "points": "{{n}} pts",
