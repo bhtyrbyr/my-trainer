@@ -2,7 +2,7 @@
 import { useBodyMetrics } from './hooks'
 
 export { bodyKeys, useBodyMetrics, usePrivateWeights } from './hooks'
-export { bmi, latestWeightOnOrBefore, type BmiCategory } from './logic'
+export { bmi, latestMeasurements, latestWeightOnOrBefore, navyBodyFat, type BmiCategory } from './logic'
 export { MEASURE_FIELDS } from './types'
 export type { BodyMetric } from './types'
 export { BodyPreviewContext } from './previewContext'

@@ -97,3 +97,37 @@ export function latestWeightOnOrBefore(rows: Pick<BodyMetric, 'measured_on' | 'w
   }
   return best
 }
+
+export type FatCategory = 'essential' | 'athletes' | 'fitness' | 'average' | 'obese'
+export type BodyFatInput = { sex: string | null | undefined; heightCm: number | null | undefined; neckCm: number | null; waistCm: number | null; hipCm: number | null }
+export type BodyFatResult =
+  | { ok: true; value: number; category: FatCategory }
+  | { ok: false; missing: ('sex' | 'height' | 'neck' | 'waist' | 'hip')[]; invalid?: boolean }
+
+/**
+ * U.S. Navy circumference method (Hodgdon & Beckett 1984), metric form:
+ *   men   %BF = 495 / (1.0324 - 0.19077 log10(waist - neck) + 0.15456 log10(height)) - 450
+ *   women %BF = 495 / (1.29579 - 0.35004 log10(waist + hip - neck) + 0.22100 log10(height)) - 450
+ * Waist at the navel for men, at the narrowest point for women; typical error about 3-4 points.
+ * Categories: American Council on Exercise.
+ */
+export function navyBodyFat({ sex, heightCm, neckCm, waistCm, hipCm }: BodyFatInput): BodyFatResult {
+  const female = sex === 'female'
+  const missing: ('sex' | 'height' | 'neck' | 'waist' | 'hip')[] = []
+  if (sex !== 'male' && sex !== 'female') missing.push('sex')
+  if (!heightCm) missing.push('height')
+  if (!neckCm) missing.push('neck')
+  if (!waistCm) missing.push('waist')
+  if (female && !hipCm) missing.push('hip')
+  if (missing.length) return { ok: false, missing }
+  const span = female ? waistCm! + hipCm! - neckCm! : waistCm! - neckCm!
+  if (span <= 0) return { ok: false, missing: [], invalid: true }
+  const density = female
+    ? 1.29579 - 0.35004 * Math.log10(span) + 0.221 * Math.log10(heightCm!)
+    : 1.0324 - 0.19077 * Math.log10(span) + 0.15456 * Math.log10(heightCm!)
+  const value = Math.round((495 / density - 450) * 10) / 10
+  if (!Number.isFinite(value) || value < 2 || value > 70) return { ok: false, missing: [], invalid: true }
+  const [ess, ath, fit, avg] = female ? [14, 21, 25, 32] : [6, 14, 18, 25]
+  const category: FatCategory = value < ess ? 'essential' : value < ath ? 'athletes' : value < fit ? 'fitness' : value < avg ? 'average' : 'obese'
+  return { ok: true, value, category }
+}

@@ -14,7 +14,16 @@ import { TargetSheet } from '../components/TargetSheet'
 import { WeightTrend } from '../components/WeightTrend'
 import { useBodyFormat } from '../format'
 import { useBodyMetrics, usePrivateWeights, useSaveBodyMetric } from '../hooks'
-import { bmi, filterPeriod, hasMeasurements, latestMeasurements, summarizeWeight, weightSeries, type MeasureRow } from '../logic'
+import {
+  bmi,
+  filterPeriod,
+  hasMeasurements,
+  latestMeasurements,
+  navyBodyFat,
+  summarizeWeight,
+  weightSeries,
+  type MeasureRow,
+} from '../logic'
 import { useIsBodyPreview } from '../previewContext'
 import { MEASURE_FIELDS, type BodyMetric } from '../types'
 
@@ -31,7 +40,9 @@ export function BodyPage() {
   // ?log=YYYY-MM-DD (from the Track day view) opens the entry sheet for that day
   const [params, setParams] = useSearchParams()
   const logParam = params.get('log')
-  const [sheetDay, setSheetDay] = useState<string | null>(() => (logParam && /^\d{4}-\d{2}-\d{2}$/.test(logParam) && logParam <= toLocalDateISO() ? logParam : null))
+  const [sheetDay, setSheetDay] = useState<string | null>(() =>
+    logParam && /^\d{4}-\d{2}-\d{2}$/.test(logParam) && logParam <= toLocalDateISO() ? logParam : null,
+  )
   const [targetOpen, setTargetOpen] = useState(false)
   const [heightOpen, setHeightOpen] = useState(false)
 
@@ -58,27 +69,57 @@ export function BodyPage() {
     >
       <ErrorNote error={metrics.error ?? target.error} className="mb-4" />
       {metrics.isLoading || target.isLoading ? (
-        <div className="h-[420px] animate-pulse rounded-[var(--radius-card)] bg-surface motion-reduce:animate-none" aria-busy="true" />
+        <div
+          className="h-[420px] animate-pulse rounded-[var(--radius-card)] bg-surface motion-reduce:animate-none"
+          aria-busy="true"
+        />
       ) : (
         <div className="space-y-10 pb-6 lg:grid lg:grid-cols-2 lg:gap-10 lg:space-y-0">
           <div className="space-y-6">
-            <Hero points={points} target={targetKg} height={target.data?.height ?? null} onTarget={() => setTargetOpen(true)} onHeight={() => setHeightOpen(true)} />
+            <Hero
+              points={points}
+              target={targetKg}
+              height={target.data?.height ?? null}
+              onTarget={() => setTargetOpen(true)}
+              onHeight={() => setHeightOpen(true)}
+            />
             <QuickLog rows={rows} lastWeight={latestWeight} onMore={() => setSheetDay(toLocalDateISO())} />
           </div>
           <div className="space-y-10">
             {points.length > 0 && <WeightTrend points={points} target={targetKg} />}
-            <Measurements rows={rows} onAdd={() => setSheetDay(toLocalDateISO())} />
+            <Measurements
+              rows={rows}
+              sex={target.data?.sex ?? null}
+              height={target.data?.height ?? null}
+              onAdd={() => setSheetDay(toLocalDateISO())}
+              onHeight={() => setHeightOpen(true)}
+            />
             <Entries rows={rows} onOpen={setSheetDay} />
           </div>
         </div>
       )}
 
-      <LogSheet open={sheetDay !== null} day={sheetDay ?? toLocalDateISO()} rows={rows} lastWeight={latestWeight} onClose={() => {
+      <LogSheet
+        open={sheetDay !== null}
+        day={sheetDay ?? toLocalDateISO()}
+        rows={rows}
+        lastWeight={latestWeight}
+        onClose={() => {
           setSheetDay(null)
           if (logParam) setParams({}, { replace: true })
-        }} />
-      <HeightSheet open={heightOpen} current={target.data?.height ?? null} onClose={() => setHeightOpen(false)} />
-      <TargetSheet open={targetOpen} current={targetKg} suggestion={latestWeight} onClose={() => setTargetOpen(false)} />
+        }}
+      />
+      <HeightSheet
+        open={heightOpen}
+        current={target.data?.height ?? null}
+        onClose={() => setHeightOpen(false)}
+      />
+      <TargetSheet
+        open={targetOpen}
+        current={targetKg}
+        suggestion={latestWeight}
+        onClose={() => setTargetOpen(false)}
+      />
     </PageShell>
   )
 }
@@ -116,30 +157,52 @@ function Hero({
     <section className="rise-in pt-2" aria-label={t('title')}>
       <p className="eyebrow">{t('hero.eyebrow', { date: f.day(s.latest.day, 'd MMM') })}</p>
       <p className="mt-3 flex items-baseline gap-2">
-        <span className="display tabular text-[88px] leading-[0.85] tracking-[-0.05em]">{f.num(s.latest.kg)}</span>
+        <span className="display tabular text-[88px] leading-[0.85] tracking-[-0.05em]">
+          {f.num(s.latest.kg)}
+        </span>
         <span className="text-[20px] font-medium text-ink-muted">{t('units.kg')}</span>
       </p>
 
       <dl className="mt-6 grid grid-cols-2 border-y border-line">
         <div className="flex flex-col-reverse py-3.5 pr-3">
-          <dt className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-faint">{t('hero.avg7')}</dt>
+          <dt className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-faint">
+            {t('hero.avg7')}
+          </dt>
           <dd className="tabular text-[20px] font-semibold leading-none">
-            {f.num(s.latest.avg7)} <span className="text-[13px] font-medium text-ink-faint">{t('units.kg')}</span>
+            {f.num(s.latest.avg7)}{' '}
+            <span className="text-[13px] font-medium text-ink-faint">{t('units.kg')}</span>
           </dd>
         </div>
         <div className="flex flex-col-reverse border-l border-line py-3.5 pl-4">
-          <dt className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-faint">{periodLabel}</dt>
+          <dt className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-faint">
+            {periodLabel}
+          </dt>
           <dd className="tabular flex items-center gap-1.5 text-[20px] font-semibold leading-none">
-            {s.change != null && s.change < 0 && <TrendingDown className="size-4 text-ink-muted" aria-hidden />}
+            {s.change != null && s.change < 0 && (
+              <TrendingDown className="size-4 text-ink-muted" aria-hidden />
+            )}
             {s.change != null && s.change > 0 && <TrendingUp className="size-4 text-ink-muted" aria-hidden />}
-            {s.change == null || s.change === 0 ? '–' : <>{f.signed(s.change)} <span className="text-[13px] font-medium text-ink-faint">{t('units.kg')}</span></>}
+            {s.change == null || s.change === 0 ? (
+              '–'
+            ) : (
+              <>
+                {f.signed(s.change)}{' '}
+                <span className="text-[13px] font-medium text-ink-faint">{t('units.kg')}</span>
+              </>
+            )}
           </dd>
         </div>
       </dl>
 
-      <button type="button" onClick={onTarget} className="group mt-1 flex h-12 w-full items-center justify-between gap-3 text-left">
+      <button
+        type="button"
+        onClick={onTarget}
+        className="group mt-1 flex h-12 w-full items-center justify-between gap-3 text-left"
+      >
         {target == null ? (
-          <span className="text-[14px] font-medium text-ink-muted group-hover:text-ink">{t('hero.addTarget')}</span>
+          <span className="text-[14px] font-medium text-ink-muted group-hover:text-ink">
+            {t('hero.addTarget')}
+          </span>
         ) : (
           <span className="tabular text-[14px] text-ink-muted">
             <span className="font-semibold text-ink">{t('hero.target', { kg: f.num(target) })}</span>
@@ -163,7 +226,11 @@ function BmiRow({ kg, height, onEdit }: { kg: number; height: number | null; onE
   const f = useBodyFormat()
   const b = bmi(kg, height)
   return (
-    <button type="button" onClick={onEdit} className="group flex min-h-12 w-full items-center justify-between gap-3 border-t border-line py-2 text-left">
+    <button
+      type="button"
+      onClick={onEdit}
+      className="group flex min-h-12 w-full items-center justify-between gap-3 border-t border-line py-2 text-left"
+    >
       {b && height ? (
         <span className="tabular text-[14px] text-ink-muted">
           <span className="font-semibold text-ink">
@@ -175,14 +242,24 @@ function BmiRow({ kg, height, onEdit }: { kg: number; height: number | null; onE
           {t('height.value', { cm: Math.round(height) })}
         </span>
       ) : (
-        <span className="text-[14px] font-medium text-ink-muted group-hover:text-ink">{t('bmi.needHeight')}</span>
+        <span className="text-[14px] font-medium text-ink-muted group-hover:text-ink">
+          {t('bmi.needHeight')}
+        </span>
       )}
       <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
     </button>
   )
 }
 
-function QuickLog({ rows, lastWeight, onMore }: { rows: BodyMetric[]; lastWeight: number | null; onMore: () => void }) {
+function QuickLog({
+  rows,
+  lastWeight,
+  onMore,
+}: {
+  rows: BodyMetric[]
+  lastWeight: number | null
+  onMore: () => void
+}) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
   const save = useSaveBodyMetric()
@@ -231,7 +308,11 @@ function QuickLog({ rows, lastWeight, onMore }: { rows: BodyMetric[]; lastWeight
       </Button>
       <div className="mt-2 flex items-center justify-between gap-3">
         <p className="text-[12px] text-ink-faint">{t('quick.points')}</p>
-        <button type="button" onClick={onMore} className="flex h-11 shrink-0 items-center gap-1 text-[13px] font-medium text-ink-muted hover:text-ink">
+        <button
+          type="button"
+          onClick={onMore}
+          className="flex h-11 shrink-0 items-center gap-1 text-[13px] font-medium text-ink-muted hover:text-ink"
+        >
           <Plus className="size-4" aria-hidden />
           {t('quick.more')}
         </button>
@@ -240,10 +321,30 @@ function QuickLog({ rows, lastWeight, onMore }: { rows: BodyMetric[]; lastWeight
   )
 }
 
-function Measurements({ rows, onAdd }: { rows: BodyMetric[]; onAdd: () => void }) {
+function Measurements({
+  rows,
+  sex,
+  height,
+  onAdd,
+  onHeight,
+}: {
+  rows: BodyMetric[]
+  sex: string | null
+  height: number | null
+  onAdd: () => void
+  onHeight: () => void
+}) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
   const list = latestMeasurements(rows)
+  const get = (k: string) => list.find((m) => m.field === k)?.value ?? null
+  const fat = navyBodyFat({
+    sex,
+    heightCm: height,
+    neckCm: get('neck_cm'),
+    waistCm: get('waist_cm'),
+    hipCm: get('hip_cm'),
+  })
   const any = list.some((m) => m.value != null)
   return (
     <section aria-labelledby="measure-title">
@@ -256,8 +357,43 @@ function Measurements({ rows, onAdd }: { rows: BodyMetric[]; onAdd: () => void }
           {t('measure.add')}
         </Button>
       </div>
+      <div className="hairline mb-3 rounded-[var(--radius-card)] bg-surface p-4">
+        <p className="eyebrow">{t('fat.title')}</p>
+        {fat.ok ? (
+          <>
+            <p className="mt-2.5 flex items-baseline gap-1.5">
+              <span className="text-[18px] text-ink-faint">≈</span>
+              <span className="display tabular text-[40px] leading-none">%{f.num(fat.value)}</span>
+              <span className="ml-1 text-[14px] font-medium text-ink-muted">
+                {t(`fat.category.${fat.category}`)}
+              </span>
+            </p>
+            <p className="mt-2 text-[12px] leading-snug text-ink-faint">{t('fat.method')}</p>
+          </>
+        ) : (
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <p className="text-[13px] leading-snug text-ink-muted">
+              {fat.invalid
+                ? t('fat.invalid')
+                : t('fat.needs', { list: fat.missing.map((m) => t(`fat.missing.${m}`)).join(', ') })}
+            </p>
+            {!fat.invalid &&
+              (fat.missing.includes('height') ? (
+                <Button variant="secondary" size="sm" className="h-11 shrink-0" onClick={onHeight}>
+                  {t('height.add')}
+                </Button>
+              ) : fat.missing.some((m) => m !== 'sex') ? (
+                <Button variant="secondary" size="sm" className="h-11 shrink-0" onClick={onAdd}>
+                  {t('measure.add')}
+                </Button>
+              ) : null)}
+          </div>
+        )}
+      </div>
       {!any ? (
-        <p className="hairline rounded-[var(--radius-card)] bg-surface px-4 py-6 text-[14px] text-ink-muted">{t('measure.empty')}</p>
+        <p className="hairline rounded-[var(--radius-card)] bg-surface px-4 py-6 text-[14px] text-ink-muted">
+          {t('measure.empty')}
+        </p>
       ) : (
         <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
           {list.map((m) => (
@@ -279,9 +415,16 @@ function MeasureLine({ m, label, f }: { m: MeasureRow; label: string; f: ReturnT
           {f.signed(m.delta)}
         </span>
       )}
-      <span className={cn('tabular w-24 text-right text-[17px] font-semibold', m.value == null && 'text-ink-faint')}>
+      <span
+        className={cn(
+          'tabular w-24 text-right text-[17px] font-semibold',
+          m.value == null && 'text-ink-faint',
+        )}
+      >
         {m.value == null ? '–' : f.num(m.value)}
-        {m.value != null && <span className="ml-1 text-[12px] font-medium text-ink-faint">{t('units.cm')}</span>}
+        {m.value != null && (
+          <span className="ml-1 text-[12px] font-medium text-ink-faint">{t('units.cm')}</span>
+        )}
       </span>
     </li>
   )
@@ -308,13 +451,23 @@ function Entries({ rows, onOpen }: { rows: BodyMetric[]; onOpen: (day: string) =
                 className="flex w-full items-center gap-4 px-4 py-3 text-left hover:bg-raised/50"
               >
                 <span className="w-10 shrink-0 text-center">
-                  <span className="display tabular block text-[22px] leading-none">{f.day(r.measured_on, 'd')}</span>
-                  <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-faint">{f.day(r.measured_on, 'MMM')}</span>
+                  <span className="display tabular block text-[22px] leading-none">
+                    {f.day(r.measured_on, 'd')}
+                  </span>
+                  <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+                    {f.day(r.measured_on, 'MMM')}
+                  </span>
                 </span>
                 <span className="tabular flex-1 text-[15px] font-semibold">
-                  {r.weight_kg != null ? `${f.num(Number(r.weight_kg))} ${t('units.kg')}` : <span className="font-normal text-ink-faint">–</span>}
+                  {r.weight_kg != null ? (
+                    `${f.num(Number(r.weight_kg))} ${t('units.kg')}`
+                  ) : (
+                    <span className="font-normal text-ink-faint">–</span>
+                  )}
                 </span>
-                {hasMeasurements(r) && <span className="text-[13px] text-ink-muted">{t('entries.measures', { count })}</span>}
+                {hasMeasurements(r) && (
+                  <span className="text-[13px] text-ink-muted">{t('entries.measures', { count })}</span>
+                )}
                 <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
               </button>
             </li>

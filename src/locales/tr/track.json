@@ -26,7 +26,8 @@
     "log": "Kilo gir",
     "measures_one": "{{count}} ölçü",
     "measures_other": "{{count}} ölçü",
-    "open": "Vücut sayfasını aç"
+    "open": "Vücut sayfasını aç",
+    "fat": "Yağ oranı ≈ %{{value}} · {{category}}"
   },
   "workouts": {
     "name": "Antrenman",

@@ -26,7 +26,8 @@
     "log": "Log weight",
     "measures_one": "{{count}} measurement",
     "measures_other": "{{count}} measurements",
-    "open": "Open body"
+    "open": "Open body",
+    "fat": "Body fat ≈ {{value}}% · {{category}}"
   },
   "workouts": {
     "name": "Workouts",

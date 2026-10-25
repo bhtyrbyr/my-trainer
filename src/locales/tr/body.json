@@ -49,7 +49,8 @@
       "chest_cm": "Göğüs",
       "hip_cm": "Kalça",
       "arm_cm": "Kol",
-      "thigh_cm": "Uyluk"
+      "thigh_cm": "Uyluk",
+      "neck_cm": "Boyun"
     },
     "since": "önceki ölçüye göre",
     "last": "son {{value}}",
@@ -114,5 +115,25 @@
     "note": "VKİ kas kütlesini ayırt etmez; düzenli ağırlık çalışanlarda yüksek çıkabilir."
   },
   "lastWeigh": "Son tartı",
-  "onDay": "{{date}} tartısı"
+  "onDay": "{{date}} tartısı",
+  "fat": {
+    "title": "Vücut yağ oranı",
+    "method": "ABD Donanması çevre yöntemi (boy, boyun, bel; kadınlarda kalça). Yaklaşık değerdir, hata payı ±3-4 puan. Beli erkeklerde göbek hizasından, kadınlarda en ince yerinden ölç.",
+    "needs": "Hesaplamak için eksik: {{list}}.",
+    "invalid": "Ölçüler tutarsız görünüyor (bel boyundan ince olamaz). Ölçüleri kontrol et.",
+    "missing": {
+      "sex": "cinsiyet (kayıtta erkek/kadın seçilmemiş)",
+      "height": "boy",
+      "neck": "boyun ölçüsü",
+      "waist": "bel ölçüsü",
+      "hip": "kalça ölçüsü"
+    },
+    "category": {
+      "essential": "temel yağ",
+      "athletes": "atletik",
+      "fitness": "fit",
+      "average": "ortalama",
+      "obese": "yüksek"
+    }
+  }
 }
