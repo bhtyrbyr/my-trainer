@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(144);
+select plan(154);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -491,6 +491,38 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 select is(public.ai_availability() ->> 'reason', 'google_daily', 'gate: every model''s daily quota used up');
 select throws_like($$ select public.ai_reserve() $$, '%AI_GOOGLE_DAILY%', 'gate: reserve refuses until the Pacific reset');
+reset role;
+
+-- sleep and water (Faz 2) ------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.sleep_entries (id, user_id, sleep_on, bed_at, wake_at, quality)
+  values ('00000000-0000-0000-0000-0000000000f1', :'ub', current_date, now() - interval '9 hours', now() - interval '1 hour', 4);
+select is((select duration_min from public.sleep_entries where id = '00000000-0000-0000-0000-0000000000f1'), 480, 'sleep: duration derived from bed and wake times');
+select is((select points from public.point_events where user_id = :'ub' and kind = 'sleep_log'), 10, 'sleep: a 7 h+ night earns 10');
+update public.sleep_entries set bed_at = now() - interval '7 hours' where id = '00000000-0000-0000-0000-0000000000f1';
+select is((select points from public.point_events where user_id = :'ub' and kind = 'sleep_log'), 5, 'sleep: a shorter night re-scores to 5');
+select throws_like(
+  $$ insert into public.sleep_entries (user_id, sleep_on, bed_at, wake_at) values ('00000000-0000-0000-0000-00000000000b', current_date - 3, now() - interval '3 days', now() - interval '4 days') $$,
+  '%SLEEP_ORDER%', 'sleep: waking before going to bed is rejected'
+);
+update public.user_settings set daily_water_ml = 1000 where user_id = :'ub';
+insert into public.water_entries (user_id, drunk_on, amount_ml) values (:'ub', current_date, 600);
+select is((select count(*)::int from public.point_events where user_id = :'ub' and kind = 'water_goal'), 0, 'water: below the goal earns nothing yet');
+insert into public.water_entries (id, user_id, drunk_on, amount_ml) values ('00000000-0000-0000-0000-0000000000f2', :'ub', current_date, 500);
+select is((select points from public.point_events where user_id = :'ub' and kind = 'water_goal'), 10, 'water: reaching the goal earns 10');
+delete from public.water_entries where id = '00000000-0000-0000-0000-0000000000f2';
+select is((select count(*)::int from public.point_events where user_id = :'ub' and kind = 'water_goal'), 0, 'water: dropping below the goal revokes it');
+select throws_like(
+  $$ insert into public.water_entries (user_id, drunk_on, amount_ml) values ('00000000-0000-0000-0000-00000000000b', current_date + 3, 250) $$,
+  '%FUTURE_DATE%', 'water: future days are rejected'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((select count(*)::int from public.sleep_entries) + (select count(*)::int from public.water_entries), 0, 'sleep/water IDOR: alice sees none of bob''s rows');
+select throws_ok(
+  $$ insert into public.water_entries (user_id, drunk_on, amount_ml) values ('00000000-0000-0000-0000-00000000000b', current_date, 250) $$,
+  '42501', null, 'sleep/water IDOR: alice cannot log water for bob'
+);
 reset role;
 
 select * from finish();

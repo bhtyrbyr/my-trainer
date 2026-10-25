@@ -66,7 +66,7 @@ Soru-cevap turlarında netleşen isterler:
 - **AI besin tahmini (Gemini)**: Yemek ismi yazarak ("2 yumurta, 1 dilim tam buğday ekmek") veya **yemek fotoğrafı** çekerek kalori + protein/karbonhidrat/yağ tahmini alınır; sonuç düzenlenebilir ve tek dokunuşla öğüne eklenir, istenirse sık yiyeceklere kaydedilir. Aynı `ai-coach` Edge Function'ın `food-estimate` aksiyonu üzerinden çalışır (Gemini çok modlu, ücretsiz katman); OpenRouter yedeği yalnızca metin için. Yemek fotoğrafı yalnızca tahmin için gönderilir, saklanmaz. Kota bitince manuel giriş her zaman açık.
 - Günlük hedef (kcal ve makro) ve kalan miktar göstergesi.
 
-**M4 — Uyku ve su**
+**M4 — Uyku ve su** (2026-10-26 uygulandı: Takip > Uyku ve su; gece kalkış gününe yazılır, süre sunucuda hesaplanır; su hedefi user_settings.daily_water_ml)
 - Uyku: yatış/kalkış saati, süre otomatik, 1–5 kalite puanı.
 - Su: hızlı "+250 ml" butonları, günlük hedef, ilerleme halkası.
 

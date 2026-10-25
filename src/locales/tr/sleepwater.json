@@ -1,0 +1,70 @@
+{
+  "title": "Uyku ve su",
+  "back": "Takip",
+  "day": {
+    "today": "Bugün",
+    "yesterday": "Dün",
+    "prev": "Önceki gün",
+    "next": "Sonraki gün"
+  },
+  "water": {
+    "title": "Su",
+    "of": "/ {{goal}} ml",
+    "goal": "Hedef {{ml}} ml",
+    "editGoal": "Su hedefini değiştir",
+    "reached": "Hedef tamam",
+    "left": "{{ml}} ml kaldı",
+    "add": "{{ml}} ml ekle",
+    "quick": {
+      "200": "Çay bardağı",
+      "250": "Su bardağı",
+      "500": "Küçük şişe"
+    },
+    "custom": "Başka miktar",
+    "customAdd": "Ekle",
+    "entries": "Bugün içtiklerin",
+    "remove": "{{ml}} ml kaydını sil",
+    "none": "Henüz su eklenmedi.",
+    "points": "Günlük hedefi tutturmak 10 puan."
+  },
+  "sleep": {
+    "title": "Uyku",
+    "night": "Bu sabah biten gece",
+    "nightOf": "{{date}} sabahı biten gece",
+    "bed": "Yatış",
+    "wake": "Kalkış",
+    "duration": "{{h}} sa {{m}} dk",
+    "quality": "Uyku kalitesi",
+    "qualityN": "Kalite {{n}}/5",
+    "qualityLabels": {
+      "1": "Çok kötü",
+      "2": "Kötü",
+      "3": "İdare eder",
+      "4": "İyi",
+      "5": "Harika"
+    },
+    "save": "Kaydet",
+    "update": "Güncelle",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "confirmDelete": "Silmek için tekrar dokun",
+    "week": "Son 7 gece",
+    "average": "Ortalama {{h}} sa {{m}} dk",
+    "target": "7 saat",
+    "noData": "Kayıt yok",
+    "tooShort": "Süre çok kısa görünüyor; saatleri kontrol et.",
+    "points": "Uyku kaydı 5 puan, 7 saat ve üzeri 10 puan.",
+    "barLabel": "{{day}}: {{value}}"
+  },
+  "goalSheet": {
+    "title": "Günlük su hedefi",
+    "hint": "Genel öneri günde 2-3 litre; antrenman günlerinde artabilir.",
+    "save": "Kaydet",
+    "dec": "Hedefi 250 ml azalt",
+    "inc": "Hedefi 250 ml artır"
+  },
+  "actions": {
+    "close": "Kapat",
+    "cancel": "Vazgeç"
+  }
+}

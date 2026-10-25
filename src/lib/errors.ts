@@ -25,6 +25,8 @@ export function classifyError(err: unknown): AppError {
   if (/NOT_REJECTED/.test(message)) return { key: 'errors.notRejected', code }
   if (/ALREADY_FINISHED/.test(message)) return { key: 'errors.alreadyFinished', code }
   if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
+  if (/SLEEP_ORDER/.test(message)) return { key: 'errors.sleepOrder', code }
+  if (/SLEEP_TOO_LONG/.test(message)) return { key: 'errors.sleepTooLong', code }
   // Codes returned by the ai-coach Edge Function
   if (/AI_GOOGLE_DAILY/.test(message)) return { key: 'errors.aiGoogleDaily', code }
   if (/AI_GOOGLE_MINUTE/.test(message)) return { key: 'errors.aiGoogleMinute', code }

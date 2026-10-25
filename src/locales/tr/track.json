@@ -44,7 +44,7 @@
   },
   "soon": {
     "title": "Yakında burada",
-    "list": "Uyku ve su, alışkanlıklar ve görevler, gelişim fotoğrafları"
+    "list": "Alışkanlıklar ve görevler, gelişim fotoğrafları"
   },
   "nutrition": {
     "name": "Beslenme",
@@ -60,5 +60,16 @@
     "hint": "Uçtan uca şifreli"
   },
   "open": "{{name}} aç",
-  "soonTag": "Yakında"
+  "soonTag": "Yakında",
+  "water": {
+    "name": "Su",
+    "add": "+250 ml",
+    "addLabel": "250 ml su ekle",
+    "open": "Uyku ve su sayfasını aç"
+  },
+  "sleep": {
+    "name": "Uyku",
+    "none": "Uyku kaydı yok",
+    "log": "Uyku gir"
+  }
 }

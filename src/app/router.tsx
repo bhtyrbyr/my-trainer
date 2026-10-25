@@ -30,7 +30,8 @@ const exercises = {
 }
 const body = page(() => import('@/features/body/pages/BodyPage'), 'BodyPage')
 const nutrition = page(() => import('@/features/nutrition/pages/NutritionPage'), 'NutritionPage')
-const devBody = (name: 'DevBodyLayout' | 'DevTrack' | 'DevBody' | 'DevNutrition') => page(() => import('@/features/body/dev/DevBodyPreview'), name)
+const sleepWater = page(() => import('@/features/sleepwater/pages/SleepWaterPage'), 'SleepWaterPage')
+const devBody = (name: 'DevBodyLayout' | 'DevTrack' | 'DevBody' | 'DevNutrition' | 'DevSleepWater') => page(() => import('@/features/body/dev/DevBodyPreview'), name)
 const onboarding = page(() => import('@/features/profile/pages/OnboardingPage'), 'OnboardingPage')
 
 const devWorkouts = (name: 'DevWorkoutsLayout' | 'DevDashboard' | 'DevTemplateEditor' | 'DevLiveSession' | 'DevSessionDetail') =>
@@ -67,6 +68,7 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
           { index: true, lazy: devBody('DevTrack') },
           { path: 'body', lazy: devBody('DevBody') },
           { path: 'nutrition', lazy: devBody('DevNutrition') },
+          { path: 'sleep-water', lazy: devBody('DevSleepWater') },
         ],
       },
       {
@@ -123,6 +125,7 @@ export const router = createBrowserRouter([
       { path: 'track', lazy: page(() => import('@/features/track/pages/TrackPage'), 'TrackPage') },
       { path: 'track/body', lazy: body },
       { path: 'track/nutrition', lazy: nutrition },
+      { path: 'track/sleep-water', lazy: sleepWater },
       { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },

@@ -44,7 +44,7 @@
   },
   "soon": {
     "title": "Coming here soon",
-    "list": "Sleep and water, habits and to-dos, progress photos"
+    "list": "Habits and to-dos, progress photos"
   },
   "nutrition": {
     "name": "Nutrition",
@@ -60,5 +60,16 @@
     "hint": "End-to-end encrypted"
   },
   "open": "Open {{name}}",
-  "soonTag": "Soon"
+  "soonTag": "Soon",
+  "water": {
+    "name": "Water",
+    "add": "+250 ml",
+    "addLabel": "Add 250 ml of water",
+    "open": "Open sleep and water"
+  },
+  "sleep": {
+    "name": "Sleep",
+    "none": "No sleep logged",
+    "log": "Log sleep"
+  }
 }
