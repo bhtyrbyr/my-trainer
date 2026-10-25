@@ -68,7 +68,16 @@
     "none": "Henüz plan yok. İlk planını oluşturduğunda haftalık programın burada görünür.",
     "meta_one": "{{count}} egzersiz · ~{{min}} dk",
     "meta_other": "{{count}} egzersiz · ~{{min}} dk",
-    "startNamed": "{{name}} planını başlat"
+    "startNamed": "{{name}} planını başlat",
+    "filterLabel": "Güne göre göster",
+    "allWeek": "Tüm hafta",
+    "count_one": "{{count}} plan",
+    "count_other": "{{count}} plan",
+    "countNone": "plan yok",
+    "showingDay": "{{day}} planları gösteriliyor.",
+    "showAll": "Tüm haftaya dön",
+    "unassignedHint_one": "Gün atanmamış {{count}} plan yalnızca Tüm hafta görünümünde listelenir.",
+    "unassignedHint_other": "Gün atanmamış {{count}} plan yalnızca Tüm hafta görünümünde listelenir."
   },
   "editor": {
     "newTitle": "Yeni plan",

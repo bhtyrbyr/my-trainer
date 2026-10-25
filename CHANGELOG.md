@@ -17,6 +17,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - **Light theme** (Profile > Appearance: Dark, Light or System). The choice is saved to the account so phone and desktop match, and applied before first paint. In light mode the accent deepens to a readable lime green.
 - **Track is the day logbook**: pick any day with the arrows or the calendar (days with records are dotted) and see everything logged on it: eaten vs burned, the weigh-in, workouts and meals, each opening its module. The Today tab is merged into Track; habits and to-dos will live here.
 ### Changed
+- Workouts plan filter: "All week" is an explicit default option, each day shows its plan count, today is labelled instead of outlined (the outline read as "selected"), a picked day fills with the accent and a line says what is shown and where plans without days went.
 - Bottom bar has five tabs: Home, Track, Workouts (centre, raised volt button), Ranking, Profile.
 - Error messages never show technical details to users (they go to the developer console); every message says what to do next. A deploy-in-progress mismatch ("function not found in schema cache") now reads "the app is being updated, refresh in a few minutes".
 - Points: 5 per logged food (max 20 a day) and 15 when the protein goal is reached, both server-side and revoked when entries are removed.
