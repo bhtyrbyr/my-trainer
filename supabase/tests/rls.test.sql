@@ -1,6 +1,13 @@
--- pgTAP tests for the Faz 0 core. Run: npx supabase test db   (local stack via Docker)
+-- pgTAP suite (RLS, anti-IDOR, points, approval, workouts). Runs in CI before every deploy
+-- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
-select plan(75);
+create extension if not exists pgtap with schema extensions;
+select plan(80);
+
+-- Deterministic config regardless of seed.sql (the seed sets a real admin email)
+update public.app_config set value = '""'::jsonb where key = 'admin_bootstrap_email';
+update public.app_config set value = '"open"'::jsonb where key = 'access_mode';
+update public.app_config set value = 'true'::jsonb where key = 'require_approval';
 
 -- Fixtures ------------------------------------------------------------------
 \set ua '00000000-0000-0000-0000-00000000000a'
@@ -215,12 +222,26 @@ select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 1)), 
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 3)), 6, 'last_sets_for_exercise(limit 3) spans three sessions');
 select is((select count(*)::int from public.exercise_progress(:'ex1')), 3, 'exercise_progress: one row per finished session');
 select is((select max(best_e1rm) from public.exercise_progress(:'ex1')), 128.33::numeric, 'exercise_progress: best e1rm');
+select is(
+  (select avg_weight_kg from public.exercise_progress(:'ex1') order by started_at limit 1),
+  100.83::numeric, 'exercise_progress: average working weight per session (warmup excluded)'
+);
+
+-- Day-based plans -------------------------------------------------------------------
+insert into public.workout_templates (user_id, name, weekdays) values (:'ub', 'Push (Mon/Wed)', '{1,3}');
+select is((select count(*)::int from public.todays_templates(1)), 1, 'todays_templates: Monday plan found');
+select is((select count(*)::int from public.todays_templates(2)), 0, 'todays_templates: nothing planned on Tuesday');
+select throws_ok(
+  $$ insert into public.workout_templates (user_id, name, weekdays) values ('00000000-0000-0000-0000-00000000000b', 'bad', '{8}') $$,
+  '23514', null, 'weekdays must be ISO 1..7'
+);
 
 -- Alice sees none of bob's workout data -----------------------------------------------
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 select is((select count(*)::int from public.exercises), 2, 'alice does not see bob''s custom exercise');
 select is((select count(*)::int from public.workout_sessions where user_id = :'ub'), 0, 'alice sees zero of bob''s sessions');
 select is((select count(*)::int from public.session_sets), 0, 'alice sees zero of bob''s sets');
+select is((select count(*)::int from public.todays_templates(1)), 0, 'alice does not get bob''s day plan');
 select is((select count(*)::int from public.personal_records), 0, 'alice sees zero of bob''s PRs');
 select is((select count(*)::int from public.point_events where user_id = :'ub'), 0, 'alice sees zero of bob''s point events');
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 5)), 0, 'RPC last_sets_for_exercise is scoped to the caller');

@@ -46,10 +46,31 @@ jobs:
           done
           exit $fail
 
+  db-tests:
+    name: Database tests (pgTAP on a local Supabase stack)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # config.toml reads these for the (unused in tests) Google provider
+      GOOGLE_CLIENT_ID: ci-dummy
+      GOOGLE_CLIENT_SECRET: ci-dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local stack (applies every migration + seed)
+        run: supabase start -x studio,imgproxy,inbucket,mailpit,realtime,edge-runtime,logflare,vector,supavisor || supabase start
+      - name: Run pgTAP suite
+        run: supabase test db
+      - name: Stop stack
+        if: always()
+        run: supabase stop --no-backup
+
   preview:
     name: Vercel preview deploy (PRs)
     if: github.event_name == 'pull_request'
-    needs: check
+    needs: [check, db-tests]
     runs-on: ubuntu-latest
     environment: preview
     steps:
