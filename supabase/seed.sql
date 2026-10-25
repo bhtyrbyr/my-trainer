@@ -3,7 +3,7 @@
 -- 1. Which Google account becomes the first admin? That account gets role = 'admin' when it completes onboarding.
 --    (If left empty, the very first profile created becomes admin.)
 update public.app_config
-   set value = to_jsonb('replace_with_your_google_email@gmail.com'::text), updated_at = now()
+   set value = to_jsonb('bhtyr.byr@gmail.com'::text), updated_at = now()
  where key = 'admin_bootstrap_email';
 
 -- 2. Access mode: 'open' = anyone with a Google account may sign up (default); 'invite' = only allowed_emails.
