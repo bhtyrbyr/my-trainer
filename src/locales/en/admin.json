@@ -11,5 +11,10 @@
     }
   },
   "status": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected" },
-  "actions": { "approve": "Approve", "reject": "Reject" }
+  "actions": { "approve": "Approve", "reject": "Reject", "delete": "Delete account permanently" },
+  "delete": {
+    "body": "{{name}}'s account, profile photo and all records will be permanently deleted. This cannot be undone. The person can send a new registration request with Google later.",
+    "cancel": "Cancel",
+    "confirm": "Delete permanently"
+  }
 }

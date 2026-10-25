@@ -22,6 +22,7 @@ export function classifyError(err: unknown): AppError {
   if (/ACCESS_DENIED/.test(message)) return { key: 'errors.accessDenied', code }
   if (/USERNAME_COOLDOWN/.test(message)) return { key: 'errors.usernameCooldown', code }
   if (/CANNOT_CHANGE_SELF/.test(message)) return { key: 'errors.cannotChangeSelf', code }
+  if (/NOT_REJECTED/.test(message)) return { key: 'errors.notRejected', code }
   if (/FORBIDDEN/.test(message)) return { key: 'errors.forbidden', code }
   if (/NOT_AUTHENTICATED|JWT|jwt expired/i.test(message)) return { key: 'errors.sessionExpired', code }
 

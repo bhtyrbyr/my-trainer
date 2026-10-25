@@ -47,4 +47,5 @@ const tierColor: Record<Exclude<StreakTier, 'none'>, string> = {
   medium: 'text-orange-400',
   high: 'text-orange-500',
   legendary: cn('text-indigo-300'),
+  mythic: 'mythic-text',
 }

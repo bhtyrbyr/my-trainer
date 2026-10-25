@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { tr as trLocale, enUS } from 'date-fns/locale'
-import { ArrowLeft, Check, Inbox, X } from 'lucide-react'
+import { ArrowLeft, Check, Inbox, Loader2, Trash2, X } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -11,7 +11,7 @@ import { avatarUrl } from '@/features/profile/api'
 import { cn } from '@/lib/utils'
 import type { RegistrationStatus } from '@/lib/database.types'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { useRegistrations, useSetRegistrationStatus } from '../hooks'
+import { useDeleteRejectedUser, useRegistrations, useSetRegistrationStatus } from '../hooks'
 
 const TABS: RegistrationStatus[] = ['pending', 'approved', 'rejected']
 
@@ -21,6 +21,8 @@ export function RegistrationRequestsPage() {
   const [tab, setTab] = useState<RegistrationStatus>('pending')
   const { data, isLoading, error } = useRegistrations(tab)
   const mutation = useSetRegistrationStatus()
+  const deletion = useDeleteRejectedUser()
+  const [confirmId, setConfirmId] = useState<string | null>(null)
   const { user } = useAuth()
   const dfLocale = i18n.resolvedLanguage === 'en' ? enUS : trLocale
 
@@ -50,7 +52,7 @@ export function RegistrationRequestsPage() {
         ))}
       </div>
 
-      <ErrorNote error={error ?? mutation.error} className="mb-4" />
+      <ErrorNote error={error ?? mutation.error ?? deletion.error} className="mb-4" />
 
       {isLoading ? (
         <p className="py-10 text-center text-sm text-ink-faint">{t('common:loading')}</p>
@@ -62,11 +64,15 @@ export function RegistrationRequestsPage() {
       ) : (
         <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
           {data.map((r) => {
-            const busy = mutation.isPending && mutation.variables?.userId === r.user_id
+            const busy =
+              (mutation.isPending && mutation.variables?.userId === r.user_id) ||
+              (deletion.isPending && deletion.variables === r.user_id)
             const isSelf = r.user_id === user?.id
             const src = avatarUrl(r.avatar_path, r.created_at)
+            const confirming = confirmId === r.user_id
             return (
-              <li key={r.user_id} className="flex items-center gap-3 p-3">
+              <li key={r.user_id}>
+              <div className="flex items-center gap-3 p-3">
                 {src ? <img src={src} alt="" className="size-11 rounded-full object-cover" /> : <span className="size-11 rounded-full bg-raised" />}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-semibold leading-tight">{r.display_name}</p>
@@ -102,7 +108,46 @@ export function RegistrationRequestsPage() {
                       <X className="size-5" aria-hidden />
                     </Button>
                   )}
+                  {!isSelf && r.status === 'rejected' && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-danger hover:bg-danger/10 hover:text-danger"
+                      aria-label={t('admin:actions.delete')}
+                      title={t('admin:actions.delete')}
+                      aria-expanded={confirming}
+                      disabled={busy}
+                      onClick={() => setConfirmId(confirming ? null : r.user_id)}
+                    >
+                      <Trash2 className="size-5" aria-hidden />
+                    </Button>
+                  )}
                 </div>
+              </div>
+              {confirming && (
+                <div className="mx-3 mb-3 space-y-3 rounded-[var(--radius-input)] border border-danger/30 bg-danger/10 p-3">
+                  <p className="text-sm text-ink">
+                    {t('admin:delete.body', { name: r.display_name })}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => setConfirmId(null)}>
+                      {t('admin:delete.cancel')}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      disabled={busy}
+                      onClick={() =>
+                        deletion.mutate(r.user_id, { onSuccess: () => setConfirmId(null) })
+                      }
+                    >
+                      {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Trash2 className="size-4" aria-hidden />}
+                      {t('admin:delete.confirm')}
+                    </Button>
+                  </div>
+                </div>
+              )}
               </li>
             )
           })}

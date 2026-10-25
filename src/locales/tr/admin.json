@@ -11,5 +11,10 @@
     }
   },
   "status": { "pending": "Bekleyen", "approved": "Onaylı", "rejected": "Reddedilen" },
-  "actions": { "approve": "Onayla", "reject": "Reddet" }
+  "actions": { "approve": "Onayla", "reject": "Reddet", "delete": "Hesabı kalıcı olarak sil" },
+  "delete": {
+    "body": "{{name}} hesabı, profil fotoğrafı ve tüm kayıtlarıyla birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz. Kişi isterse Google ile yeniden kayıt isteği gönderebilir.",
+    "cancel": "Vazgeç",
+    "confirm": "Kalıcı olarak sil"
+  }
 }
