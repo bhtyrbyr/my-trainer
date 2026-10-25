@@ -27,7 +27,9 @@ export function WorkoutsPage() {
   const [cardioOpen, setCardioOpen] = useState(false)
   const today = isoWeekday()
   const list = templates.data ?? []
-  const planned = new Set(list.flatMap((tpl) => normalizeWeekdays(tpl.weekdays)))
+  const counts = new Map<number, number>()
+  for (const tpl of list) for (const d of normalizeWeekdays(tpl.weekdays)) counts.set(d, (counts.get(d) ?? 0) + 1)
+  const unassignedCount = list.filter((tpl) => normalizeWeekdays(tpl.weekdays).length === 0).length
 
   const paths = preview
     ? { edit: () => '/__dev/workouts/plan', new: '/__dev/workouts/plan', history: '/__dev/workouts/history', session: () => '/__dev/workouts/session' }
@@ -88,7 +90,16 @@ export function WorkoutsPage() {
           </div>
 
           <ErrorNote error={templates.error ?? start.error} className="mb-3" />
-          <WeekStrip planned={planned} today={today} selected={filter} onSelect={setFilter} />
+          <WeekStrip counts={counts} today={today} selected={filter} onSelect={setFilter} />
+          {filter !== null && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 px-1 text-[13px] text-ink-muted">
+              <span>{t('workouts:plans.showingDay', { day: t(`workouts:weekday.long.${filter}`) })}</span>
+              <button type="button" onClick={() => setFilter(null)} className="flex h-11 items-center font-semibold text-volt">
+                {t('workouts:plans.showAll')}
+              </button>
+              {unassignedCount > 0 && <span className="w-full text-[12px] text-ink-faint">{t('workouts:plans.unassignedHint', { count: unassignedCount })}</span>}
+            </p>
+          )}
 
           <div className="mt-5">
             {templates.isLoading ? (

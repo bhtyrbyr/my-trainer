@@ -68,7 +68,16 @@
     "none": "No plans yet. Once you create one, your weekly program shows up here.",
     "meta_one": "{{count}} exercise · ~{{min}} min",
     "meta_other": "{{count}} exercises · ~{{min}} min",
-    "startNamed": "Start {{name}}"
+    "startNamed": "Start {{name}}",
+    "filterLabel": "Show by day",
+    "allWeek": "All week",
+    "count_one": "{{count}} plan",
+    "count_other": "{{count}} plans",
+    "countNone": "no plans",
+    "showingDay": "Showing {{day}} plans.",
+    "showAll": "Back to all week",
+    "unassignedHint_one": "{{count}} plan without days is listed only in the All week view.",
+    "unassignedHint_other": "{{count}} plans without days are listed only in the All week view."
   },
   "editor": {
     "newTitle": "New plan",
