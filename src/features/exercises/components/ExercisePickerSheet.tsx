@@ -6,6 +6,7 @@ import { ErrorNote } from '@/components/ui/ErrorNote'
 import { useExerciseSearch } from '../hooks'
 import { exerciseName } from '../name'
 import type { Exercise } from '../types'
+import { useVocab } from '../vocab'
 import { ExerciseThumb } from './ExerciseThumb'
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 /** Full-screen search sheet used by templates and the live session to add an exercise. */
 export function ExercisePickerSheet({ open, onClose, onPick, selectedIds = [], title }: Props) {
   const { t, i18n } = useTranslation('exercises')
+  const vocab = useVocab()
   const [input, setInput] = useState('')
   const [q, setQ] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -76,7 +78,7 @@ export function ExercisePickerSheet({ open, onClose, onPick, selectedIds = [], t
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{exerciseName(ex, i18n.resolvedLanguage)}</span>
                     <span className="block truncate text-xs text-ink-faint">
-                      {[...ex.target_muscles, ...ex.equipment].join(' · ')}
+                      {[...ex.target_muscles.map(vocab.muscle), ...ex.equipment.map(vocab.equipment)].join(' · ')}
                     </span>
                   </span>
                   {isSelected && <span className="text-xs text-ink-faint">{t('picker.added')}</span>}
