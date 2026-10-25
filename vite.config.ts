@@ -79,5 +79,9 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    // Agent worktrees live inside the repo folder; never watch or reload because of them.
+    watch: { ignored: ['**/.claude/worktrees/**'] },
+  },
 })
