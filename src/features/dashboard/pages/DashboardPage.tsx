@@ -1,18 +1,16 @@
 import { useTranslation } from 'react-i18next'
 import { PageShell } from '@/components/layout/PageShell'
 import { ComingSoon } from '@/components/layout/ComingSoon'
-import { HeaderActions } from '@/components/layout/HeaderActions'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { ScoreHeader } from '@/features/gamification/ScoreHeader'
 
-export function DashboardPage() {
+export function DashboardPage({ preview }: { preview?: { points: number; streak: number } }) {
   const { t } = useTranslation('common')
   const { profile } = useAuth()
+  const points = preview?.points ?? profile?.total_points ?? 0
+  const streak = preview?.streak ?? profile?.current_streak ?? 0
   return (
-    <PageShell
-      title={profile?.display_name ?? t('nav.home')}
-      subtitle={profile ? `${t('points', { n: profile.total_points })} · ${t('streakDays', { n: profile.current_streak })}` : undefined}
-      actions={<HeaderActions />}
-    >
+    <PageShell title={t('nav.home')} leading={<ScoreHeader points={points} streak={streak} />}>
       <ComingSoon phase={4} />
     </PageShell>
   )

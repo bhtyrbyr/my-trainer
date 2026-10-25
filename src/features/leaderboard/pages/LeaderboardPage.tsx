@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trophy } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
-import { HeaderActions } from '@/components/layout/HeaderActions'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { avatarUrl } from '@/features/profile/api'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -32,7 +31,7 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
   const meInList = rows.find((r) => r.is_me)
 
   return (
-    <PageShell title={t('common:nav.leaderboard')} actions={<HeaderActions />}>
+    <PageShell title={t('common:nav.leaderboard')}>
       <div role="tablist" aria-label={t('leaderboard:periodLabel')} className="hairline mb-5 grid grid-cols-3 rounded-full bg-surface p-1">
         {PERIODS.map((p) => (
           <button

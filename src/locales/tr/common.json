@@ -7,6 +7,8 @@
     "track": "Takip",
     "today": "Bugün",
     "leaderboard": "Liderlik",
+    "profile": "Profil",
+    "pendingBadge": "{{n}} bekleyen kayıt isteği",
     "settings": "Ayarlar"
   },
   "comingSoon": "Bu modül bir sonraki fazda geliyor.",
@@ -40,6 +42,18 @@
     "body": "Uygulama {{n}} saniye içinde yenilenecek; kısa süreliğine erişilemeyebilir.",
     "now": "Şimdi güncelle",
     "later": "Sonra"
+  },
+  "score": {
+    "points": "puan",
+    "streak": "günlük seri",
+    "summary": "{{points}} puan, {{streak}} günlük seri",
+    "tier": {
+      "none": "Seri yok",
+      "low": "Kıvılcım",
+      "medium": "Alev",
+      "high": "Yangın",
+      "legendary": "Efsanevi"
+    }
   },
   "points": "{{n}} puan",
   "level": "Seviye {{n}}",

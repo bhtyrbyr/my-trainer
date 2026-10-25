@@ -1,0 +1,29 @@
+import { describe, expect, it } from 'vitest'
+import { daysToNextTier, streakTier } from './streak'
+
+describe('streakTier', () => {
+  it.each([
+    [0, 'none'],
+    [1, 'low'],
+    [4, 'low'],
+    [5, 'medium'],
+    [14, 'medium'],
+    [15, 'high'],
+    [29, 'high'],
+    [30, 'legendary'],
+    [365, 'legendary'],
+    [-3, 'none'],
+  ] as const)('%i days -> %s', (days, tier) => {
+    expect(streakTier(days)).toBe(tier)
+  })
+})
+
+describe('daysToNextTier', () => {
+  it('counts down to the next boundary', () => {
+    expect(daysToNextTier(0)).toBe(1)
+    expect(daysToNextTier(3)).toBe(2)
+    expect(daysToNextTier(5)).toBe(10)
+    expect(daysToNextTier(29)).toBe(1)
+    expect(daysToNextTier(30)).toBeNull()
+  })
+})

@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from './AppShell'
 import { UpdatePrompt } from './UpdatePrompt'
+import { DevStreakPreview } from './DevStreakPreview'
 import { RequireAdmin, RequireAuth, RequireOnboarding, RequirePending } from '@/features/auth/RequireAuth'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
         { path: '/__dev/pending', element: <PendingApprovalPage preview="pending" /> },
         { path: '/__dev/rejected', element: <PendingApprovalPage preview="rejected" /> },
         { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
+        { path: '/__dev/streak/:n', element: <DevStreakPreview /> },
         {
           path: '/__dev/leaderboard',
           element: (
