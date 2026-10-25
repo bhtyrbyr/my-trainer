@@ -27,6 +27,8 @@ const MAX_TEXT = 500
 
 type FoodItem = { name: string; portion: string; kcal: number; protein_g: number; carb_g: number; fat_g: number }
 type Estimate = { items: FoodItem[] }
+type Usage = { prompt: number; output: number; total: number }
+type Result = { estimate: Estimate; usage: Usage }
 
 class ProviderError extends Error {
   constructor(public status: number, message: string) {
@@ -78,16 +80,33 @@ Deno.serve(async (req) => {
   }
 
   const prompt = buildPrompt(text, locale, Boolean(image))
+  const action = image ? 'food_estimate_photo' : 'food_estimate_text'
+  // Counts only (never content) for the admin usage dashboard; logging must never break the request.
+  const log = async (provider: string, model: string, usage: Usage | null, ok: boolean) => {
+    const { error } = await supabase.rpc('ai_log_usage', {
+      p_action: action,
+      p_provider: provider,
+      p_model: model,
+      p_prompt_tokens: usage?.prompt ?? 0,
+      p_output_tokens: usage?.output ?? 0,
+      p_total_tokens: usage?.total ?? 0,
+      p_ok: ok,
+    })
+    if (error) console.error('ai_log_usage failed', error.message)
+  }
   const models = [Deno.env.get('GEMINI_MODEL') || 'gemini-3.8-flash', Deno.env.get('GEMINI_FALLBACK_MODEL') || 'gemini-3.5-flash-lite']
   const failures: string[] = []
 
   if (geminiKey) {
     for (const model of models) {
       try {
-        const estimate = await gemini(geminiKey, model, prompt, image)
-        return json({ items: estimate.items, provider: 'gemini', model, remaining })
+        const r = await gemini(geminiKey, model, prompt, image)
+        await log('gemini', model, r.usage, true)
+        return json({ items: r.estimate.items, provider: 'gemini', model, remaining })
       } catch (e) {
         failures.push(`${model}: ${(e as Error).message}`)
+        // 429 (quota) is not counted by Google; other failures may be, so log them as failed requests
+        if (!(e instanceof ProviderError && e.status === 429)) await log('gemini', model, null, false)
         if (e instanceof ProviderError && e.status < 500 && e.status !== 429 && e.status !== 404) break
       }
     }
@@ -95,10 +114,12 @@ Deno.serve(async (req) => {
   if (openRouterKey && !image) {
     const model = Deno.env.get('OPENROUTER_MODEL') || 'meta-llama/llama-3.3-70b-instruct:free'
     try {
-      const estimate = await openRouter(openRouterKey, model, prompt)
-      return json({ items: estimate.items, provider: 'openrouter', model, remaining })
+      const r = await openRouter(openRouterKey, model, prompt)
+      await log('openrouter', model, r.usage, true)
+      return json({ items: r.estimate.items, provider: 'openrouter', model, remaining })
     } catch (e) {
       failures.push(`${model}: ${(e as Error).message}`)
+      await log('openrouter', model, null, false)
     }
   }
   console.error('food-estimate failed', failures.join(' | '))
@@ -142,7 +163,7 @@ const SCHEMA = {
   required: ['items'],
 }
 
-async function gemini(key: string, model: string, prompt: string, image: { mimeType: string; data: string } | null): Promise<Estimate> {
+async function gemini(key: string, model: string, prompt: string, image: { mimeType: string; data: string } | null): Promise<Result> {
   const parts: unknown[] = [{ text: prompt }]
   if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } })
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
@@ -157,10 +178,12 @@ async function gemini(key: string, model: string, prompt: string, image: { mimeT
   if (!res.ok) throw new ProviderError(res.status, `gemini ${res.status}`)
   const data = await res.json()
   const out = data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
-  return normalize(parseJson(out))
+  const u = data?.usageMetadata ?? {}
+  const usage = { prompt: u.promptTokenCount ?? 0, output: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0), total: u.totalTokenCount ?? 0 }
+  return { estimate: normalize(parseJson(out)), usage }
 }
 
-async function openRouter(key: string, model: string, prompt: string): Promise<Estimate> {
+async function openRouter(key: string, model: string, prompt: string): Promise<Result> {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
@@ -177,7 +200,11 @@ async function openRouter(key: string, model: string, prompt: string): Promise<E
   })
   if (!res.ok) throw new ProviderError(res.status, `openrouter ${res.status}`)
   const data = await res.json()
-  return normalize(parseJson(data?.choices?.[0]?.message?.content ?? ''))
+  const u = data?.usage ?? {}
+  return {
+    estimate: normalize(parseJson(data?.choices?.[0]?.message?.content ?? '')),
+    usage: { prompt: u.prompt_tokens ?? 0, output: u.completion_tokens ?? 0, total: u.total_tokens ?? 0 },
+  }
 }
 
 function parseJson(s: string): unknown {

@@ -1,7 +1,7 @@
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { downscaleJpeg } from '@/lib/image'
-import type { DraftItem, EstimateResult, Food, MealEntry, MealEntryInsert } from './types'
+import type { CatalogFood, DraftItem, EstimateResult, Food, MealEntry, MealEntryInsert, ProductHit } from './types'
 
 /** The caller's entries for one local day (RLS scopes the rows; no client-side user filter). */
 export async function listMeals(day: string): Promise<MealEntry[]> {
@@ -93,4 +93,24 @@ export async function estimateFood(input: { text?: string; image?: { mimeType: s
   }
   const items = Array.isArray(data?.items) ? data.items : []
   return { items, provider: String(data?.provider ?? ''), model: String(data?.model ?? ''), remaining: typeof data?.remaining === 'number' ? data.remaining : null }
+}
+
+/** Nutrition catalog (curated Turkish dishes + USDA), Turkish-aware search on the server. */
+export async function searchCatalog(q: string): Promise<CatalogFood[]> {
+  const { data, error } = await supabase.rpc('search_food_catalog', { p_query: q, p_limit: 25 })
+  if (error) throw error
+  return (data ?? []) as CatalogFood[]
+}
+
+/** Packaged products from Open Food Facts through the food-search Edge Function (never from the browser). */
+export async function searchProducts(q: string): Promise<ProductHit[]> {
+  const { data, error } = await supabase.functions.invoke('food-search', { body: { q } })
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const body = await (error.context as Response).json().catch(() => null)
+      throw new Error(typeof body?.error === 'string' ? body.error : 'SEARCH_UNAVAILABLE')
+    }
+    throw error
+  }
+  return Array.isArray(data?.items) ? (data.items as ProductHit[]) : []
 }

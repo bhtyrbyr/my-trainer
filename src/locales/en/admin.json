@@ -10,11 +10,72 @@
       "rejected": "No rejected registrations."
     }
   },
-  "status": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected" },
-  "actions": { "approve": "Approve", "reject": "Reject", "delete": "Delete account permanently" },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "actions": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "delete": "Delete account permanently"
+  },
   "delete": {
     "body": "{{name}}'s account, profile photo and all records will be permanently deleted. This cannot be undone. The person can send a new registration request with Google later.",
     "cancel": "Cancel",
     "confirm": "Delete permanently"
+  },
+  "ai": {
+    "link": "AI usage",
+    "linkToday": "{{count}} requests today",
+    "title": "AI usage",
+    "back": "Profile",
+    "quota": {
+      "title": "Google quota · today",
+      "reset": "Daily quotas reset every day at {{time}} (midnight Pacific) · in {{in}}",
+      "source": "Google does not expose the remaining quota. These numbers come from the app's own log; compare the limits with Google AI Studio > Rate limit.",
+      "requests": "requests",
+      "tokens": "tokens",
+      "perDay": "/ {{n}} per day",
+      "lastMinute": "Last minute: {{req}} / {{rpm}} requests · {{tok}} / {{tpm}} tokens",
+      "noLimit": "No limit entered",
+      "editLimits": "Edit limits",
+      "app": "App's own daily cap (all users, Istanbul day)",
+      "appValue": "{{used}} / {{limit}} requests"
+    },
+    "trend": {
+      "title": "Usage trend",
+      "days": "{{n}} days",
+      "metric": {
+        "tokens": "Tokens",
+        "requests": "Requests"
+      },
+      "chartLabel": "Daily AI usage",
+      "total": "Total {{value}}",
+      "empty": "No usage in this period."
+    },
+    "log": {
+      "title": "Who, when, how much",
+      "empty": "Nothing logged yet.",
+      "system": "System",
+      "actions": {
+        "food_estimate_text": "Food estimate (text)",
+        "food_estimate_photo": "Food estimate (photo)",
+        "catalog_translate": "Catalog translation",
+        "coach_chat": "Coach chat"
+      },
+      "row": "{{requests}} requests · {{tokens}} tokens",
+      "failed": "{{count}} failed",
+      "inOut": "in {{in}} · out {{out}}"
+    },
+    "limits": {
+      "title": "Model limits",
+      "hint": "Enter the free-tier values from Google AI Studio > Rate limit. RPM: requests per minute, TPM: tokens per minute, RPD: requests per day.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "rpm": "RPM",
+      "tpm": "TPM",
+      "rpd": "RPD"
+    }
   }
 }

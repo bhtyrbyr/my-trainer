@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/AuthProvider'
 import * as api from './api'
 import { useIsNutritionPreview } from './previewContext'
-import type { DraftItem, EstimateResult, Food, MealEntry, MealEntryInsert } from './types'
+import type { CatalogFood, DraftItem, EstimateResult, Food, MealEntry, MealEntryInsert, ProductHit } from './types'
 
 export const nutritionKeys = {
   all: ['nutrition'] as const,
   day: (day: string) => ['nutrition', 'day', day] as const,
   foods: ['nutrition', 'foods'] as const,
+  catalog: (q: string) => ['nutrition', 'catalog', q.toLocaleLowerCase('tr')] as const,
+  products: (q: string) => ['nutrition', 'products', q.toLocaleLowerCase('tr')] as const,
 }
 
 export function useMeals(day: string) {
@@ -130,5 +132,37 @@ export function useEstimateFood() {
       const image = photo ? await api.prepareFoodPhoto(photo) : undefined
       return api.estimateFood({ text: text.trim() || undefined, image, locale: i18n.resolvedLanguage === 'en' ? 'en' : 'tr' })
     },
+  })
+}
+
+const PREVIEW_CATALOG: CatalogFood[] = [
+  { id: 'tr:mercimek-corbasi', source: 'curated', name_en: 'Red lentil soup', name_tr: 'Mercimek çorbası', name_tr_machine: false, category: 'Çorbalar', kcal_100g: 56, protein_100g: 3.3, carb_100g: 8.6, fat_100g: 1.2, portion_g: 250, portion_tr: '1 kase', portion_en: '1 bowl', search_text: '', updated_at: '' },
+  { id: 'usda:173757', source: 'usda_sr', name_en: 'Lentils, mature seeds, cooked, boiled, without salt', name_tr: 'Mercimek, haşlanmış', name_tr_machine: true, category: 'Legumes and Legume Products', kcal_100g: 116, protein_100g: 9, carb_100g: 20.1, fat_100g: 0.4, portion_g: 198, portion_tr: '1 su bardağı', portion_en: '1 cup', search_text: '', updated_at: '' },
+]
+const PREVIEW_PRODUCTS: ProductHit[] = [
+  { code: '8690000000001', name: 'Kırmızı mercimek', brand: 'Örnek Marka', kcal_100g: 333, protein_100g: 24, carb_100g: 52, fat_100g: 1.5, serving_g: 50, serving_label: '50 g' },
+]
+
+/** Catalog search while typing (cheap, own database). */
+export function useCatalogSearch(q: string) {
+  const preview = useIsNutritionPreview()
+  return useQuery({
+    queryKey: nutritionKeys.catalog(q),
+    queryFn: () => (preview ? Promise.resolve(PREVIEW_CATALOG.filter((c) => (c.name_tr ?? c.name_en).toLocaleLowerCase('tr').includes(q.toLocaleLowerCase('tr').slice(0, 4)))) : api.searchCatalog(q)),
+    enabled: q.length >= 2,
+    staleTime: 10 * 60_000,
+    placeholderData: (prev) => prev,
+  })
+}
+
+/** Packaged-product search, only on an explicit tap (Open Food Facts allows ~10 searches a minute). */
+export function useProductSearch(q: string | null) {
+  const preview = useIsNutritionPreview()
+  return useQuery({
+    queryKey: nutritionKeys.products(q ?? ''),
+    queryFn: () => (preview ? new Promise<ProductHit[]>((r) => setTimeout(() => r(PREVIEW_PRODUCTS), 500)) : api.searchProducts(q!)),
+    enabled: q !== null && q.length >= 2,
+    staleTime: 60 * 60_000,
+    retry: false,
   })
 }

@@ -1,8 +1,11 @@
 -- pgTAP suite (RLS, anti-IDOR, points, approval, workouts). Runs in CI before every deploy
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
+-- The app's calendar day is Europe/Istanbul (points, streaks, weeks): test in the same zone so the
+-- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
+set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(123);
+select plan(131);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -27,7 +30,7 @@ select is(
       and has_function_privilege('authenticated', p.oid, 'execute')
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
-        'admin_set_registration_status', 'ai_consume', 'can_access', 'delete_my_account', 'finish_workout_session',
+        'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_set_registration_status', 'ai_consume', 'ai_log_usage', 'can_access', 'delete_my_account', 'finish_workout_session',
         'get_leaderboard', 'has_onboarded', 'is_admin', 'rls_auto_enable')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
@@ -187,7 +190,7 @@ select throws_ok(
 
 -- Strength session s1: 1 warmup + 3 working sets -------------------------------
 insert into public.workout_sessions (id, user_id, kind, title, started_at)
-values (:'s1', :'ub', 'strength', 'Push A', now() - interval '45 minutes');
+values (:'s1', :'ub', 'strength', 'Push A', greatest(now() - interval '45 minutes', date_trunc('day', now())));
 insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'se1', :'s1', :'ub', :'ex1', 1);
 insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps, is_warmup) values
   (:'se1', :'s1', :'ub', 1, 60, 10, true),
@@ -201,17 +204,21 @@ select is((select (r->>'total_volume_kg')::numeric from t_finish where label = '
 select is((select (r->>'points_awarded')::int from t_finish where label = 's1'), 56, 'finish: 50 + 2*3 session points; first log earns no PR points');
 select is((select jsonb_array_length(r->'new_prs') from t_finish where label = 's1'), 0, 'finish: first log is a baseline, not an announced PR');
 select throws_like($$ select public.finish_workout_session('00000000-0000-0000-0000-0000000000a1') $$, '%ALREADY_FINISHED%', 'a finished session cannot be finished again');
-select ok((select ended_at is not null and duration_sec between 2600 and 2800 from public.workout_sessions where id = :'s1'), 'finish: session closed with wall-clock duration');
+select ok((select ended_at is not null and duration_sec = floor(extract(epoch from (now() - started_at)))::int from public.workout_sessions where id = :'s1'), 'finish: session closed with wall-clock duration');
 select is((select points from public.point_events where user_id = :'ub' and ref_table = 'workout_sessions' and ref_id = :'s1'), 56, 'point_events: strength session row');
 select is((select count(*)::int from public.point_events where user_id = :'ub' and ref_table = 'personal_records'), 0, 'no PR point event for a baseline');
 select is((select total_points from public.profiles where user_id = :'ub'), 66, 'profile total = 10 + 56');
--- energy estimate: 45 min, RPE not logged -> MET 5.0 x 70 kg default x 0.75 h = 262.5
-select is((select kcal_estimate from public.workout_sessions where id = :'s1'), 263, 'kcal: strength estimate with default weight');
+-- energy estimate: RPE not logged -> MET 5.0 x 70 kg default x hours (45 min = 263 kcal)
+select is(
+  (select kcal_estimate from public.workout_sessions where id = :'s1'),
+  (select case when duration_sec < 60 then null else round(5.0 * 70 * duration_sec / 3600.0)::int end from public.workout_sessions where id = :'s1'),
+  'kcal: strength estimate with default weight (MET 5.0 x 70 kg x hours)'
+);
 select ok((select kcal_weight_kg is null from public.workout_sessions where id = :'s1'), 'kcal: default weight is flagged as assumed');
 select is((select e1rm from public.personal_records where user_id = :'ub' and exercise_id = :'ex1'), 116.67::numeric, 'personal_records row stored');
 
 -- s2: equal e1rm -> no PR --------------------------------------------------------
-insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s2', :'ub', 'strength', now() - interval '30 minutes');
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s2', :'ub', 'strength', greatest(now() - interval '30 minutes', date_trunc('day', now())));
 insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'se2', :'s2', :'ub', :'ex1', 1);
 insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps) values (:'se2', :'s2', :'ub', 1, 100, 5);
 insert into t_finish select 's2', public.finish_workout_session(:'s2');
@@ -220,7 +227,7 @@ select is((select (r->>'points_awarded')::int from t_finish where label = 's2'),
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'still one PR row');
 
 -- s3: higher e1rm -> PR, same day -> row upserted, no second PR points -------------
-insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s3', :'ub', 'strength', now() - interval '10 minutes');
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s3', :'ub', 'strength', greatest(now() - interval '10 minutes', date_trunc('day', now())));
 insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'se3', :'s3', :'ub', :'ex1', 1);
 insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps) values (:'se3', :'s3', :'ub', 1, 110, 5);
 insert into t_finish select 's3', public.finish_workout_session(:'s3');
@@ -231,7 +238,7 @@ select is((select (r->>'points_awarded')::int from t_finish where label = 's3'),
 select is((select total_points from public.profiles where user_id = :'ub'), 86, 'profile total after three sessions');
 
 -- s4: cardio -------------------------------------------------------------------------
-insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s4', :'ub', 'cardio', now() - interval '5 minutes');
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s4', :'ub', 'cardio', greatest(now() - interval '5 minutes', date_trunc('day', now())));
 insert into public.cardio_entries (session_id, user_id, activity, duration_sec, distance_m) values (:'s4', :'ub', 'run', 1800, 5000);
 insert into t_finish select 's4', public.finish_workout_session(:'s4');
 select is((select (r->>'duration_sec')::int from t_finish where label = 's4'), 1800, 'cardio duration taken from cardio_entries');
@@ -243,7 +250,7 @@ select is((select points from public.point_events where user_id = :'ub' and ref_
 update public.workout_sessions set kind = 'cardio', ended_at = null, total_sets = 99 where id = :'s3';
 select ok((select kind = 'strength' and ended_at is not null and total_sets = 1 from public.workout_sessions where id = :'s3'), 'client update of kind/ended_at/totals is ignored');
 update public.workout_sessions set kcal_estimate = 9999, kcal_weight_kg = 50 where id = :'s3';
-select ok((select kcal_estimate = 58 and kcal_weight_kg is null from public.workout_sessions where id = :'s3'), 'client cannot rewrite the kcal estimate');
+select ok((select kcal_estimate is distinct from 9999 and kcal_weight_kg is null from public.workout_sessions where id = :'s3'), 'client cannot rewrite the kcal estimate');
 delete from public.personal_records where user_id = :'ub';
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'client cannot delete personal_records');
 
@@ -260,7 +267,7 @@ select is((select total_points from public.profiles where user_id = :'ub'), 122,
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 1)), 1, 'last_sets_for_exercise(limit 1) returns the latest session''s sets');
 select is((select count(*)::int from public.last_sets_for_exercise(:'ex1', 3)), 6, 'last_sets_for_exercise(limit 3) spans three sessions');
 -- A newer finished session that lists the exercise but logged no sets must not hide the real "last time"
-insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s5', :'ub', 'strength', now() - interval '2 minutes');
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'s5', :'ub', 'strength', greatest(now() - interval '2 minutes', date_trunc('day', now())));
 insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'se5', :'s5', :'ub', :'ex1', 1);
 select public.finish_workout_session(:'s5');
 select is(
@@ -322,7 +329,7 @@ select is((select total_points from public.profiles where user_id = :'ub'), 46, 
 -- Deleting the only scoring activity of the day also rolls the streak back --------------------
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 insert into public.workout_sessions (id, user_id, kind, started_at)
-  values ('00000000-0000-0000-0000-0000000000a6', :'ua', 'strength', now() - interval '20 minutes');
+  values ('00000000-0000-0000-0000-0000000000a6', :'ua', 'strength', greatest(now() - interval '20 minutes', date_trunc('day', now())));
 insert into public.session_exercises (id, session_id, user_id, exercise_id, position)
   values ('00000000-0000-0000-0000-0000000000b6', '00000000-0000-0000-0000-0000000000a6', :'ua', :'ex1', 1);
 insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps)
@@ -335,7 +342,7 @@ delete from public.workout_sessions where id = '00000000-0000-0000-0000-00000000
 select is((select current_streak from public.profiles where user_id = :'ua'), 0, 'deleting it resets the streak');
 select ok((select last_active_on is null and total_points = 0 from public.profiles where user_id = :'ua'), 'and clears last_active_on and points');
 -- short cardio earns nothing
-insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'cardio', now() - interval '5 minutes');
+insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'cardio', greatest(now() - interval '5 minutes', date_trunc('day', now())));
 insert into public.cardio_entries (session_id, user_id, activity, duration_sec) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'run', 300);
 select is((public.finish_workout_session('00000000-0000-0000-0000-0000000000a7')->>'points_awarded')::int, 0, 'cardio under 10 minutes earns no points');
 
@@ -346,7 +353,7 @@ select is(public.cardio_met('walk', null), 3.5, 'cardio MET: walking default wit
 insert into public.profile_private (user_id, start_weight_kg, sex, birth_year)
 values (:'ua', 80, 'male', extract(year from current_date)::int - 30)
 on conflict (user_id) do update set start_weight_kg = 80, sex = 'male', birth_year = extract(year from current_date)::int - 30;
-insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', now() - interval '40 minutes');
+insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', greatest(now() - interval '40 minutes', date_trunc('day', now())));
 insert into public.cardio_entries (session_id, user_id, activity, duration_sec, avg_hr) values ('00000000-0000-0000-0000-0000000000a8', :'ua', 'run', 1800, 150);
 -- Keytel (male, 150 bpm, 80 kg, 30 y): (-55.0969 + 94.635 + 15.904 + 6.051) / 4.184 = 14.70 kcal/min x 30 = 441
 select is((select kcal from public.estimate_session_kcal('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', 1800)), 441, 'kcal: heart-rate equation when weight, sex, age and HR are known');
@@ -429,6 +436,20 @@ select is((select count(*)::int from public.foods), 0, 'foods IDOR: bob sees non
 insert into public.meal_entries (id, user_id, eaten_on, meal_slot, food_id, name, kcal)
   values ('00000000-0000-0000-0000-0000000000c2', :'ub', (now() at time zone 'Europe/Istanbul')::date, 'snack', '00000000-0000-0000-0000-0000000000d1', 'x', 1);
 select is((select food_id from public.meal_entries where id = '00000000-0000-0000-0000-0000000000c2'), null::uuid, 'meals: another user''s food id is dropped');
+reset role;
+
+-- AI usage log + admin dashboard ----------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select lives_ok($$ select public.ai_log_usage('food_estimate_text', 'gemini', 'gemini-3.8-flash', 120, 80, 200, true) $$, 'ai log: a user can log their own request');
+select throws_like($$ select public.ai_log_usage('catalog_translate', 'gemini', 'x', 1, 1, 2, true) $$, '%BAD_ACTION%', 'ai log: users cannot log system actions');
+select is((select count(*)::int from public.ai_usage_log), 0, 'ai log: users cannot read the log directly');
+select throws_ok($$ insert into public.ai_usage_log (action, provider, model) values ('coach_chat', 'gemini', 'x') $$, '42501', null, 'ai log: users cannot insert directly');
+select throws_like($$ select * from public.admin_ai_usage(30) $$, '%FORBIDDEN%', 'ai log: non-admins cannot read the dashboard');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((select sum(total_tokens)::int from public.admin_ai_usage(30) where username = 'bob'), 200, 'ai log: the admin sees who used how many tokens');
+select is((select requests_today from public.admin_ai_live() where model = 'gemini-3.8-flash'), 1, 'ai log: the admin sees today''s requests per model');
+select ok((select global_limit > 0 from public.admin_ai_app_today()), 'ai log: the admin sees the app''s daily budget');
 reset role;
 
 select * from finish();

@@ -42,7 +42,9 @@
     "aiQuota": "Bugünkü yapay zekâ hakkın doldu. Yarın tekrar deneyebilir ya da elle girebilirsin.",
     "aiNotConfigured": "Yapay zekâ tahmini henüz açılmadı. Şimdilik elle girebilirsin.",
     "aiUnavailable": "Yapay zekâ servisine şu an ulaşılamıyor. Biraz sonra dene ya da elle gir.",
-    "aiBadInput": "Tahmin için bir yemek adı yaz ya da fotoğraf ekle."
+    "aiBadInput": "Tahmin için bir yemek adı yaz ya da fotoğraf ekle.",
+    "searchBusy": "Ürün araması şu an yoğun. Bir dakika sonra tekrar dene.",
+    "searchUnavailable": "Ürün aramasına şu an ulaşılamıyor."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

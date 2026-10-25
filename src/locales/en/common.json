@@ -42,7 +42,9 @@
     "aiQuota": "You have used today's AI requests. Try again tomorrow or enter it by hand.",
     "aiNotConfigured": "AI estimates are not switched on yet. You can enter it by hand.",
     "aiUnavailable": "The AI service is unreachable right now. Try again shortly or enter it by hand.",
-    "aiBadInput": "Describe a meal or add a photo to get an estimate."
+    "aiBadInput": "Describe a meal or add a photo to get an estimate.",
+    "searchBusy": "Product search is busy right now. Try again in a minute.",
+    "searchUnavailable": "Product search is unreachable right now."
   },
   "update": {
     "title": "New version released",

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronRight, LogOut, UserCheck } from 'lucide-react'
-import { usePendingCount } from '@/features/admin/hooks'
+import { ChevronRight, LogOut, Sparkles, UserCheck } from 'lucide-react'
+import { useAiLive, usePendingCount } from '@/features/admin/hooks'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -18,6 +18,8 @@ export function SettingsPage() {
   const { user, profile, signOut } = useAuth()
   const { settings, updateSettings } = useUserSettings()
   const pending = usePendingCount()
+  const aiLive = useAiLive()
+  const aiToday = (aiLive.data ?? []).reduce((s, m) => s + m.requests_today, 0)
   const avatar = avatarUrl(profile?.avatar_path, profile?.updated_at)
 
   const changeLocale = (locale: Locale) => {
@@ -55,6 +57,15 @@ export function SettingsPage() {
               {(pending.data ?? 0) > 0 && (
                 <span className="tabular rounded-full bg-volt px-2 py-0.5 text-xs font-semibold text-volt-ink">{pending.data}</span>
               )}
+              <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+            </Link>
+            <Link
+              to="/admin/ai-usage"
+              className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+            >
+              <Sparkles className="size-5 text-ink-muted" aria-hidden />
+              <span className="flex-1 text-[15px]">{t('admin:ai.link')}</span>
+              {aiLive.data && <span className="tabular text-xs text-ink-faint">{t('admin:ai.linkToday', { count: aiToday })}</span>}
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>
           </section>

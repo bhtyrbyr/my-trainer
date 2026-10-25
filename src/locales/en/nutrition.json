@@ -52,10 +52,10 @@
     "title": "Add food",
     "slot": "Meal",
     "tabs": {
+      "search": "Search",
       "describe": "Describe",
       "photo": "Photo",
-      "manual": "Manual",
-      "saved": "Saved"
+      "manual": "Manual"
     },
     "describeLabel": "What did you eat?",
     "describePlaceholder": "E.g. 2 eggs, 1 slice of white cheese, 2 slices of wholemeal bread",
@@ -108,5 +108,23 @@
     "protein": "P",
     "carb": "C",
     "fat": "F"
+  },
+  "search": {
+    "placeholder": "Search foods: lentils, yogurt…",
+    "savedRecent": "Your saved foods",
+    "savedMatches": "In your saved foods",
+    "catalog": "Nutrition database",
+    "products": "Packaged products",
+    "searchProducts": "Search packaged products (Open Food Facts)",
+    "noCatalog": "No match in the nutrition database.",
+    "noProducts": "No packaged product found.",
+    "notFound": "Not found?",
+    "askAi": "Ask the AI",
+    "approx": "approximate",
+    "per100": "100 g: {{kcal}} kcal",
+    "grams": "Amount",
+    "addGrams": "Add · {{kcal}} kcal",
+    "hint": "Type a food: your saved foods and the nutrition database are searched first; if it is not there, try packaged products or the AI.",
+    "offCredit": "Packaged product data: Open Food Facts (ODbL). Values are per 100 g."
   }
 }

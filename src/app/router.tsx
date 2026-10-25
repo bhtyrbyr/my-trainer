@@ -54,6 +54,11 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         ],
       },
       {
+        path: '/__dev/ai-usage',
+        element: <AppShell />,
+        children: [{ index: true, lazy: page(() => import('@/features/admin/dev/DevAiUsagePreview'), 'DevAiUsagePreview') }],
+      },
+      {
         // body metrics with sample data: ?empty=1 for a user without entries
         path: '/__dev/track',
         lazy: devBody('DevBodyLayout'),
@@ -120,6 +125,19 @@ export const router = createBrowserRouter([
       { path: 'today', lazy: page(() => import('@/features/today/pages/TodayPage'), 'TodayPage') },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
+      {
+        path: 'admin/ai-usage',
+        lazy: async () => {
+          const { AiUsagePage } = await import('@/features/admin/pages/AiUsagePage')
+          return {
+            Component: () => (
+              <RequireAdmin>
+                <AiUsagePage />
+              </RequireAdmin>
+            ),
+          }
+        },
+      },
       {
         path: 'admin/requests',
         lazy: async () => {

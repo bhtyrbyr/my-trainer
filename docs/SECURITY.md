@@ -37,3 +37,9 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - Input is limited to a 500-character description and one JPEG/PNG/WebP image (<= ~1.5 MB). The client re-encodes photos to a 1024px JPEG, which drops EXIF/location. Nothing is stored server-side.
 - The user text is wrapped as a quoted food description in the prompt; model output is treated as untrusted data and reduced to short strings and clamped numbers before it reaches the client.
 - Gemini's free tier may use submitted content to improve Google products; the add-food screen says so and asks users not to send photos with faces or personal details.
+
+## Food catalog and AI usage log
+
+- `food_catalog` is shared reference data: readable by approved users, written only by `scripts/sync-foods.mjs` with the service role in CI. `search_food_catalog()` runs as the caller.
+- `food-search` (Open Food Facts) verifies the JWT and `can_access()`, sends a descriptive User-Agent, caches results in memory and returns only normalized numbers and short strings.
+- `ai_usage_log` has RLS with no policies. Users write their own rows only through `ai_log_usage()`, which accepts user actions only. Admins read through `admin_ai_usage()`, `admin_ai_live()` and `admin_ai_app_today()`, which check `is_admin()`. Only counts and model names are stored.

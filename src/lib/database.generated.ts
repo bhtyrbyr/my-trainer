@@ -45,6 +45,49 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_log: {
+        Row: {
+          action: string
+          created_at: string
+          day_pt: string
+          id: number
+          model: string
+          ok: boolean
+          output_tokens: number
+          prompt_tokens: number
+          provider: string
+          total_tokens: number
+          user_id: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          created_at?: string
+          day_pt?: string
+          id?: never
+          model: string
+          ok?: boolean
+          output_tokens?: number
+          prompt_tokens?: number
+          provider: string
+          total_tokens?: number
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          day_pt?: string
+          id?: never
+          model?: string
+          ok?: boolean
+          output_tokens?: number
+          prompt_tokens?: number
+          provider?: string
+          total_tokens?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       allowed_emails: {
         Row: {
           added_by: string | null
@@ -266,6 +309,61 @@ export type Database = {
           target_muscles?: string[]
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      food_catalog: {
+        Row: {
+          carb_100g: number
+          category: string | null
+          fat_100g: number
+          id: string
+          kcal_100g: number
+          name_en: string
+          name_tr: string | null
+          name_tr_machine: boolean
+          portion_en: string | null
+          portion_g: number | null
+          portion_tr: string | null
+          protein_100g: number
+          search_text: string | null
+          source: string
+          updated_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          carb_100g?: number
+          category?: string | null
+          fat_100g?: number
+          id: string
+          kcal_100g: number
+          name_en: string
+          name_tr?: string | null
+          name_tr_machine?: boolean
+          portion_en?: string | null
+          portion_g?: number | null
+          portion_tr?: string | null
+          protein_100g?: number
+          search_text?: never
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          carb_100g?: number
+          category?: string | null
+          fat_100g?: number
+          id?: string
+          kcal_100g?: number
+          name_en?: string
+          name_tr?: string | null
+          name_tr_machine?: boolean
+          portion_en?: string | null
+          portion_g?: number | null
+          portion_tr?: string | null
+          protein_100g?: number
+          search_text?: never
+          source?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1002,6 +1100,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_ai_app_today: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          global_limit: number
+          used: number
+        }[]
+      }
+      admin_ai_live: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          model: string
+          requests_last_minute: number
+          requests_today: number
+          tokens_last_minute: number
+          tokens_today: number
+        }[]
+      }
+      admin_ai_usage: {
+        Args: { p_days?: number }
+        Returns: {
+          action: string
+          day_pt: string
+          display_name: string
+          failed: number
+          model: string
+          output_tokens: number
+          prompt_tokens: number
+          requests: number
+          total_tokens: number
+          user_id: string
+          username: string
+        }[]
+      }
       admin_delete_rejected_user: { Args: { p_user: string }; Returns: undefined }
       admin_list_registrations: {
         Args: { p_limit?: number; p_status?: string }
@@ -1019,6 +1150,18 @@ export type Database = {
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
       ai_consume: { Args: Record<PropertyKey, never>; Returns: number }
+      ai_log_usage: {
+        Args: {
+          p_action: string
+          p_model: string
+          p_ok: boolean
+          p_output_tokens: number
+          p_prompt_tokens: number
+          p_provider: string
+          p_total_tokens: number
+        }
+        Returns: undefined
+      }
       award_points: {
         Args: {
           p_kind: string
@@ -1057,6 +1200,7 @@ export type Database = {
         }[]
       }
       finish_workout_session: { Args: { p_session: string }; Returns: Json }
+      fold_tr: { Args: { p: string }; Returns: string }
       get_leaderboard: {
         Args: { p_limit?: number; p_period?: string }
         Returns: {
@@ -1093,6 +1237,32 @@ export type Database = {
       }
       recompute_streak: { Args: { p_user: string }; Returns: undefined }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
+      search_food_catalog: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          carb_100g: number
+          category: string | null
+          fat_100g: number
+          id: string
+          kcal_100g: number
+          name_en: string
+          name_tr: string | null
+          name_tr_machine: boolean
+          portion_en: string | null
+          portion_g: number | null
+          portion_tr: string | null
+          protein_100g: number
+          search_text: string | null
+          source: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: '*'
+          to: 'food_catalog'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       strength_met: { Args: { p_avg_rpe: number }; Returns: number }
       sync_protein_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
       todays_templates: {
