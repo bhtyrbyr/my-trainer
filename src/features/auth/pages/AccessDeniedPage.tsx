@@ -18,6 +18,7 @@ export function AccessDeniedPage() {
 
   if (status === 'ready') return <Navigate to="/" replace />
   if (status === 'onboarding') return <Navigate to="/onboarding" replace />
+  if (status === 'pending' || status === 'rejected') return <Navigate to="/pending" replace />
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-6 px-6 text-center pt-safe pb-safe">

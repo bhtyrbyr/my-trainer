@@ -26,6 +26,7 @@ export function AuthCallbackPage() {
     }
     if (status === 'ready') navigate('/', { replace: true })
     else if (status === 'onboarding') navigate('/onboarding', { replace: true })
+    else if (status === 'pending' || status === 'rejected') navigate('/pending', { replace: true })
     else if (status === 'blocked') navigate('/denied', { replace: true })
     else if (status === 'signed-out') {
       const id = window.setTimeout(() => navigate('/login', { replace: true }), 3000)

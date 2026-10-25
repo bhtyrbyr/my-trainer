@@ -104,7 +104,8 @@ Soru-cevap turlarında netleşen isterler:
 - Anti-hile: günlük toplam tavan, aynı gün aynı olaya tekrarlı puan yok, geri tarihli kayıtlar (>2 gün) puan kazandırmaz, silinen kayıtların puanı geri alınır.
 
 **M13 — Yönetim (ürün sahibi)**
-- `profiles.role = 'admin'` olan kullanıcı Ayarlar → Yönetim'de: erişim modu (`open`/`invite`), beyaz liste yönetimi, kullanıcı engelleme (`is_blocked`), AI günlük global kota, kullanım özeti (kullanıcı sayısı, Supabase/AI kota yüzdesi).
+- **Kayıt onayı** (2026-10-25 eklendi, Faz 0'da uygulandı): Onboarding tamamlanan her yeni hesap `status = 'pending'` ile başlar ve "Onay bekleniyor" ekranında kalır; yalnızca kendi profil satırını okuyabilir, başka hiçbir tabloya erişemez (`can_access()` onaylı olmayı şart koşar). Yönetici Ayarlar → Yönetim → **Kayıt istekleri**'nde (Bekleyen / Onaylı / Reddedilen sekmeleri, e-posta görünür) onaylar veya reddeder; bekleyen sayısı rozet olarak görünür. `app_config.require_approval` kapatılırsa yeni hesaplar doğrudan onaylı olur. Yönetici hesaplar her zaman onaylıdır; yönetici kendi durumunu değiştiremez.
+- `profiles.role = 'admin'` olan kullanıcı Ayarlar → Yönetim'de ayrıca (Faz 4): erişim modu (`open`/`invite`), beyaz liste yönetimi, kullanıcı engelleme (`is_blocked`), AI günlük global kota, kullanım özeti (kullanıcı sayısı, Supabase/AI kota yüzdesi).
 
 **M8 — Ayarlar**
 - Dil (TR/EN), birim (kg/lb, cm/in), günlük hedefler, haftanın başlangıç günü, AI sağlayıcı tercihi, fotoğraf parolası / kurtarma kodu yönetimi, liderlik görünürlüğü, profil düzenleme, hesabı sil (tüm veriler + Storage dosyaları kaskad silinir).

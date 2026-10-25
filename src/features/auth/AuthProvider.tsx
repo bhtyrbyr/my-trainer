@@ -10,9 +10,11 @@ import type { Profile } from '@/lib/database.types'
  *  checking    session exists, loading the profile
  *  blocked     profile.is_blocked (admin action) -> access denied screen
  *  onboarding  signed in but no completed profile -> /onboarding (mandatory username + avatar)
- *  ready       onboarded, app may render
+ *  pending     onboarded, waiting for admin approval -> /pending
+ *  rejected    admin rejected the registration -> /pending (rejected variant)
+ *  ready       onboarded + approved, app may render
  */
-export type AuthStatus = 'loading' | 'signed-out' | 'checking' | 'blocked' | 'onboarding' | 'ready'
+export type AuthStatus = 'loading' | 'signed-out' | 'checking' | 'blocked' | 'onboarding' | 'pending' | 'rejected' | 'ready'
 
 type AuthContextValue = {
   status: AuthStatus
@@ -39,6 +41,8 @@ async function loadProfile(userId: string): Promise<Profile | null> {
 function statusFor(profile: Profile | null): AuthStatus {
   if (!profile || !profile.onboarding_completed_at) return 'onboarding'
   if (profile.is_blocked) return 'blocked'
+  if (profile.status === 'pending') return 'pending'
+  if (profile.status === 'rejected') return 'rejected'
   return 'ready'
 }
 

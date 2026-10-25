@@ -1,0 +1,15 @@
+{
+  "section": "Yönetim",
+  "you": "sen",
+  "requests": {
+    "title": "Kayıt istekleri",
+    "link": "Kayıt istekleri",
+    "empty": {
+      "pending": "Bekleyen kayıt isteği yok.",
+      "approved": "Henüz onaylanmış kayıt yok.",
+      "rejected": "Reddedilmiş kayıt yok."
+    }
+  },
+  "status": { "pending": "Bekleyen", "approved": "Onaylı", "rejected": "Reddedilen" },
+  "actions": { "approve": "Onayla", "reject": "Reddet" }
+}
