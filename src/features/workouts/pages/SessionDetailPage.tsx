@@ -11,6 +11,7 @@ import { ConfirmSheet } from '../components/ConfirmSheet'
 import { sessionTitle } from '../components/sessionTitle'
 import { useDateLocale, useDeleteSession, useSessionBundle, useWeightUnit } from '../hooks'
 import { formatClock, isWorkingSet, paceSecPerKm, sessionVolumeKg } from '../logic'
+import { EnergyLine } from '../components/EnergyLine'
 import { useIsPreview } from '../previewContext'
 
 export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
@@ -108,6 +109,7 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
             </>
           )}
         </dl>
+        {s.ended_at && <EnergyLine kcal={s.kcal_estimate} weightKg={s.kcal_weight_kg == null ? null : Number(s.kcal_weight_kg)} />}
 
         {s.kind === 'cardio' && cardio && (
           <p className="mt-4 text-sm text-ink-muted">{t(`cardio.activity.${cardio.activity}`)}</p>

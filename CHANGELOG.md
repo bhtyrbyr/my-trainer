@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+### Added
+- **Workout energy estimate**: every finished session gets an estimated kcal burned, computed by the database (MET values from the 2024 Compendium of Physical Activities; strength by average RPE, cardio by activity and speed, the Keytel heart-rate equation when heart rate, weight, sex and age are known). Shown in the workout summary, session detail and history, and as "Burned today" on the dashboard. It earns no points and is never added to eaten calories.
 
 ## [0.2.0] - 2026-10-25
 ### Added

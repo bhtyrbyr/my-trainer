@@ -50,6 +50,12 @@ Soru-cevap turlarında netleşen isterler:
 - Kişisel rekor (PR) tespiti: egzersiz başına en yüksek kg / tahmini 1RM, yeni PR'da bildirim.
 - Geçmiş: takvim görünümü + seans detayları, düzenleme/silme.
 
+**M1b — Antrenman kalorisi ve günlük enerji** (2026-10-25 eklendi, Faz 2'nin ilk adımı)
+- Her bitirilen seans için tahmini yakılan kalori veritabanında hesaplanır ve seansa yazılır; istemci değiştiremez. Formül: MET × kg × saat (2024 Fiziksel Aktivite Kompendiyumu). Ağırlık antrenmanı: ortalama RPE < 7 → 3,5, RPE yok veya 7–8,4 → 5,0, ≥ 8,5 → 6,0; süre dinlenmeler dahil, en fazla 3 saat, en az 1 çalışma seti. Kardiyo: aktivite + hız bandı (mesafe varsa), en fazla 4 saat; nabız, kilo, cinsiyet ve yaş biliniyorsa Keytel (2005) nabız denklemi.
+- Kilo kaynağı: önce son kilo kaydı (M2 gelince), yoksa onboarding başlangıç kilosu, o da yoksa 70 kg varsayımı (ekranda belirtilir).
+- **Günlük kalori takibi**: "Yenilen" (M3) ve "Yakılan" (antrenmanlar) günlük olarak **ayrı ayrı** gösterilir; antrenman kalorisi yeme hedefine eklenmez, birbirinden düşülmez (kullanıcı kararı). Kalori puan kazandırmaz.
+- Faz 2 sırası: 1) antrenman kalorisi, 2) vücut ölçüleri/kilo, 3) beslenme + Gemini + günlük enerji kartı (yenilen | yakılan), 4) uyku/su, 5) şifreli fotoğraflar.
+
 **M2 — Vücut metrikleri**
 - Kilo (günlük), bel/göğüs/kol/kalça/uyluk ölçüleri (haftalık).
 - Trend grafiği, 7 günlük hareketli ortalama, hedef kilo çizgisi.

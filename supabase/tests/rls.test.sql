@@ -2,7 +2,7 @@
 -- (.github/workflows/ci.yml job "db-tests"); locally: npx supabase start && npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(91);
+select plan(100);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -205,6 +205,9 @@ select ok((select ended_at is not null and duration_sec between 2600 and 2800 fr
 select is((select points from public.point_events where user_id = :'ub' and ref_table = 'workout_sessions' and ref_id = :'s1'), 56, 'point_events: strength session row');
 select is((select count(*)::int from public.point_events where user_id = :'ub' and ref_table = 'personal_records'), 0, 'no PR point event for a baseline');
 select is((select total_points from public.profiles where user_id = :'ub'), 66, 'profile total = 10 + 56');
+-- energy estimate: 45 min, RPE not logged -> MET 5.0 x 70 kg default x 0.75 h = 262.5
+select is((select kcal_estimate from public.workout_sessions where id = :'s1'), 263, 'kcal: strength estimate with default weight');
+select ok((select kcal_weight_kg is null from public.workout_sessions where id = :'s1'), 'kcal: default weight is flagged as assumed');
 select is((select e1rm from public.personal_records where user_id = :'ub' and exercise_id = :'ex1'), 116.67::numeric, 'personal_records row stored');
 
 -- s2: equal e1rm -> no PR --------------------------------------------------------
@@ -233,10 +236,14 @@ insert into public.cardio_entries (session_id, user_id, activity, duration_sec, 
 insert into t_finish select 's4', public.finish_workout_session(:'s4');
 select is((select (r->>'duration_sec')::int from t_finish where label = 's4'), 1800, 'cardio duration taken from cardio_entries');
 select is((select (r->>'points_awarded')::int from t_finish where label = 's4'), 36, 'cardio: 30 + floor(1800/300)');
+-- 5 km in 30 min = 10 km/h -> MET 9.8 x 70 x 0.5 h = 343
+select is((select kcal_estimate from public.workout_sessions where id = :'s4'), 343, 'kcal: cardio estimate from activity + speed');
 select is((select points from public.point_events where user_id = :'ub' and ref_table = 'personal_records' and ref_id = :'ex1' || ':' || (now() at time zone 'Europe/Istanbul')::date::text), 20, 'PR point event keyed exercise:local date');
 -- clients cannot rewrite server-owned session columns or delete PRs
 update public.workout_sessions set kind = 'cardio', ended_at = null, total_sets = 99 where id = :'s3';
 select ok((select kind = 'strength' and ended_at is not null and total_sets = 1 from public.workout_sessions where id = :'s3'), 'client update of kind/ended_at/totals is ignored');
+update public.workout_sessions set kcal_estimate = 9999, kcal_weight_kg = 50 where id = :'s3';
+select ok((select kcal_estimate = 58 and kcal_weight_kg is null from public.workout_sessions where id = :'s3'), 'client cannot rewrite the kcal estimate');
 delete from public.personal_records where user_id = :'ub';
 select is((select count(*)::int from public.personal_records where user_id = :'ub'), 1, 'client cannot delete personal_records');
 
@@ -331,6 +338,20 @@ select ok((select last_active_on is null and total_points = 0 from public.profil
 insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'cardio', now() - interval '5 minutes');
 insert into public.cardio_entries (session_id, user_id, activity, duration_sec) values ('00000000-0000-0000-0000-0000000000a7', :'ua', 'run', 300);
 select is((public.finish_workout_session('00000000-0000-0000-0000-0000000000a7')->>'points_awarded')::int, 0, 'cardio under 10 minutes earns no points');
+
+-- energy helpers (run as the test owner) -------------------------------------------------
+reset role;
+select is(public.strength_met(9), 6.0, 'strength MET: vigorous when average RPE >= 8.5');
+select is(public.cardio_met('walk', null), 3.5, 'cardio MET: walking default without distance');
+insert into public.profile_private (user_id, start_weight_kg, sex, birth_year)
+values (:'ua', 80, 'male', extract(year from current_date)::int - 30)
+on conflict (user_id) do update set start_weight_kg = 80, sex = 'male', birth_year = extract(year from current_date)::int - 30;
+insert into public.workout_sessions (id, user_id, kind, started_at) values ('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', now() - interval '40 minutes');
+insert into public.cardio_entries (session_id, user_id, activity, duration_sec, avg_hr) values ('00000000-0000-0000-0000-0000000000a8', :'ua', 'run', 1800, 150);
+-- Keytel (male, 150 bpm, 80 kg, 30 y): (-55.0969 + 94.635 + 15.904 + 6.051) / 4.184 = 14.70 kcal/min x 30 = 441
+select is((select kcal from public.estimate_session_kcal('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', 1800)), 441, 'kcal: heart-rate equation when weight, sex, age and HR are known');
+select is((select weight_kg from public.estimate_session_kcal('00000000-0000-0000-0000-0000000000a8', :'ua', 'cardio', 1800)), 80::numeric, 'kcal: known weight is reported');
+select ok(not has_function_privilege('authenticated', 'public.estimate_session_kcal(uuid, uuid, text, integer)', 'execute'), 'clients cannot call the estimator directly');
 
 select * from finish();
 rollback;

@@ -131,6 +131,8 @@ function liveBundle(push: TemplateWithExercises, id: string, withExercises: bool
       notes: null,
       total_volume_kg: 0,
       total_sets: 0,
+      kcal_estimate: null,
+      kcal_weight_kg: null,
       created_at: iso(NOW),
       updated_at: iso(NOW),
     },
@@ -158,6 +160,7 @@ function historyItems(month: Date): HistoryItem[] {
       duration_sec: 3120,
       total_sets: 18,
       total_volume_kg: 8420,
+      kcal_estimate: 364,
       template_id: 'tpl-push',
       templateName: 'İtiş: göğüs, omuz',
       cardio: [],
@@ -182,7 +185,7 @@ function detailBundle(): SessionBundle {
   const started = addDays(NOW, -2)
   return {
     ...b,
-    session: { ...b.session, started_at: iso(started), ended_at: iso(new Date(started.getTime() + 3_120_000)), duration_sec: 3120, total_sets: 5, total_volume_kg: 2765 },
+    session: { ...b.session, started_at: iso(started), ended_at: iso(new Date(started.getTime() + 3_120_000)), duration_sec: 3120, total_sets: 5, total_volume_kg: 2765, kcal_estimate: 364, kcal_weight_kg: 78 },
   }
 }
 
@@ -248,7 +251,7 @@ export function DevTemplateEditor() {
 }
 
 export function DevDashboard() {
-  return <DashboardPage preview={{ points: 1240, streak: 9 }} />
+  return <DashboardPage preview={{ points: 1240, streak: 9, burned: { kcal: 412, sessions: 1 } }} />
 }
 
 export function DevSessionDetail() {
@@ -264,6 +267,8 @@ const SAMPLE_SUMMARY: FinishSummary = {
     { exercise_id: EX.bench.id, e1rm: 104.5, weight_kg: 82.5, reps: 8 },
     { exercise_id: EX.ohp.id, e1rm: 63.33, weight_kg: 50, reps: 8 },
   ],
+  kcal_estimate: 412,
+  kcal_weight_kg: null,
 }
 
 /** ?state=entry (default) | rest | empty | summary */
