@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -19,7 +19,21 @@ function buildCommit(): string {
   }
 }
 
-export default defineConfig({
+/**
+ * The production Content-Security-Policy lives in vercel.json. `vite preview` serves the same policy,
+ * pointed at the build's Supabase origin, so it can be tested locally before a deploy.
+ */
+const PROD_SUPABASE = 'https://tnamatnobmtxvdtovkzp.supabase.co'
+function previewHeaders(supabaseUrl: string | undefined): Record<string, string> {
+  const vercel = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8')) as { headers: { headers: { key: string; value: string }[] }[] }
+  const csp = vercel.headers.flatMap((h) => h.headers).find((h) => h.key === 'Content-Security-Policy')?.value
+  if (!csp || !supabaseUrl) return {}
+  const origin = new URL(supabaseUrl).origin
+  const ws = origin.replace(/^http/, 'ws')
+  return { 'Content-Security-Policy': csp.replaceAll(PROD_SUPABASE, origin).replaceAll(PROD_SUPABASE.replace('https://', 'wss://'), ws) }
+}
+
+export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_COMMIT__: JSON.stringify(buildCommit()),
@@ -50,6 +64,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallbackDenylist: [/^\/auth\/callback/],
         runtimeCaching: [
+          {
+            // Photo vault and photo rows: never from a cache. A stale "no vault yet" answer could lead
+            // to a second vault being created; rows carry IVs and wrapped data. Must precede the rule below.
+            urlPattern: ({ url }) => /^\/rest\/v1\/(photo_vault|progress_photos)\b/.test(url.pathname),
+            handler: 'NetworkOnly',
+          },
           {
             // Supabase REST reads: network first, fall back to cache when offline.
             urlPattern: ({ url }) =>
@@ -83,8 +103,12 @@ export default defineConfig({
               ],
             },
           },
-          // NOTE: the progress-photos bucket is intentionally NOT cached by the service worker.
-          // Encrypted blobs are decrypted in memory only (see docs/PRD.md M9).
+          {
+            // Progress photos: never cached by the service worker (ciphertext is decrypted in memory only,
+            // CLAUDE.md rule 5). Explicit NetworkOnly so no future cache rule can pick them up.
+            urlPattern: ({ url }) => url.pathname.includes('/storage/v1/object/') && url.pathname.includes('/progress-photos/'),
+            handler: 'NetworkOnly',
+          },
         ],
       },
     }),
@@ -109,4 +133,5 @@ export default defineConfig({
     // Agent worktrees live inside the repo folder; never watch or reload because of them.
     watch: { ignored: ['**/.claude/worktrees/**'] },
   },
-})
+  preview: { headers: previewHeaders(loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_URL) },
+}))

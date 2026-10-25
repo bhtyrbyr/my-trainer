@@ -15,7 +15,12 @@ describe('request trace privacy', () => {
     expect(out!.length).toBeLessThan(200)
   })
   it('keeps only path and query, and flags auth endpoints', () => {
-    expect(describeUrl('https://x.supabase.co/rest/v1/meal_entries?eaten_on=eq.2026-10-26')).toEqual({ path: '/rest/v1/meal_entries?eaten_on=eq.2026-10-26', isAuth: false })
-    expect(describeUrl('https://x.supabase.co/auth/v1/token?grant_type=refresh_token').isAuth).toBe(true)
+    expect(describeUrl('https://x.supabase.co/rest/v1/meal_entries?eaten_on=eq.2026-10-26')).toEqual({ path: '/rest/v1/meal_entries?eaten_on=eq.2026-10-26', noBody: false })
+    expect(describeUrl('https://x.supabase.co/auth/v1/token?grant_type=refresh_token').noBody).toBe(true)
+    // wrapped keys, IVs and ciphertext never land in a report
+    expect(describeUrl('https://x.supabase.co/rest/v1/photo_vault?select=*').noBody).toBe(true)
+    expect(describeUrl('https://x.supabase.co/rest/v1/progress_photos').noBody).toBe(true)
+    expect(describeUrl('https://x.supabase.co/storage/v1/object/progress-photos/u/p.img.bin').noBody).toBe(true)
+    expect(describeUrl('https://x.supabase.co/rest/v1/progress_photos_x').noBody).toBe(false)
   })
 })

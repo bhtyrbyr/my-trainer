@@ -44,7 +44,7 @@
   },
   "soon": {
     "title": "Yakında burada",
-    "list": "Alışkanlıklar ve görevler, gelişim fotoğrafları"
+    "list": "Alışkanlıklar ve görevler"
   },
   "nutrition": {
     "name": "Beslenme",
@@ -57,7 +57,11 @@
   },
   "photos": {
     "name": "Gelişim fotoğrafları",
-    "hint": "Uçtan uca şifreli"
+    "hint": "Uçtan uca şifreli",
+    "day_one": "Bu gün {{count}} fotoğraf",
+    "day_other": "Bu gün {{count}} fotoğraf",
+    "none": "Bu gün fotoğraf yok",
+    "open": "Gelişim fotoğraflarını aç"
   },
   "open": "{{name}} aç",
   "soonTag": "Yakında",

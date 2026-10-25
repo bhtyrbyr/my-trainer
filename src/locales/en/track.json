@@ -44,7 +44,7 @@
   },
   "soon": {
     "title": "Coming here soon",
-    "list": "Habits and to-dos, progress photos"
+    "list": "Habits and to-dos"
   },
   "nutrition": {
     "name": "Nutrition",
@@ -57,7 +57,11 @@
   },
   "photos": {
     "name": "Progress photos",
-    "hint": "End-to-end encrypted"
+    "hint": "End-to-end encrypted",
+    "day_one": "{{count}} photo this day",
+    "day_other": "{{count}} photos this day",
+    "none": "No photo this day",
+    "open": "Open progress photos"
   },
   "open": "Open {{name}}",
   "soonTag": "Soon",

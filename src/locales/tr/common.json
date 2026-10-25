@@ -55,7 +55,10 @@
     "aiGoogleDaily": "Uygulamanın bugünkü ücretsiz yapay zekâ hakkı doldu. Ara sekmesinden besin veritabanını ya da elle girişi kullanabilirsin.",
     "aiGoogleMinute": "Yapay zekâ şu an yoğun. Yaklaşık bir dakika sonra tekrar dene.",
     "sleepOrder": "Kalkış saati yatış saatinden sonra olmalı. Saatleri kontrol et.",
-    "sleepTooLong": "20 saatten uzun bir uyku kaydedilemez. Saatleri kontrol et."
+    "sleepTooLong": "20 saatten uzun bir uyku kaydedilemez. Saatleri kontrol et.",
+    "badPath": "Fotoğraf yüklenemedi: dosya konumu geçersiz. Sayfayı yenileyip tekrar dene.",
+    "missingUpload": "Fotoğraf tam yüklenemedi. Bağlantını kontrol edip tekrar dene.",
+    "vaultDamaged": "Albümün anahtar bilgileri beklenmedik biçimde. Güvenliğin için açılmadı; yöneticiye bildir."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

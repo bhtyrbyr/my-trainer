@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
+import { forgetAllVaultKeys } from '@/features/photos/keyStore'
 
 const LAST_USER_KEY = 'mt.lastUserId'
 const USER_SCOPED_PREFIXES = ['mt.workout.draft.']
@@ -12,6 +13,8 @@ const USER_SCOPED_CACHES = ['supabase-rest']
  */
 export async function clearUserData(qc: QueryClient): Promise<void> {
   qc.clear()
+  // photo vault keys remembered on this device belong to the previous user
+  await forgetAllVaultKeys()
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i)

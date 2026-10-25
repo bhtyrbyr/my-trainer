@@ -25,7 +25,9 @@
     "entries": "Drinks today",
     "remove": "Delete the {{ml}} ml entry",
     "none": "No water logged yet.",
-    "points": "Reaching the daily goal earns 10 points."
+    "points": "Reaching the daily goal earns 10 points.",
+    "unit": "ml",
+    "amount": "{{ml}} ml"
   },
   "sleep": {
     "title": "Sleep",

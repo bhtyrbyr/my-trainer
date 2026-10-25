@@ -84,7 +84,7 @@ Soru-cevap turlarında netleşen isterler:
 - Haftalık özet: antrenman sayısı, toplam hacim (kg), kilo trendi, alışkanlık tamamlama %.
 - Kural tabanlı öneriler (AI yok): ör. "3 gündür bacak çalışmadın", "su hedefinin %40'ındasın".
 
-**M9 — Gelişim fotoğrafları (uçtan uca şifreli)**
+**M9 — Gelişim fotoğrafları (uçtan uca şifreli)** (2026-10-26 uygulandı: Takip > Gelişim fotoğrafları; Argon2id 19 MiB/2 tur, AES-256-GCM + AAD; tarih ve poz düz metin, not şifreli)
 - Periyodik fotoğraf çekme/yükleme (kamera veya galeri), tarih + opsiyonel kilo/not etiketi, poz tipi (ön/yan/arka).
 - Zaman çizelgesi ve **yan yana karşılaştırma** (ör. 1 Ocak vs bugün), aynı poz tipinde kaydırıcıyla geçiş.
 - **Sıfır bilgi şifreleme**: Fotoğraf, cihazda EXIF'i (konum, cihaz bilgisi) temizlenip yeniden boyutlandırılır, küçük önizleme (thumbnail) üretilir; hem fotoğraf hem önizleme hem de etiket/not metni **cihazda AES-256-GCM ile şifrelenir**, Supabase Storage ve DB'ye yalnızca şifreli bayt dizisi gider. Sunucu, Supabase personeli veya sızıntıyı ele geçiren kişi anahtarsız hiçbir şey göremez; dosya adı bile rastgele UUID'dir.
@@ -129,7 +129,7 @@ Soru-cevap turlarında netleşen isterler:
 | Kilo kaydı | 10 | Günde 1 |
 | Vücut ölçüsü kaydı | 15 | Haftada 1 |
 | Öğün kaydı | 5 | Günde en fazla 20 (4 öğün) |
-| Günlük protein hedefi tutturuldu | 15 | Günde 1, hedef tanımlıysa |
+| Günlük protein hedefi tutturuldu | 15 | Günde 1, hedef tanımlı ve en az 40 g ise (2026-10-26 QA: göstermelik hedefle puan toplanmasın) |
 | Su hedefi tamamlandı | 10 | Günde 1 |
 | Uyku kaydı | 5 (+5 eğer ≥ 7 saat) | Günde 1 |
 | Alışkanlık tamamlandı | 10 | Günde en fazla 50 |

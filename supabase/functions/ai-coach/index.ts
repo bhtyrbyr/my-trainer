@@ -5,7 +5,7 @@
 // (coach chat arrives in Faz 4.)
 //
 // Security (docs/SECURITY.md): the user comes from the caller's JWT; every database call uses the
-// caller's token (RLS applies), never service_role. ai_consume() enforces the per-user and global
+// caller's token (RLS applies), never service_role. ai_reserve() enforces the per-user and global
 // daily limits before any provider call. Photos are only forwarded for the estimate and never stored.
 //
 // Secrets (Supabase > Edge Functions > Secrets): GEMINI_API_KEY (required for photos),
