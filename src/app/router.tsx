@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from './AppShell'
 import { UpdatePrompt } from './UpdatePrompt'
 import { DevStreakPreview } from './DevStreakPreview'
+import { DevLeaderboardPreview } from './DevLeaderboardPreview'
 import { RequireAdmin, RequireAuth, RequireOnboarding, RequirePending } from '@/features/auth/RequireAuth'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
@@ -26,19 +27,7 @@ export const router = createBrowserRouter([
         { path: '/__dev/rejected', element: <PendingApprovalPage preview="rejected" /> },
         { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
         { path: '/__dev/streak/:n', element: <DevStreakPreview /> },
-        {
-          path: '/__dev/leaderboard',
-          element: (
-            <LeaderboardPage
-              previewRows={[
-                { rank: 1, user_id: 'a', username: 'groogy', display_name: 'Bahtiyar BAYIR', avatar_path: '', points: 845, level: 1, active_days: 6, streak: 60, is_me: false },
-                { rank: 2, user_id: 'b', username: 'huseyin_sanlav', display_name: 'Hüseyin Sanlav', avatar_path: '', points: 610, level: 1, active_days: 5, streak: 35, is_me: true },
-                { rank: 3, user_id: 'c', username: 'zeynep', display_name: 'Zeynep K.', avatar_path: '', points: 420, level: 1, active_days: 4, streak: 20, is_me: false },
-                { rank: 4, user_id: 'd', username: 'mert', display_name: 'Mert A.', avatar_path: '', points: 180, level: 1, active_days: 2, streak: 7, is_me: false },
-              ]}
-            />
-          ),
-        },
+        { path: '/__dev/leaderboard', element: <DevLeaderboardPreview /> },
       ]
     : []),
   { path: '/auth/callback', element: <AuthCallbackPage /> },
