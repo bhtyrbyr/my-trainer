@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { avatarUrl } from '@/features/profile/api'
+import { StreakAvatar } from '@/features/gamification/StreakAvatar'
+import { effectiveStreak } from '@/features/gamification/streak'
 import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
 import { useUserSettings } from '../hooks'
 import { cn } from '@/lib/utils'
@@ -29,11 +31,7 @@ export function SettingsPage() {
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings:profile')}</h2>
           <div className="flex items-center gap-4 rounded-xl border border-line bg-surface p-4">
-            {avatar ? (
-              <img src={avatar} alt="" className="size-14 rounded-full object-cover" />
-            ) : (
-              <span className="size-14 rounded-full bg-raised" />
-            )}
+            <StreakAvatar src={avatar} streak={effectiveStreak(profile?.current_streak, profile?.last_active_on)} size={64} />
             <div className="min-w-0">
               <p className="truncate font-semibold">{profile?.display_name}</p>
               <p className="truncate text-sm text-ink-muted">@{profile?.username}</p>

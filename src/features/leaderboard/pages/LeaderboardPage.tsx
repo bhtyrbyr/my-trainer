@@ -4,6 +4,7 @@ import { Trophy } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { avatarUrl } from '@/features/profile/api'
+import { StreakAvatar } from '@/features/gamification/StreakAvatar'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
 import type { LeaderboardRow } from '@/lib/database.types'
@@ -98,12 +99,9 @@ function LeaderCard({ row }: { row: LeaderboardRow }) {
       />
       <div className="relative flex items-center gap-4">
         <div className="relative">
-          {src ? (
-            <img src={src} alt="" className="size-16 rounded-full object-cover ring-2 ring-volt" />
-          ) : (
-            <span className="block size-16 rounded-full bg-raised ring-2 ring-volt" />
-          )}
-          <span className="inner-glow absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-volt text-volt-ink ring-[3px] ring-surface">
+          <StreakAvatar src={src} streak={row.streak} size={64} />
+          {/* trophy sits top-left so the streak badge keeps the bottom-right corner */}
+          <span className="inner-glow absolute -left-1.5 -top-1.5 flex size-7 items-center justify-center rounded-full bg-volt text-volt-ink ring-[3px] ring-surface">
             <Trophy className="size-3.5" aria-hidden />
           </span>
         </div>
@@ -135,7 +133,7 @@ function Row({ row }: { row: LeaderboardRow }) {
       <span className={cn('tabular w-6 text-center text-[15px] font-semibold', row.rank <= 3 ? 'text-ink' : 'text-ink-faint')}>
         {row.rank}
       </span>
-      {src ? <img src={src} alt="" className="size-10 rounded-full object-cover" /> : <span className="size-10 rounded-full bg-raised" />}
+      <StreakAvatar src={src} streak={row.streak} size={42} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[15px] font-medium leading-tight">
           {row.display_name}

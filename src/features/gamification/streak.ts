@@ -10,6 +10,19 @@ export function streakTier(days: number): StreakTier {
   return 'mythic'
 }
 
+/**
+ * Streak that is still alive: the stored streak counts only if the user was active today or yesterday
+ * (local calendar). Mirrors public.effective_streak() in SQL.
+ */
+export function effectiveStreak(current: number | null | undefined, lastActiveOn: string | null | undefined, today = new Date()): number {
+  if (!current || !lastActiveOn) return 0
+  const [y, m, d] = lastActiveOn.split('-').map(Number)
+  const last = new Date(y!, (m ?? 1) - 1, d ?? 1)
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const diffDays = Math.round((start.getTime() - last.getTime()) / 86_400_000)
+  return diffDays <= 1 ? current : 0
+}
+
 /** Days remaining until the next tier, or null at the top tier. */
 export function daysToNextTier(days: number): number | null {
   const d = Math.max(0, Math.floor(days))
