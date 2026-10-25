@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CalendarCheck, Dumbbell, LayoutDashboard, LineChart, Trophy, UserRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -17,8 +17,15 @@ const tabs = [
   { to: '/settings', key: 'profile', icon: UserRound },
 ] as const
 
+/** Extra path prefixes that belong to a tab (e.g. the exercise library lives under the Workouts tab). */
+const ALSO_ACTIVE: Partial<Record<(typeof tabs)[number]['key'], string[]>> = {
+  workouts: ['/exercises'],
+  profile: ['/admin'],
+}
+
 export function BottomNav() {
   const { t } = useTranslation('common')
+  const { pathname } = useLocation()
   const pending = usePendingCount()
   const pendingCount = pending.data ?? 0
 
@@ -40,7 +47,9 @@ export function BottomNav() {
                 cn(
                   'touch-target flex h-full flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium transition-colors',
                   'lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-lg lg:px-3 lg:text-sm',
-                  isActive ? 'text-volt' : 'text-ink-muted hover:text-ink',
+                  isActive || ALSO_ACTIVE[key]?.some((p) => pathname.startsWith(p))
+                    ? 'text-volt'
+                    : 'text-ink-muted hover:text-ink',
                 )
               }
             >
