@@ -66,7 +66,8 @@
     "pushDenied": "Notification permission was not granted. You can allow it in the phone or browser settings.",
     "pushUnsupported": "Notifications cannot be turned on here. On iPhone, add the app to the Home Screen first.",
     "aiConsent": "AI estimates need your consent first.",
-    "aiRegion": "AI estimates are not available in your region. Use search or manual entry."
+    "aiRegion": "AI estimates are not available in your region. Use search or manual entry.",
+    "underage": "The app is for people aged 18 or older."
   },
   "update": {
     "title": "New version released",

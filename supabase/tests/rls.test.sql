@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(311);
+select plan(313);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -1368,5 +1368,10 @@ select public.withdraw_ai_consent('test');
 select throws_like($$ select public.ai_reserve() $$, '%AI_CONSENT_REQUIRED%', 'ai: withdrawing the AI consent stops further requests');
 select throws_ok($$ select public.ai_consent_of('00000000-0000-0000-0000-00000000000a') $$, '42501', null, 'ai: the consent helper is internal');
 reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select throws_like($$ update public.profile_private set birth_year = extract(year from current_date)::int - 10 where user_id = '00000000-0000-0000-0000-00000000000b' $$, '%UNDERAGE%', 'age: a birth year under 18 is rejected');
+reset role;
+select is((select count(*)::int from public.profile_private where birth_year > extract(year from current_date)::int - 18), 0, 'age: no stored profile is under 18');
 select * from finish();
 rollback;

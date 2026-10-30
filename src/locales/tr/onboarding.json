@@ -3,7 +3,9 @@
   "title": "Seni tanıyalım.",
   "subtitle": "Liderlik tablosunda tam olarak böyle görüneceksin.",
   "ready": "Hazırsın. Profilini sonra Ayarlar'dan değiştirebilirsin.",
-  "preview": { "namePlaceholder": "Adın" },
+  "preview": {
+    "namePlaceholder": "Adın"
+  },
   "cancel": "Vazgeç ve çıkış yap",
   "optional": "İsteğe bağlı",
   "about": "Senin hakkında",
@@ -45,9 +47,14 @@
     "display_name_required": "Görünen ad zorunlu.",
     "display_name_too_long": "En fazla 40 karakter.",
     "sex_required": "Cinsiyet seçimi zorunlu.",
-    "goal_required": "Bir hedef seç."
+    "goal_required": "Bir hedef seç.",
+    "too_young": "Uygulama 18 yaşından büyükler içindir."
   },
-  "sex": { "male": "Erkek", "female": "Kadın", "other": "Diğer" },
+  "sex": {
+    "male": "Erkek",
+    "female": "Kadın",
+    "other": "Diğer"
+  },
   "goal": {
     "lose_fat": "Yağ yak",
     "build_muscle": "Kas kazan",

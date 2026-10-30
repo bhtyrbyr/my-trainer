@@ -37,6 +37,7 @@ export function classifyError(err: unknown): AppError {
   if (/SLEEP_ORDER/.test(message)) return { key: 'errors.sleepOrder', code }
   if (/SLEEP_TOO_LONG/.test(message)) return { key: 'errors.sleepTooLong', code }
   // Codes returned by the ai-coach Edge Function
+  if (/UNDERAGE/.test(message)) return { key: 'errors.underage', code }
   if (/AI_CONSENT_REQUIRED/.test(message)) return { key: 'errors.aiConsent', code }
   if (/AI_REGION/.test(message)) return { key: 'errors.aiRegion', code }
   if (/AI_GOOGLE_DAILY/.test(message)) return { key: 'errors.aiGoogleDaily', code }
