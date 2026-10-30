@@ -83,7 +83,11 @@ export function WaterCard({ day, goal, onGoal }: { day: string; goal: number; on
             variant="secondary"
             className="h-11"
             disabled={customMl < 10 || customMl > 3000 || add.isPending}
-            onClick={() => add.mutate({ day, ml: customMl }, { onSuccess: () => setCustom('') })}
+            onClick={() => {
+              // queued write: shown at once, synced when there is a connection
+              add.mutate({ day, ml: customMl })
+              setCustom('')
+            }}
           >
             {add.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : t('water.customAdd')}
           </Button>

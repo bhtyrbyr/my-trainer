@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Trophy } from 'lucide-react'
+import { CloudOff, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useWeightUnit } from '../hooks'
 import { formatClock } from '../logic'
@@ -12,6 +12,8 @@ type Props = {
   exerciseLabel: (exerciseId: string) => string
   onDone: () => void
   onHistory?: () => void
+  /** finished offline: saved on the device, the server adds points and records when the queue syncs */
+  queued?: boolean
 }
 
 /**
@@ -19,7 +21,7 @@ type Props = {
  * three-figure scoreboard; new PRs are listed with a trophy. The celebration is the staggered rise and
  * the ambient glow, nothing more.
  */
-export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistory }: Props) {
+export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistory, queued = false }: Props) {
   const { t } = useTranslation('workouts')
   const w = useWeightUnit()
   const stagger = (i: number) => ({ ['--i' as string]: i })
@@ -32,10 +34,20 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
           {title}
         </h1>
 
-        <div className="rise-in mt-10" style={stagger(2)}>
-          <p className="display tabular text-[104px] leading-[0.9] tracking-[-0.05em] text-volt">+{summary.points_awarded}</p>
-          <p className="mt-3 text-sm text-ink-muted">{summary.points_awarded > 0 ? t('summary.pointsLabel') : t('summary.noPoints')}</p>
-        </div>
+        {queued ? (
+          <div className="rise-in mt-10" style={stagger(2)}>
+            <p className="display flex items-center gap-3 text-[48px] leading-[0.95] tracking-[-0.04em] text-ink">
+              <CloudOff className="size-10 shrink-0 text-ink-faint" strokeWidth={1.75} aria-hidden />
+              {t('summary.queuedHero')}
+            </p>
+            <p className="mt-3 max-w-[32ch] text-sm leading-relaxed text-ink-muted">{t('summary.queuedBody')}</p>
+          </div>
+        ) : (
+          <div className="rise-in mt-10" style={stagger(2)}>
+            <p className="display tabular text-[104px] leading-[0.9] tracking-[-0.05em] text-volt">+{summary.points_awarded}</p>
+            <p className="mt-3 text-sm text-ink-muted">{summary.points_awarded > 0 ? t('summary.pointsLabel') : t('summary.noPoints')}</p>
+          </div>
+        )}
 
         <dl className="rise-in mt-10 grid grid-cols-3 border-y border-line" style={stagger(3)}>
           <Stat label={t('summary.duration')} value={formatClock(summary.duration_sec)} />
@@ -76,7 +88,7 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
           <Button size="lg" onClick={onDone}>
             {t('common.done')}
           </Button>
-          {onHistory && (
+          {onHistory && !queued && (
             <Button size="lg" variant="ghost" onClick={onHistory}>
               {t('summary.viewDetail')}
             </Button>

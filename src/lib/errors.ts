@@ -27,6 +27,14 @@ export function classifyError(err: unknown): AppError {
   if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
   if (/BAD_PATH/.test(message)) return { key: 'errors.badPath', code }
   if (/PUSH_DENIED/.test(message)) return { key: 'errors.pushDenied', code }
+  // Admin panel (BAD_KEY of admin_set_config is re-tagged BAD_CONFIG_KEY by the admin api; plain BAD_KEY is push)
+  if (/BAD_CONFIG_KEY/.test(message)) return { key: 'errors.badConfigKey', code }
+  if (/BAD_VALUE/.test(message)) return { key: 'errors.badValue', code }
+  if (/BAD_EMAIL/.test(message)) return { key: 'errors.badEmail', code }
+  if (/BAD_NOTE/.test(message)) return { key: 'errors.badNote', code }
+  if (/BAD_QUERY/.test(message)) return { key: 'errors.badQuery', code }
+  if (/TARGET_IS_ADMIN/.test(message)) return { key: 'errors.targetIsAdmin', code }
+  if (/^NOT_FOUND$/.test(message)) return { key: 'errors.notFound', code }
   if (/PUSH_UNSUPPORTED|PUSH_NOT_CONFIGURED|BAD_ENDPOINT|BAD_KEY/.test(message)) return { key: 'errors.pushUnsupported', code }
   if (/ALREADY_DONE/.test(message)) return { key: 'errors.alreadyDone', code }
   if (/NOT_DUE/.test(message)) return { key: 'errors.notDue', code }

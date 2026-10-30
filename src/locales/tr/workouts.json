@@ -157,7 +157,9 @@
     "rpeShort": "RPE",
     "demoEnlarge": "Hareketi büyüt",
     "demoShrink": "Hareketi küçült",
-    "demoAlt": "{{name}} hareketinin animasyonu"
+    "demoAlt": "{{name}} hareketinin animasyonu",
+    "notSynced": "Henüz gönderilmedi",
+    "notSaved": "Kaydedilemedi"
   },
   "rest": {
     "title": "Mola",
@@ -179,7 +181,9 @@
     "prs_one": "Yeni rekor",
     "prs_other": "{{count}} yeni rekor",
     "e1rm": "Tahmini 1RM {{value}} {{unit}}",
-    "viewDetail": "Ayrıntıları gör"
+    "viewDetail": "Ayrıntıları gör",
+    "queuedHero": "Kaydedildi",
+    "queuedBody": "Bu telefonda tutuluyor. Puanlar ve rekorlar bağlantı gelince eklenir."
   },
   "cardio": {
     "quick": "Kardiyo",

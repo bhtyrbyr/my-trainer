@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isDuplicate } from '@/lib/offline/queue'
 import type { SleepEntry, WaterEntry } from './types'
 
 /** The caller's drinks for one local day (RLS scopes the rows). */
@@ -8,9 +9,23 @@ export async function listWater(day: string): Promise<WaterEntry[]> {
   return data ?? []
 }
 
-export async function addWater(userId: string, day: string, ml: number): Promise<void> {
-  const { error } = await supabase.from('water_entries').insert({ user_id: userId, drunk_on: day, amount_ml: ml })
-  if (error) throw error
+/**
+ * Log a drink. `id` is generated on the device (offline queue) and `loggedAt` is when the user tapped:
+ * a replay of an insert that already reached the server hits the primary key and counts as done.
+ */
+export async function addWater(userId: string, w: { id: string; day: string; ml: number; loggedAt: string }): Promise<WaterEntry> {
+  const { data, error } = await supabase
+    .from('water_entries')
+    .insert({ id: w.id, user_id: userId, drunk_on: w.day, amount_ml: w.ml, logged_at: w.loggedAt })
+    .select('*')
+    .single()
+  if (error) {
+    if (!isDuplicate(error)) throw error
+    const { data: existing, error: readError } = await supabase.from('water_entries').select('*').eq('id', w.id).single()
+    if (readError) throw readError
+    return existing
+  }
+  return data
 }
 
 export async function deleteWater(id: string): Promise<void> {

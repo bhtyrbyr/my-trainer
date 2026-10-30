@@ -1,0 +1,51 @@
+{
+  "suggest": {
+    "label": "Suggestions",
+    "dismiss": "Hide for today",
+    "streak": { "lead": "Streak at risk.", "body": "Log anything before midnight to keep your {{count}} days." },
+    "habits": { "lead": "Habits waiting.", "body_one": "{{count}} habit is still open today.", "body_other": "{{count}} habits are still open today." },
+    "water": { "lead": "Drink up.", "body": "You are at {{pct}}% of today's water goal." },
+    "muscle": { "lead": "{{part}} is resting.", "body_one": "Last trained yesterday.", "body_other": "Last trained {{count}} days ago." },
+    "weigh": { "lead": "Time to weigh in.", "body_one": "Your last weigh-in was yesterday.", "body_other": "Your last weigh-in was {{count}} days ago." }
+  },
+  "glance": {
+    "label": "Today at a glance",
+    "agenda": "Agenda",
+    "habits": "habits",
+    "todosLeft_one": "{{count}} to-do left",
+    "todosLeft_other": "{{count}} to-dos left",
+    "todosDone": "to-dos done",
+    "nothing": "Nothing scheduled",
+    "open": "Open the day in Track",
+    "water": "Water",
+    "sleep": "Sleep",
+    "sleepNone": "Not logged",
+    "sleepLog": "Log"
+  },
+  "week": {
+    "title": "This week",
+    "range": "{{from}} – {{to}}",
+    "workouts_one": "workout",
+    "workouts_other": "workouts",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "volume": "{{value}} {{unit}} lifted",
+    "cardio": "{{n}} min cardio",
+    "empty": "No workouts yet. The week ends on Sunday.",
+    "deltaUp": "+{{n}} vs last week",
+    "deltaDown": "−{{n}} vs last week",
+    "deltaSame": "Same as last week",
+    "stat": {
+      "habits": "Habits",
+      "habitsCaption": "of due days",
+      "todos": "To-dos",
+      "todosCaption": "done",
+      "sleep": "Sleep",
+      "sleepCaption": "avg per night",
+      "weight": "Weight",
+      "weightCaption": "change",
+      "water": "Water",
+      "waterCaption": "days at goal"
+    }
+  }
+}

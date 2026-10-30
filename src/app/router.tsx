@@ -36,6 +36,27 @@ const photos = page(() => import('@/features/photos/pages/PhotosPage'), 'PhotosP
 const devBody = (name: 'DevBodyLayout' | 'DevTrack' | 'DevBody' | 'DevNutrition' | 'DevSleepWater') => page(() => import('@/features/body/dev/DevBodyPreview'), name)
 const onboarding = page(() => import('@/features/profile/pages/OnboardingPage'), 'OnboardingPage')
 
+const devHome = (name: 'DevHomeLayout' | 'DevHome') => page(() => import('@/features/dashboard/dev/DevDashboardPreview'), name)
+const devProfile = (name: 'DevProfileLayout' | 'DevProfile') => page(() => import('@/features/badges/dev/DevBadgesPreview'), name)
+const admin = {
+  access: page(() => import('@/features/admin/pages/AccessPage'), 'AccessPage'),
+  users: page(() => import('@/features/admin/pages/UsersPage'), 'UsersPage'),
+}
+
+/** Admin-only page: lazy component wrapped in RequireAdmin (the RPCs refuse non-admins anyway). */
+function adminPage<M>(loader: () => Promise<M>, name: keyof M & string): RouteObject['lazy'] {
+  return async () => {
+    const Page = (await loader())[name] as unknown as ComponentType
+    return {
+      Component: () => (
+        <RequireAdmin>
+          <Page />
+        </RequireAdmin>
+      ),
+    }
+  }
+}
+
 const devWorkouts = (name: 'DevWorkoutsLayout' | 'DevDashboard' | 'DevTemplateEditor' | 'DevLiveSession' | 'DevSessionDetail') =>
   page(() => import('@/features/workouts/dev/DevWorkoutsPreview'), name)
 
@@ -61,6 +82,27 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         path: '/__dev/licenses',
         element: <AppShell />,
         children: [{ index: true, lazy: page(() => import('@/features/settings/pages/LicensesPage'), 'LicensesPage') }],
+      },
+      {
+        // Home with sample data: ?hour=21|12, ?health=0, ?empty=1, ?celebrate=streak_7, ?units=imperial
+        path: '/__dev/home',
+        lazy: devHome('DevHomeLayout'),
+        children: [{ index: true, lazy: devHome('DevHome') }],
+      },
+      {
+        // Profile with a sample badge shelf: ?fresh=1, ?celebrate=sets_100
+        path: '/__dev/profile',
+        lazy: devProfile('DevProfileLayout'),
+        children: [{ index: true, lazy: devProfile('DevProfile') }],
+      },
+      {
+        // admin Access and Users with sample data: ?mode=invite
+        path: '/__dev/admin',
+        lazy: page(() => import('@/features/admin/dev/DevAdminPreview'), 'DevAdminLayout'),
+        children: [
+          { path: 'access', lazy: admin.access },
+          { path: 'users', lazy: admin.users },
+        ],
       },
       {
         path: '/__dev/ai-usage',
@@ -176,6 +218,8 @@ export const router = createBrowserRouter([
           }
         },
       },
+      { path: 'admin/access', lazy: adminPage(() => import('@/features/admin/pages/AccessPage'), 'AccessPage') },
+      { path: 'admin/users', lazy: adminPage(() => import('@/features/admin/pages/UsersPage'), 'UsersPage') },
       {
         path: 'admin/requests',
         lazy: async () => {

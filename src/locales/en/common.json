@@ -67,7 +67,13 @@
     "pushUnsupported": "Notifications cannot be turned on here. On iPhone, add the app to the Home Screen first.",
     "aiConsent": "AI estimates need your consent first.",
     "aiRegion": "AI estimates are not available in your region. Use search or manual entry.",
-    "underage": "AI features are not available under 18. Search and manual entry still work."
+    "underage": "AI features are not available under 18. Search and manual entry still work.",
+    "badConfigKey": "This setting cannot be changed from the app.",
+    "badValue": "That value is not allowed. Check it and try again.",
+    "badEmail": "That does not look like an e-mail address. Check it and try again.",
+    "badNote": "The note is too long. Keep it under 200 characters.",
+    "badQuery": "The search is too long. Use at most 100 characters.",
+    "targetIsAdmin": "Admins cannot be blocked. Remove the admin role first."
   },
   "update": {
     "title": "New version released",

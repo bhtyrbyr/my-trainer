@@ -1,0 +1,61 @@
+{
+  "chip": {
+    "offline": "Offline",
+    "offlinePending_one": "Offline · {{count}} change waiting",
+    "offlinePending_other": "Offline · {{count}} changes waiting",
+    "syncing_one": "Syncing {{count}} change",
+    "syncing_other": "Syncing {{count}} changes",
+    "weak_one": "Weak connection · {{count}} waiting",
+    "weak_other": "Weak connection · {{count}} waiting",
+    "failed_one": "{{count}} change not saved",
+    "failed_other": "{{count}} changes not saved",
+    "open": "Show sync details"
+  },
+  "inline": {
+    "offline": "Offline",
+    "waiting": "{{count}} waiting",
+    "failed": "{{count}} not saved"
+  },
+  "sheet": {
+    "label": "Sync status",
+    "close": "Close",
+    "eyebrowOffline": "Offline",
+    "eyebrowOnline": "Sync",
+    "titleOffline": "You're offline",
+    "titleSyncing": "Sending your changes",
+    "titleFailed": "Some changes were not saved",
+    "titleIdle": "Everything is saved",
+    "body": "Sets, water, habits and to-dos you log now stay on this phone and are sent in order once you're back online. Other changes need a connection.",
+    "waiting": "Waiting to sync",
+    "failed": "Not saved",
+    "retry": "Retry",
+    "retryAll": "Retry all",
+    "discard": "Discard",
+    "discardConfirm": "Tap again to discard",
+    "done": "Done"
+  },
+  "ops": {
+    "addSet": "Logged sets",
+    "deleteSet": "Removed sets",
+    "addExercise": "Added exercises",
+    "finish": "Finished workouts",
+    "addWater": "Water",
+    "deleteWater": "Removed water",
+    "setHabitCount": "Habit check-ins",
+    "completeTodo": "Ticked to-dos",
+    "uncompleteTodo": "Unticked to-dos",
+    "unknown": "Other changes"
+  },
+  "op": {
+    "addSet": "Logged set",
+    "deleteSet": "Removed set",
+    "addExercise": "Added exercise",
+    "finish": "Finished workout",
+    "addWater": "Water",
+    "deleteWater": "Removed water",
+    "setHabitCount": "Habit check-in",
+    "completeTodo": "Ticked to-do",
+    "uncompleteTodo": "Unticked to-do",
+    "unknown": "Change"
+  }
+}

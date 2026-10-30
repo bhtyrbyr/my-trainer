@@ -1,0 +1,33 @@
+{
+  "title": "Badges",
+  "count": "{{earned}} / {{total}}",
+  "earnedOn": "Earned {{date}}",
+  "locked": "Locked",
+  "close": "Close",
+  "items": {
+    "first_workout": { "name": "First rep", "desc": "Finish your first workout or cardio session." },
+    "streak_7": { "name": "Week on fire", "desc": "Keep your streak going for 7 days." },
+    "streak_30": { "name": "Unbroken month", "desc": "Keep your streak going for 30 days." },
+    "sets_100": { "name": "Hundred sets", "desc": "Finish 100 working sets. Warm-ups don't count." },
+    "photos_10": { "name": "Progress archive", "desc": "Save 10 progress photos." },
+    "habit_30": { "name": "Habit builder", "desc": "Complete a habit's daily target 30 times." },
+    "todo_50": { "name": "Fifty done", "desc": "Tick off 50 to-dos." }
+  },
+  "progress": {
+    "workouts": "{{value}} of {{threshold}} workouts",
+    "streak": "Best streak {{value}} of {{threshold}} days",
+    "sets": "{{value}} of {{threshold}} sets",
+    "photos": "{{value}} of {{threshold}} photos",
+    "habitDays": "{{value}} of {{threshold}} habit days",
+    "todos": "{{value}} of {{threshold}} to-dos"
+  },
+  "celebrate": {
+    "eyebrow": "New badge",
+    "done": "Nice",
+    "next_one": "Next badge",
+    "next_other": "Next ({{count}} more)"
+  },
+  "public": {
+    "none": "No badges yet."
+  }
+}

@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
-import { Check, Info, Loader2, Plus, SkipForward, Thermometer, Trash2, X } from 'lucide-react'
+import { AlertCircle, Check, CloudOff, Info, Loader2, Plus, SkipForward, Thermometer, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { ExercisePickerSheet, exerciseName, useExercisesByIds, type Exercise } from '@/features/exercises'
@@ -19,11 +19,15 @@ import {
   useDateLocale,
   useDeleteSession,
   useDeleteSet,
+  useFinishResult,
   useFinishSession,
   useLastSets,
+  useQueuedWorkoutRows,
   useSessionBundle,
   useWeightUnit,
+  localFinishSummary,
 } from '../hooks'
+import { SyncInline } from '@/lib/offline/OfflineStatus'
 import {
   DEFAULT_REST_SEC,
   clamp,
@@ -57,7 +61,10 @@ export function LiveSession({ sessionId }: { sessionId: string }) {
   const preview = useIsPreview()
   const bundle = useSessionBundle(sessionId)
   const { draft, update, clear } = useSessionDraft(sessionId)
-  const [summary, setSummary] = useState<FinishSummary | null>(null)
+  const [summary, setSummary] = useState<{ value: FinishSummary; queued: boolean } | null>(null)
+  // a finish queued offline shows a local summary; once the queue syncs it, the server's (with points) replaces it
+  const synced = useFinishResult(sessionId)
+  if (synced && summary?.queued) setSummary({ value: synced, queued: false })
   const exerciseIds = useMemo(() => [...new Set((bundle.data?.exercises ?? []).map((e) => e.exercise_id))], [bundle.data])
   const exercisesQ = useExercisesByIds(exerciseIds)
   const [picked, setPicked] = useState<Map<string, Exercise>>(new Map())
@@ -82,7 +89,8 @@ export function LiveSession({ sessionId }: { sessionId: string }) {
       <Layer>
         <SessionSummary
           title={bundle.data?.session.title ?? t('session.freeTitle')}
-          summary={summary}
+          summary={summary.value}
+          queued={summary.queued}
           exerciseLabel={label}
           onDone={() => navigate(home)}
           onHistory={preview ? undefined : () => navigate(`/workouts/history/${sessionId}`)}
@@ -128,9 +136,9 @@ export function LiveSession({ sessionId }: { sessionId: string }) {
         label={label}
         byId={byId}
         onPicked={(ex) => setPicked((m) => new Map(m).set(ex.id, ex))}
-        onFinished={(s) => {
+        onFinished={(s, queued) => {
           clear()
-          setSummary(s)
+          setSummary({ value: s, queued })
         }}
         onDiscarded={() => {
           clear()
@@ -153,7 +161,7 @@ type RunnerProps = {
   label: (exerciseId: string) => string
   byId: Map<string, Exercise>
   onPicked: (ex: Exercise) => void
-  onFinished: (s: FinishSummary) => void
+  onFinished: (s: FinishSummary, queued: boolean) => void
   onDiscarded: () => void
   home: string
 }
@@ -204,8 +212,13 @@ function Runner({ data, draft, update, label, byId, onPicked, onFinished, onDisc
 
   const finishNow = () => {
     const empty = exercises.filter((e) => e.sets.length === 0).map((e) => e.id)
-    finish.mutate({ sessionId, emptyExerciseIds: empty }, { onSuccess: onFinished })
+    finish.mutate({ sessionId, emptyExerciseIds: empty }, { onSuccess: (s) => onFinished(s, false) })
   }
+  // No connection (or a dead one): the finish waits in the offline queue; show what the device knows now.
+  const finishQueued = finish.queued
+  useEffect(() => {
+    if (finishQueued) onFinished(localFinishSummary(data), true)
+  }, [finishQueued, data, onFinished])
 
   const elapsed = Math.max(0, Math.floor((now - new Date(data.session.started_at).getTime()) / 1000))
   const title = data.session.title ?? t('session.freeTitle')
@@ -220,8 +233,11 @@ function Runner({ data, draft, update, label, byId, onPicked, onFinished, onDisc
           </Link>
           <div className="min-w-0 flex-1 text-center">
             <p className="truncate text-[13px] font-semibold">{title}</p>
-            <p className="tabular text-[12px] text-ink-faint" aria-label={t('session.elapsed', { time: formatClock(elapsed) })}>
-              {formatClock(elapsed)}
+            <p className="flex items-center justify-center gap-1.5 text-[12px] text-ink-faint">
+              <span className="tabular" aria-label={t('session.elapsed', { time: formatClock(elapsed) })}>
+                {formatClock(elapsed)}
+              </span>
+              <SyncInline className="before:mr-0.5 before:content-['·']" />
             </p>
           </div>
           <Button variant="ghost" size="sm" className="h-11 px-3 text-ink" onClick={() => setConfirm(true)}>
@@ -308,10 +324,9 @@ function Runner({ data, draft, update, label, byId, onPicked, onFinished, onDisc
         onPick={(ex) => {
           onPicked(ex)
           setPicker(false)
-          addExercise.mutate(
-            { exerciseId: ex.id, existing: exercises },
-            { onSuccess: () => update({ exerciseIndex: exercises.length, restEndsAt: null, restTotalSec: null }) },
-          )
+          // shown at once (queued write), so jump to it now rather than when the server answers
+          addExercise.mutate({ exerciseId: ex.id, existing: exercises })
+          update({ exerciseIndex: exercises.length, restEndsAt: null, restTotalSec: null })
         }}
       />
 
@@ -331,6 +346,17 @@ function Runner({ data, draft, update, label, byId, onPicked, onFinished, onDisc
         onConfirm={() => (totalWorking > 0 ? finishNow() : discard.mutate(sessionId, { onSuccess: onDiscarded }))}
       />
     </div>
+  )
+}
+
+/** Small mark on a set that is not on the server yet (offline queue) or that the server rejected. */
+function QueuedMark({ state }: { state: 'pending' | 'error' | undefined }) {
+  const { t } = useTranslation('workouts')
+  if (!state) return null
+  return state === 'error' ? (
+    <AlertCircle className="ml-2 inline size-3.5 align-[-2px] text-danger" aria-label={t('session.notSaved')} role="img" />
+  ) : (
+    <CloudOff className="ml-2 inline size-3.5 align-[-2px] text-ink-faint" aria-label={t('session.notSynced')} role="img" />
   )
 }
 
@@ -376,6 +402,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
   const dfLocale = useDateLocale()
   const preview = useIsPreview()
   const last = useLastSets(exercise.exercise_id)
+  const queuedRows = useQueuedWorkoutRows()
   const target = exercise.target
   const working = exercise.sets.filter(isWorkingSet).length
   const reached = target ? working >= target.target_sets : false
@@ -450,6 +477,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
                   <span className="tabular flex-1 font-medium">
                     {s.weight_kg != null ? `${w.format(s.weight_kg)} ${w.label} × ${s.reps ?? 0}` : `${s.reps ?? 0} ${t('units.reps')}`}
                     {s.rpe != null && <span className="ml-2 text-[13px] font-normal text-ink-faint">{t('session.rpeShort')} {w.formatNumber(s.rpe)}</span>}
+                    <QueuedMark state={queuedRows.get(s.id)} />
                   </span>
                   {isLast ? (
                     <button

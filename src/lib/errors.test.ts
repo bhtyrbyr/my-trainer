@@ -14,6 +14,20 @@ describe('classifyError', () => {
     expect(classifyError(new Error('USERNAME_COOLDOWN')).key).toBe('errors.usernameCooldown')
     expect(classifyError({ message: 'ACCESS_DENIED: x is not on the invite list' }).key).toBe('errors.accessDenied')
   })
+  it('maps admin panel codes', () => {
+    expect(classifyError({ code: '22023', message: 'BAD_VALUE' }).key).toBe('errors.badValue')
+    expect(classifyError({ code: '22023', message: 'BAD_EMAIL' }).key).toBe('errors.badEmail')
+    expect(classifyError({ code: '22023', message: 'BAD_NOTE' }).key).toBe('errors.badNote')
+    expect(classifyError({ code: '22023', message: 'BAD_QUERY' }).key).toBe('errors.badQuery')
+    expect(classifyError({ code: 'P0001', message: 'CANNOT_CHANGE_SELF' }).key).toBe('errors.cannotChangeSelf')
+    expect(classifyError({ code: 'P0001', message: 'TARGET_IS_ADMIN' }).key).toBe('errors.targetIsAdmin')
+    expect(classifyError({ code: 'P0002', message: 'NOT_FOUND' }).key).toBe('errors.notFound')
+    expect(classifyError({ code: '42501', message: 'FORBIDDEN' }).key).toBe('errors.forbidden')
+  })
+  it('tells the admin config BAD_KEY apart from the push BAD_KEY', () => {
+    expect(classifyError({ code: '22023', message: 'BAD_CONFIG_KEY' }).key).toBe('errors.badConfigKey')
+    expect(classifyError({ code: '22023', message: 'BAD_KEY' }).key).toBe('errors.pushUnsupported')
+  })
   it('maps HTTP statuses', () => {
     expect(classifyError({ status: 429, message: 'Too many requests' }).key).toBe('errors.rateLimited')
     expect(classifyError({ status: 503, message: 'Service unavailable' }).key).toBe('errors.server')

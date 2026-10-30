@@ -33,5 +33,7 @@
     "cm": "Centimetres",
     "in": "Inches",
     "hint": "Values are always stored in kg and cm; this only changes how they are shown and entered."
-  }
+  },
+  "signOutUnsynced_one": "{{count}} entry has not been sent yet and will be lost if you sign out. Sign out anyway?",
+  "signOutUnsynced_other": "{{count}} entries have not been sent yet and will be lost if you sign out. Sign out anyway?"
 }

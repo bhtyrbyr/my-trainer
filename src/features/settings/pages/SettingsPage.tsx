@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Bug, ChevronRight, LogOut, Scale, Sparkles, UserCheck } from 'lucide-react'
-import { useAiLive, useErrorReports, usePendingCount } from '@/features/admin/hooks'
+import { Bug, ChevronRight, DoorOpen, LogOut, Scale, Sparkles, UserCheck, Users } from 'lucide-react'
+import { useAdminConfig, useAiLive, useErrorReports, usePendingCount } from '@/features/admin/hooks'
+import { BadgeShelf } from '@/features/badges'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -14,6 +15,7 @@ import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
 import { THEMES, applyTheme, readTheme, type ThemePref } from '@/lib/theme'
 import { LENGTH_UNITS, WEIGHT_UNITS, asLengthUnit, asWeightUnit, type LengthUnit, type WeightUnit } from '@/lib/units'
 import { useUserSettings } from '../hooks'
+import { useSyncState } from '@/lib/offline/hooks'
 import { PrivacySection } from '@/features/privacy/components/PrivacySection'
 import { NotificationsSection } from '@/features/notifications/NotificationsSection'
 import { cn } from '@/lib/utils'
@@ -21,10 +23,12 @@ import { cn } from '@/lib/utils'
 export function SettingsPage() {
   const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'admin'])
   const { user, profile, signOut } = useAuth()
+  const sync = useSyncState()
   const { settings, updateSettings } = useUserSettings()
   const pending = usePendingCount()
   const aiLive = useAiLive()
   const openReports = useErrorReports('open')
+  const access = useAdminConfig()
   const aiToday = (aiLive.data ?? []).reduce((s, m) => s + m.requests_today, 0)
   const avatar = avatarUrl(profile?.avatar_path, profile?.updated_at)
 
@@ -67,6 +71,8 @@ export function SettingsPage() {
           </div>
         </section>
 
+        <BadgeShelf />
+
         {profile?.role === 'admin' && (
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
@@ -83,6 +89,27 @@ export function SettingsPage() {
                   {pending.data}
                 </span>
               )}
+              <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+            </Link>
+            <Link
+              to="/admin/access"
+              className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+            >
+              <DoorOpen className="size-5 text-ink-muted" aria-hidden />
+              <span className="flex-1 text-[15px]">{t('admin:access.link')}</span>
+              {access.data && (
+                <span className="text-xs text-ink-faint">
+                  {access.data.access_mode === 'invite' ? t('admin:access.linkInvite') : t('admin:access.linkOpen')}
+                </span>
+              )}
+              <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+            </Link>
+            <Link
+              to="/admin/users"
+              className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+            >
+              <Users className="size-5 text-ink-muted" aria-hidden />
+              <span className="flex-1 text-[15px]">{t('admin:users.link')}</span>
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>
             <Link
@@ -197,7 +224,15 @@ export function SettingsPage() {
             <p className="text-xs text-ink-muted">{t('settings:signedInAs')}</p>
             <p className="truncate font-medium">{user?.email}</p>
           </div>
-          <Button variant="secondary" className="w-full gap-2" onClick={() => void signOut()}>
+          <Button
+            variant="secondary"
+            className="w-full gap-2"
+            onClick={() => {
+              // unsynced offline writes are dropped on sign-out: ask first
+              if (sync.pending + sync.failed > 0 && !window.confirm(t('settings:signOutUnsynced', { count: sync.pending + sync.failed }))) return
+              void signOut()
+            }}
+          >
             <LogOut className="size-5" aria-hidden />
             {t('auth:signOut')}
           </Button>

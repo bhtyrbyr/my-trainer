@@ -1,26 +1,58 @@
 import { useTranslation } from 'react-i18next'
 import { PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { BadgeCelebration, type BadgeCode } from '@/features/badges'
 import { ScoreHero } from '@/features/gamification/ScoreHero'
 import { effectiveStreak } from '@/features/gamification/streak'
+import { useConsents } from '@/features/privacy/hooks'
 import { TodayWorkoutCard } from '@/features/workouts'
 import { DailyEnergyCard } from '../components/DailyEnergyCard'
+import { Suggestions, type SuggestionPreview } from '../components/Suggestions'
+import { TodayGlance } from '../components/TodayGlance'
+import { WeekSummary } from '../components/WeekSummary'
 
-export function DashboardPage({ preview }: { preview?: { points: number; streak: number; energy?: { burned: { kcal: number; sessions: number }; eaten: { kcal: number; entries: number } } } }) {
+type Preview = {
+  points: number
+  streak: number
+  energy?: { burned: { kcal: number; sessions: number }; eaten: { kcal: number; entries: number } }
+  /** dev previews: health consent, the clock and last active day for the suggestions, a forced celebration */
+  health?: boolean
+  suggest?: SuggestionPreview
+  celebrate?: BadgeCode[]
+  base?: string
+}
+
+/**
+ * Home. Today first (score, nudges, the workout, energy, the day's list), then the week. On desktop the
+ * same blocks split into two columns: today on the left, the week on the right.
+ */
+export function DashboardPage({ preview }: { preview?: Preview }) {
   const { t } = useTranslation('common')
   const { profile } = useAuth()
+  const consents = useConsents()
   const points = preview?.points ?? profile?.total_points ?? 0
   const streak = preview?.streak ?? effectiveStreak(profile?.current_streak, profile?.last_active_on)
+  // KVKK art. 6: health-dependent parts render only with explicit consent (nothing while it loads)
+  const health = preview?.health ?? (!consents.isLoading && consents.health)
+  const base = preview?.base ?? ''
+
   return (
-    <PageShell title={t('nav.home')} bare className="space-y-4 pt-3">
-      <ScoreHero points={points} streak={streak} />
-      <TodayWorkoutCard variant="dashboard" />
-      <DailyEnergyCard preview={preview?.energy} />
-      {/* water, nutrition, sleep and the weekly summary arrive in phase 4 */}
-      <p className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-dashed border-line px-4 py-3 text-[13px] text-ink-faint">
-        <span>{t('comingSoon')}</span>
-        <span className="shrink-0 rounded-full bg-raised px-2.5 py-0.5 text-[11px] font-medium text-ink-muted">{t('phase', { n: 4 })}</span>
-      </p>
+    <PageShell title={t('nav.home')} bare className="pt-3">
+      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5 lg:space-y-0">
+        <div className="space-y-4">
+          <ScoreHero points={points} streak={streak} />
+          <Suggestions health={health} preview={preview?.suggest} base={base} />
+          <TodayWorkoutCard variant="dashboard" />
+          <DailyEnergyCard preview={preview?.energy} />
+        </div>
+        <div className="space-y-4">
+          <TodayGlance health={health} base={base} />
+          <div className="pt-2 lg:pt-0">
+            <WeekSummary />
+          </div>
+        </div>
+      </div>
+      <BadgeCelebration preview={preview?.celebrate} />
     </PageShell>
   )
 }

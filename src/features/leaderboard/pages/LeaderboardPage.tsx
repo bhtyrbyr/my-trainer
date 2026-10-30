@@ -6,6 +6,7 @@ import { ErrorNote } from '@/components/ui/ErrorNote'
 import { avatarUrl } from '@/features/profile/api'
 import { StreakAvatar } from '@/features/gamification/StreakAvatar'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { PublicProfileSheet } from '@/features/badges'
 import { cn } from '@/lib/utils'
 import type { LeaderboardRow } from '@/lib/database.types'
 import { useLeaderboard } from '../hooks'
@@ -30,10 +31,16 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
   const leader = rows.find((r) => r.rank === 1)
   const rest = rows.filter((r) => r !== leader)
   const meInList = rows.find((r) => r.is_me)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const open = rows.find((r) => r.user_id === openId) ?? null
 
   return (
     <PageShell title={t('common:nav.leaderboard')}>
-      <div role="tablist" aria-label={t('leaderboard:periodLabel')} className="hairline mb-5 grid grid-cols-3 rounded-full bg-surface p-1">
+      <div
+        role="tablist"
+        aria-label={t('leaderboard:periodLabel')}
+        className="hairline mb-5 grid grid-cols-3 rounded-full bg-surface p-1"
+      >
         {PERIODS.map((p) => (
           <button
             key={p}
@@ -58,12 +65,12 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
         <EmptyState />
       ) : (
         <div className="space-y-4">
-          {leader && <LeaderCard row={leader} />}
+          {leader && <LeaderCard row={leader} onOpen={() => setOpenId(leader.user_id)} />}
 
           {rest.length > 0 && (
             <ol className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
               {rest.map((r) => (
-                <Row key={r.user_id} row={r} />
+                <Row key={r.user_id} row={r} onOpen={() => setOpenId(r.user_id)} />
               ))}
             </ol>
           )}
@@ -77,73 +84,92 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
           <p className="px-1 text-center text-[11px] text-ink-faint">{t('leaderboard:footnote')}</p>
         </div>
       )}
+
+      <PublicProfileSheet person={open} onClose={() => setOpenId(null)} />
     </PageShell>
   )
 }
 
-function LeaderCard({ row }: { row: LeaderboardRow }) {
+function LeaderCard({ row, onOpen }: { row: LeaderboardRow; onOpen: () => void }) {
   const { t } = useTranslation(['leaderboard', 'common'])
   const src = avatarUrl(row.avatar_path)
   return (
-    <div
+    <button
+      type="button"
+      onClick={onOpen}
       className={cn(
-        'hairline relative overflow-hidden rounded-[var(--radius-card)] bg-surface p-5',
+        'hairline relative block w-full overflow-hidden rounded-[var(--radius-card)] bg-surface p-5 text-left transition-colors hover:bg-raised/40',
         row.is_me && 'border-volt/50',
       )}
     >
       {/* soft volt glow behind the leader */}
-      <div
+      <span
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-16 size-48 rounded-full"
         style={{ background: 'radial-gradient(circle, oklch(91% 0.21 125 / 22%), transparent 70%)' }}
       />
-      <div className="relative flex items-center gap-4">
-        <div className="relative">
+      <span className="relative flex items-center gap-4">
+        <span className="block relative">
           <StreakAvatar src={src} streak={row.streak} size={64} />
           {/* trophy sits top-left so the streak badge keeps the bottom-right corner */}
           <span className="inner-glow absolute -left-1.5 -top-1.5 flex size-7 items-center justify-center rounded-full bg-volt text-volt-ink ring-[3px] ring-surface">
             <Trophy className="size-3.5" aria-hidden />
           </span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2">
-            <span className="eyebrow">{t('leaderboard:leader')}</span>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="block eyebrow">{t('leaderboard:leader')}</span>
             {row.is_me && <YouTag />}
-          </p>
-          <p className="mt-1 truncate text-[19px] font-semibold leading-tight">{row.display_name}</p>
-          <p className="truncate text-xs text-ink-muted">
+          </span>
+          <span className="block mt-1 truncate text-[19px] font-semibold leading-tight">{row.display_name}</span>
+          <span className="block truncate text-xs text-ink-muted">
             @{row.username} · {t('common:level', { n: row.level })}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="display tabular text-[34px] leading-none text-ink">{row.points}</p>
-          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint">{t('leaderboard:pts')}</p>
-        </div>
-      </div>
-      <p className="relative mt-4 text-xs text-ink-faint">{t('leaderboard:activeDays', { n: row.active_days })}</p>
-    </div>
+          </span>
+        </span>
+        <span className="block text-right">
+          <span className="block display tabular text-[34px] leading-none text-ink">{row.points}</span>
+          <span className="block mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-faint">
+            {t('leaderboard:pts')}
+          </span>
+        </span>
+      </span>
+      <span className="block relative mt-4 text-xs text-ink-faint">
+        {t('leaderboard:activeDays', { n: row.active_days })}
+      </span>
+    </button>
   )
 }
 
-function Row({ row }: { row: LeaderboardRow }) {
+function Row({ row, onOpen }: { row: LeaderboardRow; onOpen: () => void }) {
   const { t } = useTranslation(['leaderboard', 'common'])
   const src = avatarUrl(row.avatar_path)
   return (
-    <li className={cn('flex items-center gap-3 px-4 py-3', row.is_me && 'bg-volt/[0.07]')}>
-      <span className={cn('tabular w-6 text-center text-[15px] font-semibold', row.rank <= 3 ? 'text-ink' : 'text-ink-faint')}>
-        {row.rank}
-      </span>
-      <StreakAvatar src={src} streak={row.streak} size={42} />
-      <div className="min-w-0 flex-1">
-        <p className="flex min-w-0 items-baseline gap-2 text-[15px] font-medium leading-tight">
-          <span className="truncate">{row.display_name}</span>
-          {row.is_me && <YouTag />}
-        </p>
-        <p className="truncate text-xs text-ink-faint">
-          {t('common:level', { n: row.level })} · {t('leaderboard:activeDaysShort', { n: row.active_days })}
-        </p>
-      </div>
-      <span className="tabular text-[17px] font-semibold">{row.points}</span>
+    <li className={cn(row.is_me && 'bg-volt/[0.07]')}>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-raised/50"
+      >
+        <span
+          className={cn(
+            'tabular w-6 text-center text-[15px] font-semibold',
+            row.rank <= 3 ? 'text-ink' : 'text-ink-faint',
+          )}
+        >
+          {row.rank}
+        </span>
+        <StreakAvatar src={src} streak={row.streak} size={42} />
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-baseline gap-2 text-[15px] font-medium leading-tight">
+            <span className="block truncate">{row.display_name}</span>
+            {row.is_me && <YouTag />}
+          </span>
+          <span className="block truncate text-xs text-ink-faint">
+            {t('common:level', { n: row.level })} · {t('leaderboard:activeDaysShort', { n: row.active_days })}
+          </span>
+        </span>
+        <span className="block tabular text-[17px] font-semibold">{row.points}</span>
+      </button>
     </li>
   )
 }
@@ -152,7 +178,9 @@ function Row({ row }: { row: LeaderboardRow }) {
 function YouTag() {
   const { t } = useTranslation('leaderboard')
   return (
-    <span className="shrink-0 rounded-full bg-volt/15 px-1.5 py-px text-[11px] font-semibold text-volt">{t('you')}</span>
+    <span className="shrink-0 rounded-full bg-volt/15 px-1.5 py-px text-[11px] font-semibold text-volt">
+      {t('you')}
+    </span>
   )
 }
 

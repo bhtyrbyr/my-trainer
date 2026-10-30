@@ -1,0 +1,51 @@
+{
+  "suggest": {
+    "label": "Öneriler",
+    "dismiss": "Bugün gizle",
+    "streak": { "lead": "Serin tehlikede.", "body": "{{count}} günlük serini korumak için gece yarısından önce bir şey kaydet." },
+    "habits": { "lead": "Alışkanlıklar bekliyor.", "body_one": "Bugün {{count}} alışkanlık hâlâ açık.", "body_other": "Bugün {{count}} alışkanlık hâlâ açık." },
+    "water": { "lead": "Su iç.", "body": "Su hedefinde bugün %{{pct}} seviyesindesin." },
+    "muscle": { "lead": "{{part}} dinleniyor.", "body_one": "En son dün çalıştın.", "body_other": "En son {{count}} gün önce çalıştın." },
+    "weigh": { "lead": "Tartılma zamanı.", "body_one": "En son dün tartıldın.", "body_other": "En son {{count}} gün önce tartıldın." }
+  },
+  "glance": {
+    "label": "Bugün kısaca",
+    "agenda": "Ajanda",
+    "habits": "alışkanlık",
+    "todosLeft_one": "{{count}} iş kaldı",
+    "todosLeft_other": "{{count}} iş kaldı",
+    "todosDone": "iş bitti",
+    "nothing": "Planlı bir şey yok",
+    "open": "Günü Takip'te aç",
+    "water": "Su",
+    "sleep": "Uyku",
+    "sleepNone": "Kayıt yok",
+    "sleepLog": "Gir"
+  },
+  "week": {
+    "title": "Bu hafta",
+    "range": "{{from}} – {{to}}",
+    "workouts_one": "antrenman",
+    "workouts_other": "antrenman",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} set",
+    "volume": "{{value}} {{unit}} kaldırıldı",
+    "cardio": "{{n}} dk kardiyo",
+    "empty": "Henüz antrenman yok. Hafta pazar günü bitiyor.",
+    "deltaUp": "Geçen haftadan {{n}} fazla",
+    "deltaDown": "Geçen haftadan {{n}} az",
+    "deltaSame": "Geçen haftayla aynı",
+    "stat": {
+      "habits": "Alışkanlık",
+      "habitsCaption": "planlı günlerin",
+      "todos": "İşler",
+      "todosCaption": "tamamlandı",
+      "sleep": "Uyku",
+      "sleepCaption": "gece ortalaması",
+      "weight": "Kilo",
+      "weightCaption": "değişim",
+      "water": "Su",
+      "waterCaption": "gün hedefte"
+    }
+  }
+}

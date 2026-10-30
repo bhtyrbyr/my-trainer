@@ -76,6 +76,13 @@
       "rpm": "RPM",
       "tpm": "TPM",
       "rpd": "RPD"
+    },
+    "global": {
+      "edit": "Edit",
+      "title": "App's daily AI cap",
+      "hint": "The most AI requests the whole app may make in one Istanbul day, across all users. It protects the shared free Google quota. 0 switches AI off for everyone.",
+      "label": "Requests per day",
+      "invalid": "Enter a whole number from 0 to {{max}}."
     }
   },
   "reports": {
@@ -102,5 +109,72 @@
     "copied": "Copied",
     "unknownUser": "Account without a profile",
     "note": "Note"
+  },
+  "back": "Profile",
+  "access": {
+    "link": "Access",
+    "linkOpen": "Open",
+    "linkInvite": "Invite only",
+    "title": "Access",
+    "mode": {
+      "title": "Who can join",
+      "open": "Anyone with a Google account",
+      "openHint": "Everyone can sign in and send a registration request.",
+      "invite": "Invite only",
+      "inviteHint": "Only e-mail addresses on the invite list below can sign in."
+    },
+    "approval": {
+      "title": "Approve new accounts by hand",
+      "on": "New accounts wait in Registration requests until you approve them.",
+      "off": "New accounts can use the app right after onboarding."
+    },
+    "invite": {
+      "title": "Invite list",
+      "count_one": "{{count}} address",
+      "count_other": "{{count}} addresses",
+      "enforced": "Only these addresses can sign in.",
+      "notEnforced": "Not enforced while anyone can join. It takes effect when you switch to invite only.",
+      "email": "E-mail address",
+      "note": "Note (optional)",
+      "add": "Add",
+      "invalid": "That does not look like an e-mail address.",
+      "empty": "No addresses yet.",
+      "remove": "Remove",
+      "keep": "Keep",
+      "removeLabel": "Remove {{email}}"
+    }
+  },
+  "users": {
+    "link": "Users",
+    "title": "Users",
+    "search": "Search name, username or e-mail",
+    "found_one": "{{count}} match",
+    "found_other": "{{count}} matches",
+    "newest_one": "Newest {{count}} person",
+    "newest_other": "Newest {{count}} people",
+    "empty": "No one matches this search.",
+    "chip": {
+      "admin": "Admin",
+      "blocked": "Blocked"
+    },
+    "noProfile": "No profile yet",
+    "joined": "Joined",
+    "lastActive": "Last active",
+    "never": "Never",
+    "aiLimit": "Daily AI requests",
+    "aiLimitHint": "Food estimates and coach messages per day. Default {{n}}, 0 turns AI off for this person, at most {{max}}.",
+    "aiLimitInvalid": "Enter a whole number from 0 to {{max}}.",
+    "save": "Save",
+    "saved": "Saved.",
+    "access": "Access",
+    "selfNote": "This is your own account; you cannot block yourself.",
+    "adminNote": "Admins cannot be blocked. Remove the admin role first.",
+    "blockHint": "A blocked person cannot open the app and disappears from the leaderboard. Their data stays.",
+    "blockConfirm": "Block {{name}}? They lose access to the app until you unblock them.",
+    "blockedNote": "This person is blocked and cannot open the app.",
+    "block": "Block account",
+    "unblock": "Unblock",
+    "cancel": "Cancel",
+    "close": "Close"
   }
 }
