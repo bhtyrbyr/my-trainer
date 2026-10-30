@@ -59,7 +59,10 @@
     "badPath": "The photo could not be saved: invalid file location. Refresh and try again.",
     "missingUpload": "The photo did not finish uploading. Check your connection and try again.",
     "vaultDamaged": "Your album’s key data looks wrong, so it was not opened for your safety. Report it to the admin.",
-    "lastAdmin": "You are the only admin. Make someone else an admin before deleting your account."
+    "lastAdmin": "You are the only admin. Make someone else an admin before deleting your account.",
+    "alreadyDone": "This to-do is already done. Refresh the page.",
+    "notDue": "This to-do is not scheduled for that day.",
+    "limitReached": "You reached the limit (50 active habits, 500 to-dos). Archive or delete the ones you no longer use."
   },
   "update": {
     "title": "New version released",

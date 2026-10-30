@@ -42,10 +42,6 @@
     "items_other": "{{count}} foods",
     "open": "Open the nutrition day"
   },
-  "soon": {
-    "title": "Coming here soon",
-    "list": "Habits and to-dos"
-  },
   "nutrition": {
     "name": "Nutrition",
     "hint": "Meals, calories, macros",

@@ -139,6 +139,8 @@ export const router = createBrowserRouter([
           { path: 'track/photos', lazy: photos },
         ],
       },
+      { path: 'track/habits', lazy: page(() => import('@/features/today/pages/HabitsPage'), 'HabitsPage') },
+      { path: 'track/todos', lazy: page(() => import('@/features/today/pages/TodosPage'), 'TodosPage') },
       { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },

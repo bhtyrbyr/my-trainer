@@ -26,6 +26,9 @@ export function classifyError(err: unknown): AppError {
   if (/ALREADY_FINISHED/.test(message)) return { key: 'errors.alreadyFinished', code }
   if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
   if (/BAD_PATH/.test(message)) return { key: 'errors.badPath', code }
+  if (/ALREADY_DONE/.test(message)) return { key: 'errors.alreadyDone', code }
+  if (/NOT_DUE/.test(message)) return { key: 'errors.notDue', code }
+  if (/LIMIT_REACHED/.test(message)) return { key: 'errors.limitReached', code }
   if (/LAST_ADMIN/.test(message)) return { key: 'errors.lastAdmin', code }
   if (/MISSING_UPLOAD/.test(message)) return { key: 'errors.missingUpload', code }
   if (/BAD_KDF/.test(message)) return { key: 'errors.vaultDamaged', code }

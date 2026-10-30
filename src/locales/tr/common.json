@@ -59,7 +59,10 @@
     "badPath": "Fotoğraf yüklenemedi: dosya konumu geçersiz. Sayfayı yenileyip tekrar dene.",
     "missingUpload": "Fotoğraf tam yüklenemedi. Bağlantını kontrol edip tekrar dene.",
     "vaultDamaged": "Albümün anahtar bilgileri beklenmedik biçimde. Güvenliğin için açılmadı; yöneticiye bildir.",
-    "lastAdmin": "Tek yönetici sensin. Hesabını silmeden önce başka birini yönetici yap."
+    "lastAdmin": "Tek yönetici sensin. Hesabını silmeden önce başka birini yönetici yap.",
+    "alreadyDone": "Bu görev zaten tamamlanmış. Sayfayı yenile.",
+    "notDue": "Bu görev o gün için planlı değil.",
+    "limitReached": "Üst sınıra ulaştın (en fazla 50 aktif alışkanlık, 500 görev). Kullanmadıklarını arşivle ya da sil."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

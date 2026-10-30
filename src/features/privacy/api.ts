@@ -64,7 +64,7 @@ export async function deleteMyAccount(userId: string): Promise<void> {
 const OWN_TABLES = [
   'profile_private', 'user_settings', 'user_consents', 'workout_templates', 'template_exercises', 'workout_sessions',
   'session_exercises', 'session_sets', 'cardio_entries', 'personal_records', 'body_metrics', 'foods', 'meal_entries',
-  'sleep_entries', 'water_entries', 'progress_photos', 'point_events', 'ai_usage',
+  'sleep_entries', 'water_entries', 'progress_photos', 'point_events', 'ai_usage', 'habits', 'habit_logs', 'todos', 'todo_completions',
 ] as const
 
 /** KVKK art. 11: everything we hold about the caller, as one JSON document. */
