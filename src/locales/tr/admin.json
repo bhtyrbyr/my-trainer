@@ -76,6 +76,13 @@
       "rpm": "RPM",
       "tpm": "TPM",
       "rpd": "RPD"
+    },
+    "global": {
+      "edit": "Düzenle",
+      "title": "Uygulamanın günlük AI sınırı",
+      "hint": "Uygulamanın tüm kullanıcılar için bir İstanbul gününde yapabileceği en fazla AI isteği. Paylaşılan ücretsiz Google kotasını korur. 0 herkes için AI'yı kapatır.",
+      "label": "Günlük istek",
+      "invalid": "0 ile {{max}} arasında bir tam sayı gir."
     }
   },
   "reports": {
@@ -102,5 +109,72 @@
     "copied": "Kopyalandı",
     "unknownUser": "Profili olmayan hesap",
     "note": "Not"
+  },
+  "back": "Profil",
+  "access": {
+    "link": "Erişim",
+    "linkOpen": "Açık",
+    "linkInvite": "Yalnızca davetli",
+    "title": "Erişim",
+    "mode": {
+      "title": "Kimler katılabilir",
+      "open": "Google hesabı olan herkes",
+      "openHint": "Herkes giriş yapıp kayıt isteği gönderebilir.",
+      "invite": "Yalnızca davetli",
+      "inviteHint": "Yalnızca aşağıdaki davet listesindeki e-posta adresleri giriş yapabilir."
+    },
+    "approval": {
+      "title": "Yeni hesapları elle onayla",
+      "on": "Yeni hesaplar sen onaylayana kadar Kayıt istekleri'nde bekler.",
+      "off": "Yeni hesaplar tanışma adımlarından hemen sonra uygulamayı kullanabilir."
+    },
+    "invite": {
+      "title": "Davet listesi",
+      "count_one": "{{count}} adres",
+      "count_other": "{{count}} adres",
+      "enforced": "Yalnızca bu adresler giriş yapabilir.",
+      "notEnforced": "Herkes katılabildiği sürece uygulanmaz. Yalnızca davetli moduna geçince geçerli olur.",
+      "email": "E-posta adresi",
+      "note": "Not (isteğe bağlı)",
+      "add": "Ekle",
+      "invalid": "Bu bir e-posta adresine benzemiyor.",
+      "empty": "Henüz adres yok.",
+      "remove": "Kaldır",
+      "keep": "Vazgeç",
+      "removeLabel": "{{email}} adresini kaldır"
+    }
+  },
+  "users": {
+    "link": "Kullanıcılar",
+    "title": "Kullanıcılar",
+    "search": "Ad, kullanıcı adı veya e-posta ara",
+    "found_one": "{{count}} sonuç",
+    "found_other": "{{count}} sonuç",
+    "newest_one": "En yeni {{count}} kişi",
+    "newest_other": "En yeni {{count}} kişi",
+    "empty": "Bu aramaya uyan kimse yok.",
+    "chip": {
+      "admin": "Yönetici",
+      "blocked": "Engelli"
+    },
+    "noProfile": "Henüz profil yok",
+    "joined": "Katılım",
+    "lastActive": "Son etkinlik",
+    "never": "Hiç",
+    "aiLimit": "Günlük AI isteği",
+    "aiLimitHint": "Günlük yemek tahmini ve koç mesajı sayısı. Varsayılan {{n}}, 0 bu kişi için AI'yı kapatır, en fazla {{max}}.",
+    "aiLimitInvalid": "0 ile {{max}} arasında bir tam sayı gir.",
+    "save": "Kaydet",
+    "saved": "Kaydedildi.",
+    "access": "Erişim",
+    "selfNote": "Bu senin hesabın; kendini engelleyemezsin.",
+    "adminNote": "Yöneticiler engellenemez. Önce yönetici rolünü kaldır.",
+    "blockHint": "Engellenen kişi uygulamayı açamaz ve liderlik tablosundan çıkar. Verileri silinmez.",
+    "blockConfirm": "{{name}} engellensin mi? Engeli kaldırana kadar uygulamaya erişemez.",
+    "blockedNote": "Bu kişi engelli ve uygulamayı açamıyor.",
+    "block": "Hesabı engelle",
+    "unblock": "Engeli kaldır",
+    "cancel": "Vazgeç",
+    "close": "Kapat"
   }
 }

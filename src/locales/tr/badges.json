@@ -1,0 +1,33 @@
+{
+  "title": "Rozetler",
+  "count": "{{earned}} / {{total}}",
+  "earnedOn": "{{date}} tarihinde kazanıldı",
+  "locked": "Kilitli",
+  "close": "Kapat",
+  "items": {
+    "first_workout": { "name": "İlk tekrar", "desc": "İlk antrenmanını ya da kardiyonu bitir." },
+    "streak_7": { "name": "Alev haftası", "desc": "Serini 7 gün boyunca sürdür." },
+    "streak_30": { "name": "Kesintisiz ay", "desc": "Serini 30 gün boyunca sürdür." },
+    "sets_100": { "name": "Yüz set", "desc": "100 çalışma seti bitir. Isınma setleri sayılmaz." },
+    "photos_10": { "name": "Gelişim arşivi", "desc": "10 gelişim fotoğrafı kaydet." },
+    "habit_30": { "name": "Alışkanlık ustası", "desc": "Bir alışkanlığın günlük hedefini 30 kez tamamla." },
+    "todo_50": { "name": "Elli iş", "desc": "50 yapılacak işi tamamla." }
+  },
+  "progress": {
+    "workouts": "{{value}} / {{threshold}} antrenman",
+    "streak": "En iyi seri {{value}} / {{threshold}} gün",
+    "sets": "{{value}} / {{threshold}} set",
+    "photos": "{{value}} / {{threshold}} fotoğraf",
+    "habitDays": "{{value}} / {{threshold}} alışkanlık günü",
+    "todos": "{{value}} / {{threshold}} iş"
+  },
+  "celebrate": {
+    "eyebrow": "Yeni rozet",
+    "done": "Harika",
+    "next_one": "Sıradaki rozet",
+    "next_other": "Sıradaki ({{count}} rozet daha)"
+  },
+  "public": {
+    "none": "Henüz rozet yok."
+  }
+}

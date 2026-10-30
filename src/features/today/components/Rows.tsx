@@ -13,10 +13,10 @@ import { PRIORITY_DOT, describeRule } from '../schedule'
 export function HabitRow({ item, day, onEdit }: { item: HabitItem; day: string; onEdit?: () => void }) {
   const { t } = useTranslation('today')
   const set = useSetHabitCount()
-  const { habit, count, done, log } = item
+  const { habit, count, done } = item
   const counter = habit.target_count > 1
   const name = habit.name
-  const setCount = (n: number) => set.mutate({ habitId: habit.id, day, count: n, log })
+  const setCount = (n: number) => set.mutate({ habitId: habit.id, day, count: n })
   const meta =
     counter
       ? t('habits.count', { count, target: habit.target_count, unit: habit.unit ?? '' }).trim()
@@ -71,7 +71,6 @@ export function TodoRow({ item, onEdit, trailing }: { item: TodoItem; onEdit?: (
     <li className="flex min-h-14 items-center gap-3 px-4 py-2">
       <TickButton
         done={done}
-        disabled={toggle.isPending}
         label={done ? t('todos.untick', { title }) : t('todos.tick', { title })}
         onClick={() => toggle.mutate({ todoId: todo.id, day: tickDay, completionId: completion?.id })}
       />

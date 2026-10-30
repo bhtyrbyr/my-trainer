@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import type { RegistrationRow, RegistrationStatus } from '@/lib/database.types'
+import { parseAdminConfig, type AdminConfig, type AdminConfigKey } from './adminLogic'
+import type { Database, RegistrationRow, RegistrationStatus } from '@/lib/database.types'
 
 export async function listRegistrations(status: RegistrationStatus | 'all' = 'pending'): Promise<RegistrationRow[]> {
   const { data, error } = await supabase.rpc('admin_list_registrations', { p_status: status, p_limit: 100 })
@@ -90,5 +91,67 @@ export async function listErrorReports(status: 'open' | 'resolved' | 'all') {
 
 export async function setErrorReportStatus(id: number, status: 'open' | 'resolved'): Promise<void> {
   const { error } = await supabase.from('error_reports').update({ status }).eq('id', id)
+  if (error) throw error
+}
+
+// ---------------------------------------------------------------------------------------------
+// Access (app_config keys the panel edits) and the invite list. All admin-only RPCs; app_config is
+// readable by admins only (RLS).
+
+export async function fetchAdminConfig(): Promise<AdminConfig> {
+  const { data, error } = await supabase.from('app_config').select('key, value').in('key', ['access_mode', 'require_approval', 'ai_global_daily_limit'])
+  if (error) throw error
+  return parseAdminConfig(data ?? [])
+}
+
+/** BAD_KEY is also the push-subscription code; tag it so errors.ts can tell the two apart. */
+function configError(error: { message?: string }): unknown {
+  return /\bBAD_KEY\b/.test(error.message ?? '') ? { ...error, message: 'BAD_CONFIG_KEY' } : error
+}
+
+export async function setAdminConfig<K extends AdminConfigKey>(key: K, value: AdminConfig[K]): Promise<void> {
+  const { error } = await supabase.rpc('admin_set_config', { p_key: key, p_value: value })
+  if (error) throw configError(error)
+}
+
+export async function listAllowedEmails() {
+  const { data, error } = await supabase.rpc('admin_list_allowed_emails')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addAllowedEmail(email: string, note: string | null): Promise<void> {
+  const { error } = await supabase.rpc('admin_add_allowed_email', { p_email: email, p_note: note ?? undefined })
+  if (error) throw error
+}
+
+export async function removeAllowedEmail(email: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('admin_remove_allowed_email', { p_email: email })
+  if (error) throw error
+  return Boolean(data)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Users: search, block/unblock, per-user AI limit
+type AdminUserRow = Database['public']['Functions']['admin_list_users']['Returns'][number]
+/** Generated RPC types are non-null; these two really are null for never-active users / no settings row. */
+export type AdminUser = Omit<AdminUserRow, 'last_active_on' | 'ai_daily_limit'> & {
+  last_active_on: string | null
+  ai_daily_limit: number | null
+}
+
+export async function listUsers(query: string, limit = 50): Promise<AdminUser[]> {
+  const { data, error } = await supabase.rpc('admin_list_users', { p_query: query.trim() || undefined, p_limit: limit })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function setUserBlocked(userId: string, blocked: boolean): Promise<void> {
+  const { error } = await supabase.rpc('admin_set_blocked', { p_user: userId, p_blocked: blocked })
+  if (error) throw error
+}
+
+export async function setUserAiLimit(userId: string, limit: number): Promise<void> {
+  const { error } = await supabase.rpc('admin_set_ai_limit', { p_user: userId, p_limit: limit })
   if (error) throw error
 }

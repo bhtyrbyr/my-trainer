@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isDuplicate } from '@/lib/offline/queue'
 import type { Json } from '@/lib/database.types'
 import type { Habit, HabitInput, HabitLog, Todo, TodoCompletion, TodoInput } from './types'
 
@@ -35,21 +36,23 @@ export async function deleteHabit(id: string): Promise<void> {
   if (error) throw error
 }
 
-/** Set a habit's count for a day: 0 removes the log (and its points). */
-export async function setHabitCount(userId: string, habitId: string, day: string, count: number, existing: HabitLog | undefined): Promise<void> {
+/**
+ * Set a habit's count for a day (absolute, so a replay from the offline queue is the same write): an
+ * upsert on (habit_id, day), or a delete of that day's log for 0 (which also revokes its points).
+ */
+export async function setHabitCount(userId: string, habitId: string, day: string, count: number): Promise<HabitLog | null> {
   if (count <= 0) {
-    if (!existing) return
-    const { error } = await supabase.from('habit_logs').delete().eq('id', existing.id)
+    const { error } = await supabase.from('habit_logs').delete().eq('habit_id', habitId).eq('day', day)
     if (error) throw error
-    return
+    return null
   }
-  if (existing) {
-    const { error } = await supabase.from('habit_logs').update({ count }).eq('id', existing.id)
-    if (error) throw error
-    return
-  }
-  const { error } = await supabase.from('habit_logs').insert({ user_id: userId, habit_id: habitId, day, count })
+  const { data, error } = await supabase
+    .from('habit_logs')
+    .upsert({ user_id: userId, habit_id: habitId, day, count }, { onConflict: 'habit_id,day' })
+    .select('*')
+    .single()
   if (error) throw error
+  return data
 }
 
 /**
@@ -106,9 +109,20 @@ export async function deleteTodo(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function completeTodo(userId: string, todoId: string, day: string): Promise<void> {
-  const { error } = await supabase.from('todo_completions').insert({ user_id: userId, todo_id: todoId, day })
-  if (error) throw error
+/**
+ * Tick a to-do occurrence. `id` is generated on the device (offline queue). A replay whose first attempt
+ * went through (primary key / one per day / one-off already done) returns the stored completion.
+ */
+export async function completeTodo(userId: string, c: { id: string; todoId: string; day: string }): Promise<TodoCompletion> {
+  const { data, error } = await supabase.from('todo_completions').insert({ id: c.id, user_id: userId, todo_id: c.todoId, day: c.day }).select('*').single()
+  if (!error) return data
+  if (!isDuplicate(error) && !/ALREADY_DONE/.test(error.message)) throw error
+  const { data: rows, error: readError } = await supabase.from('todo_completions').select('*').eq('todo_id', c.todoId)
+  if (readError) throw readError
+  const list = rows ?? []
+  const existing = list.find((r) => r.id === c.id) ?? list.find((r) => r.day === c.day) ?? (list.length === 1 ? list[0] : undefined)
+  if (!existing) throw error
+  return existing
 }
 
 export async function uncompleteTodo(completionId: string): Promise<void> {

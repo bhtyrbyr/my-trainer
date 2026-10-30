@@ -33,5 +33,7 @@
     "cm": "Santimetre",
     "in": "İnç",
     "hint": "Değerler her zaman kg ve cm olarak saklanır; bu seçim yalnızca gösterimi ve girişi değiştirir."
-  }
+  },
+  "signOutUnsynced_one": "{{count}} kayıt henüz gönderilmedi. Çıkış yaparsan kaybolur. Yine de çıkılsın mı?",
+  "signOutUnsynced_other": "{{count}} kayıt henüz gönderilmedi. Çıkış yaparsan kaybolur. Yine de çıkılsın mı?"
 }

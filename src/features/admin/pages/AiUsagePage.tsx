@@ -3,14 +3,15 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format, formatDistanceStrict, parseISO } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
-import { ArrowLeft, Loader2, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, Loader2, Pencil, SlidersHorizontal } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
 import { QUOTA_TZ, dailySeries, nextMidnight, type ModelLimits, type UsageRow } from '../aiUsageLogic'
-import { useAiAppToday, useAiLive, useAiModelLimits, useAiUsage, useSetAiModelLimits } from '../hooks'
+import { useAiAppToday, useAiLive, useAiModelLimits, useAiUsage, useSetAdminConfig, useSetAiModelLimits } from '../hooks'
+import { LIMITS, parseLimit } from '../adminLogic'
 
 const PERIODS = [7, 30, 90] as const
 type Metric = 'tokens' | 'requests'
@@ -26,6 +27,7 @@ export function AiUsagePage() {
   const [days, setDays] = useState<(typeof PERIODS)[number]>(30)
   const [metric, setMetric] = useState<Metric>('tokens')
   const [editing, setEditing] = useState(false)
+  const [editingGlobal, setEditingGlobal] = useState(false)
   const usage = useAiUsage(days)
   const live = useAiLive()
   const app = useAiAppToday()
@@ -102,11 +104,24 @@ export function AiUsagePage() {
                 </li>
               )
             })}
-            <li className="flex items-center justify-between gap-3 px-4 py-3.5">
-              <span className="text-[13px] text-ink-muted">{t('ai.quota.app')}</span>
-              <span className="tabular shrink-0 text-[14px] font-semibold">
-                {app.data ? t('ai.quota.appValue', { used: nf.format(app.data.used), limit: nf.format(app.data.limit) }) : '…'}
-              </span>
+            <li>
+              <button
+                type="button"
+                disabled={!app.data}
+                onClick={() => setEditingGlobal(true)}
+                aria-label={`${t('ai.quota.app')}: ${t('ai.global.edit')}`}
+                className="flex w-full items-center justify-between gap-3 py-2 pl-4 pr-2 text-left transition-colors hover:bg-raised/50"
+              >
+                <span className="text-[13px] text-ink-muted">{t('ai.quota.app')}</span>
+                <span className="flex shrink-0 items-center gap-1">
+                  <span className="tabular text-[14px] font-semibold">
+                    {app.data ? t('ai.quota.appValue', { used: nf.format(app.data.used), limit: nf.format(app.data.limit) }) : '…'}
+                  </span>
+                  <span className="flex size-10 items-center justify-center text-ink-faint" aria-hidden>
+                    <Pencil className="size-4" />
+                  </span>
+                </span>
+              </button>
             </li>
           </ul>
           <p className="mt-2 text-[11px] leading-snug text-ink-faint">{t('ai.quota.source')}</p>
@@ -146,6 +161,7 @@ export function AiUsagePage() {
       </div>
 
       {editing && limits.data && <LimitsSheet initial={limits.data} onClose={() => setEditing(false)} />}
+      {editingGlobal && app.data && <GlobalLimitSheet initial={app.data.limit} onClose={() => setEditingGlobal(false)} />}
     </PageShell>
   )
 }
@@ -334,6 +350,57 @@ function LimitsSheet({ initial, onClose }: { initial: ModelLimits; onClose: () =
           </Button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/** The app's own daily AI cap across all users (app_config.ai_global_daily_limit, 0..10000). */
+function GlobalLimitSheet({ initial, onClose }: { initial: number; onClose: () => void }) {
+  const { t } = useTranslation('admin')
+  const save = useSetAdminConfig()
+  const [draft, setDraft] = useState(String(initial))
+  const parsed = parseLimit(draft, LIMITS.globalAi)
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center lg:items-center" role="presentation">
+      <button type="button" aria-label={t('ai.limits.cancel')} className="absolute inset-0 bg-bg/70 backdrop-blur-sm" onClick={onClose} />
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('ai.global.title')}
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (parsed !== null) save.mutate({ key: 'ai_global_daily_limit', value: parsed }, { onSuccess: onClose })
+        }}
+        className="rise-in hairline relative w-full max-w-md rounded-t-[var(--radius-sheet)] bg-surface px-5 pb-safe pt-6 lg:rounded-[var(--radius-sheet)] lg:pb-0"
+      >
+        <h2 className="display text-[24px]">{t('ai.global.title')}</h2>
+        <p className="mt-1.5 text-[13px] leading-snug text-ink-muted">{t('ai.global.hint')}</p>
+        <label className="mt-5 block">
+          <span className="mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-ink-faint">{t('ai.global.label')}</span>
+          <input
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, '').slice(0, 5))}
+            aria-invalid={parsed === null}
+            className={cn(
+              'tabular h-12 w-full rounded-[var(--radius-input)] bg-bg px-3 text-[20px] font-semibold text-ink outline-none ring-1 ring-inset focus-visible:ring-2 focus-visible:ring-volt',
+              parsed === null ? 'ring-danger' : 'ring-line',
+            )}
+          />
+        </label>
+        {parsed === null && <p className="mt-1.5 text-[12px] text-danger">{t('ai.global.invalid', { max: LIMITS.globalAi })}</p>}
+        <ErrorNote error={save.error} className="mt-4" />
+        <div className="mt-6 grid gap-2 pb-5">
+          <Button type="submit" size="lg" disabled={parsed === null || save.isPending}>
+            {save.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
+            {t('ai.limits.save')}
+          </Button>
+          <Button size="lg" variant="ghost" onClick={onClose}>
+            {t('ai.limits.cancel')}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }

@@ -1,0 +1,61 @@
+{
+  "chip": {
+    "offline": "Çevrimdışı",
+    "offlinePending_one": "Çevrimdışı · {{count}} değişiklik bekliyor",
+    "offlinePending_other": "Çevrimdışı · {{count}} değişiklik bekliyor",
+    "syncing_one": "{{count}} değişiklik gönderiliyor",
+    "syncing_other": "{{count}} değişiklik gönderiliyor",
+    "weak_one": "Bağlantı zayıf · {{count}} bekliyor",
+    "weak_other": "Bağlantı zayıf · {{count}} bekliyor",
+    "failed_one": "{{count}} değişiklik kaydedilemedi",
+    "failed_other": "{{count}} değişiklik kaydedilemedi",
+    "open": "Senkron ayrıntılarını göster"
+  },
+  "inline": {
+    "offline": "Çevrimdışı",
+    "waiting": "{{count}} bekliyor",
+    "failed": "{{count}} kaydedilemedi"
+  },
+  "sheet": {
+    "label": "Senkron durumu",
+    "close": "Kapat",
+    "eyebrowOffline": "Çevrimdışı",
+    "eyebrowOnline": "Senkron",
+    "titleOffline": "Bağlantı yok",
+    "titleSyncing": "Değişikliklerin gönderiliyor",
+    "titleFailed": "Bazı değişiklikler kaydedilemedi",
+    "titleIdle": "Her şey kaydedildi",
+    "body": "Şimdi kaydettiğin setler, su, alışkanlıklar ve yapılacaklar bu telefonda kalır; bağlantı gelince sırayla gönderilir. Diğer değişiklikler için bağlantı gerekir.",
+    "waiting": "Gönderilmeyi bekliyor",
+    "failed": "Kaydedilemedi",
+    "retry": "Tekrar dene",
+    "retryAll": "Hepsini tekrar dene",
+    "discard": "Vazgeç",
+    "discardConfirm": "Silmek için tekrar dokun",
+    "done": "Tamam"
+  },
+  "ops": {
+    "addSet": "Kaydedilen setler",
+    "deleteSet": "Silinen setler",
+    "addExercise": "Eklenen hareketler",
+    "finish": "Bitirilen antrenmanlar",
+    "addWater": "Su",
+    "deleteWater": "Silinen su kayıtları",
+    "setHabitCount": "Alışkanlık işaretleri",
+    "completeTodo": "İşaretlenen yapılacaklar",
+    "uncompleteTodo": "İşareti kaldırılan yapılacaklar",
+    "unknown": "Diğer değişiklikler"
+  },
+  "op": {
+    "addSet": "Set kaydı",
+    "deleteSet": "Set silme",
+    "addExercise": "Hareket ekleme",
+    "finish": "Antrenmanı bitirme",
+    "addWater": "Su kaydı",
+    "deleteWater": "Su kaydını silme",
+    "setHabitCount": "Alışkanlık işareti",
+    "completeTodo": "Yapılacak işaretleme",
+    "uncompleteTodo": "Yapılacak işaretini kaldırma",
+    "unknown": "Değişiklik"
+  }
+}

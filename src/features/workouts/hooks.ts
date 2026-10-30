@@ -1,14 +1,32 @@
 import { useCallback, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useMutation, useMutationState, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { enUS, tr as trLocale } from 'date-fns/locale'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { toLocalDateISO } from '@/lib/dates'
 import * as api from './api'
 import { useUnits } from '@/features/settings/useUnits'
-import { isoWeekday, sessionVolumeKg, workingSetCount } from './logic'
+import { isoWeekday, nextPosition, sessionVolumeKg, workingSetCount } from './logic'
 import { useIsPreview } from './previewContext'
-import type { BundleExercise, CardioInput, FinishSummary, SessionBundle, SessionSet, TemplateInput, TemplateWithExercises } from './schema'
+import type { BundleExercise, CardioInput, FinishSummary, SessionBundle, SessionSet, TemplateInput, TemplateWithExercises, WorkoutSession } from './schema'
+import { cancelQueuedInsert, newId, nowISO, registerQueued } from '@/lib/offline/queue'
+import { useQueuedMutation, useQueuedOps } from '@/lib/offline/hooks'
+import {
+  applyActiveOps,
+  applySessionOps,
+  pendingExerciseRow,
+  pendingSetRow,
+  queuedRowState,
+  withExercise,
+  withSet,
+  withoutSet,
+  workoutQueue,
+  type AddExerciseVars,
+  type AddSetVars,
+  type DeleteSetVars,
+  type FinishVars,
+  type WorkoutVars,
+} from './offline'
 
 export const workoutKeys = {
   all: ['workouts'] as const,
@@ -71,12 +89,26 @@ export function useTodaysTemplates() {
   return useQuery({ queryKey: workoutKeys.today(isodow, day), queryFn: () => api.todaysTemplates(isodow) })
 }
 
+/** The running strength session; null as soon as its finish is queued (offline). */
 export function useActiveSession() {
-  return useQuery({ queryKey: workoutKeys.active, queryFn: api.getActiveSession })
+  const q = useQuery({ queryKey: workoutKeys.active, queryFn: api.getActiveSession })
+  const ops = useQueuedOps<WorkoutVars>('workouts')
+  const data = useMemo(() => applyActiveOps(q.data, ops), [q.data, ops])
+  return { ...q, data }
 }
 
+/** One session with its exercises and sets; queued (not yet synced) writes are shown on top. */
 export function useSessionBundle(id: string | undefined) {
-  return useQuery({ queryKey: workoutKeys.session(id ?? ''), queryFn: () => api.getSessionBundle(id!), enabled: Boolean(id) })
+  const q = useQuery({ queryKey: workoutKeys.session(id ?? ''), queryFn: () => api.getSessionBundle(id!), enabled: Boolean(id) })
+  const ops = useQueuedOps<WorkoutVars>('workouts')
+  const data = useMemo(() => applySessionOps(q.data, ops), [q.data, ops])
+  return { ...q, data }
+}
+
+/** id -> 'pending' | 'error' for sets/exercises that are not on the server yet. */
+export function useQueuedWorkoutRows() {
+  const ops = useQueuedOps<WorkoutVars>('workouts')
+  return useMemo(() => queuedRowState(ops), [ops])
 }
 
 export function useLastSets(exerciseId: string | undefined) {
@@ -204,93 +236,154 @@ function patchBundle(qc: QueryClient, sessionId: string, fn: (exercises: BundleE
   qc.setQueryData<SessionBundle | null>(workoutKeys.session(sessionId), (prev) => (prev ? { ...prev, exercises: fn(prev.exercises) } : prev))
 }
 
-/** Logs a set; the cache is patched with the inserted row so the screen never waits for a refetch. */
+/**
+ * Offline queue (src/lib/offline): the gym-critical session writes. Registered once on the QueryClient so
+ * writes persisted while offline replay after a reload too. On success the server row (same id) goes into
+ * the cache; until then the read hooks overlay the queued variables.
+ */
+export function registerWorkoutQueue(qc: QueryClient) {
+  registerQueued<SessionSet, AddSetVars>(qc, workoutQueue.addSet, {
+    mutationFn: (v) => api.addSet(v.userId, v),
+    onSuccess: (row, v) => patchBundle(qc, v.sessionId, (list) => withSet(list, row)),
+  })
+  registerQueued<void, DeleteSetVars>(qc, workoutQueue.deleteSet, {
+    mutationFn: (v) => api.deleteSet(v.setId),
+    onSuccess: (_d, v) => patchBundle(qc, v.sessionId, (list) => withoutSet(list, v.setId)),
+  })
+  registerQueued<BundleExercise, AddExerciseVars>(qc, workoutQueue.addExercise, {
+    mutationFn: (v) => api.addSessionExercise(v.userId, v),
+    onSuccess: (row, v) => patchBundle(qc, v.sessionId, (list) => withExercise(list, row)),
+  })
+  registerQueued<FinishSummary, FinishVars>(qc, workoutQueue.finish, {
+    mutationFn: (v) => api.finishSession(v.sessionId, v.emptyExerciseIds),
+    onSuccess: (_d, v) => {
+      // the overlay stops hiding the session once the write settles: close it in the cache first
+      qc.setQueryData<WorkoutSession | null>(workoutKeys.active, (prev) => (prev?.id === v.sessionId ? null : prev))
+      qc.setQueryData<SessionBundle | null>(workoutKeys.session(v.sessionId), (prev) =>
+        prev && !prev.session.ended_at ? { ...prev, session: { ...prev.session, ended_at: v.at } } : prev,
+      )
+    },
+    // exercise pages: progress chart and "last sessions" list share the ['exercises','progress'] prefix
+    invalidates: [workoutKeys.all, ['exercises', 'progress']],
+    points: true,
+  })
+}
+
+/** Logs a set. Queued: shows at once (overlay), syncs in order, survives offline and reloads. */
 export function useAddSet(sessionId: string) {
   const qc = useQueryClient()
   const userId = useUserId()
   const preview = useIsPreview()
-  return useMutation({
-    mutationFn: (s: api.NewSet): Promise<SessionSet> =>
-      preview
-        ? Promise.resolve({
-            id: previewId(),
-            session_id: s.sessionId,
-            session_exercise_id: s.sessionExerciseId,
-            user_id: 'preview',
-            set_no: s.setNo,
-            weight_kg: s.weightKg,
-            reps: s.reps,
-            rpe: s.rpe,
-            is_warmup: s.isWarmup,
-            completed_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-        : api.addSet(userId, s),
-    onSuccess: (row) =>
-      patchBundle(qc, sessionId, (list) =>
-        list.map((ex) => (ex.id === row.session_exercise_id ? { ...ex, sets: [...ex.sets, row].sort((a, b) => a.set_no - b.set_no) } : ex)),
-      ),
-  })
+  const stamp = useCallback((s: api.NewSet): AddSetVars => ({ ...s, id: newId(), userId, at: nowISO() }), [userId])
+  return useQueuedMutation<SessionSet, api.NewSet, AddSetVars>(
+    workoutQueue.addSet,
+    stamp,
+    preview
+      ? {
+          mutationFn: async (v) => ({ ...pendingSetRow(v), user_id: 'preview' }),
+          onSuccess: (row) => patchBundle(qc, sessionId, (list) => withSet(list, row)),
+        }
+      : undefined,
+  )
 }
 
+/** Removes a set; a set that never reached the server is simply dropped from the queue. */
 export function useDeleteSet(sessionId: string) {
   const qc = useQueryClient()
+  const userId = useUserId()
   const preview = useIsPreview()
-  return useMutation({
-    mutationFn: (setId: string) => (preview ? Promise.resolve() : api.deleteSet(setId)),
-    onSuccess: (_v, setId) => patchBundle(qc, sessionId, (list) => list.map((ex) => ({ ...ex, sets: ex.sets.filter((s) => s.id !== setId) }))),
-  })
+  const stamp = useCallback((setId: string): DeleteSetVars => ({ sessionId, setId, userId, at: nowISO() }), [sessionId, userId])
+  const m = useQueuedMutation<void, string, DeleteSetVars>(
+    workoutQueue.deleteSet,
+    stamp,
+    preview
+      ? { mutationFn: async () => undefined, onSuccess: (_d, v) => patchBundle(qc, sessionId, (list) => withoutSet(list, v.setId)) }
+      : undefined,
+  )
+  const { mutate: queue } = m
+  const mutate = useCallback(
+    (setId: string, opts?: Parameters<typeof queue>[1]) => {
+      if (!preview && cancelQueuedInsert(qc, workoutQueue.addSet, setId)) return stamp(setId)
+      return queue(setId, opts)
+    },
+    [preview, qc, queue, stamp],
+  )
+  return { ...m, mutate }
 }
 
 export function useAddSessionExercise(sessionId: string) {
   const qc = useQueryClient()
   const userId = useUserId()
   const preview = useIsPreview()
-  return useMutation({
-    mutationFn: ({ exerciseId, existing }: { exerciseId: string; existing: BundleExercise[] }): Promise<BundleExercise> =>
-      preview
-        ? Promise.resolve({
-            id: previewId(),
-            session_id: sessionId,
-            user_id: 'preview',
-            exercise_id: exerciseId,
-            position: existing.reduce((m, e) => Math.max(m, e.position), -1) + 1,
-            notes: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            sets: [],
-            target: null,
-          })
-        : api.addSessionExercise(userId, sessionId, exerciseId, existing),
-    onSuccess: (row) => patchBundle(qc, sessionId, (list) => [...list, row]),
-  })
+  const stamp = useCallback(
+    ({ exerciseId, existing }: { exerciseId: string; existing: BundleExercise[] }): AddExerciseVars => ({
+      id: newId(),
+      sessionId,
+      exerciseId,
+      position: nextPosition(existing),
+      userId,
+      at: nowISO(),
+    }),
+    [sessionId, userId],
+  )
+  return useQueuedMutation<BundleExercise, { exerciseId: string; existing: BundleExercise[] }, AddExerciseVars>(
+    workoutQueue.addExercise,
+    stamp,
+    preview
+      ? {
+          mutationFn: async (v) => ({ ...pendingExerciseRow(v), user_id: 'preview' }),
+          onSuccess: (row) => patchBundle(qc, sessionId, (list) => withExercise(list, row)),
+        }
+      : undefined,
+  )
 }
 
+type FinishInput = { sessionId: string; emptyExerciseIds: string[] }
+
+/**
+ * Finish a session. Queued: offline the screen shows a local summary right away (see LiveSession) and the
+ * server computes totals, points and PRs when the queue reaches it.
+ */
 export function useFinishSession() {
   const preview = useIsPreview()
-  const afterPoints = useAfterPoints()
+  const userId = useUserId()
   const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ sessionId, emptyExerciseIds }: { sessionId: string; emptyExerciseIds: string[] }): Promise<FinishSummary> => {
-      if (!preview) return api.finishSession(sessionId, emptyExerciseIds)
-      const bundle = qc.getQueryData<SessionBundle | null>(workoutKeys.session(sessionId))
-      const sets = bundle?.exercises.flatMap((e) => e.sets) ?? []
-      const total = workingSetCount(sets)
-      return Promise.resolve({
-        duration_sec: bundle ? Math.round((Date.now() - new Date(bundle.session.started_at).getTime()) / 1000) : 0,
-        total_sets: total,
-        total_volume_kg: sessionVolumeKg(sets),
-        kcal_estimate: null,
-        kcal_weight_kg: null,
-        points_awarded: total ? Math.min(100, 50 + 2 * total) : 0,
-        new_prs: [],
-      })
-    },
-    onSuccess: () => {
-      if (!preview) void afterPoints()
-    },
+  const stamp = useCallback((v: FinishInput): FinishVars => ({ ...v, userId, at: nowISO() }), [userId])
+  return useQueuedMutation<FinishSummary, FinishInput, FinishVars>(
+    workoutQueue.finish,
+    stamp,
+    preview
+      ? {
+          mutationFn: async ({ sessionId }) => {
+            const summary = localFinishSummary(qc.getQueryData<SessionBundle | null>(workoutKeys.session(sessionId)) ?? null)
+            return { ...summary, points_awarded: summary.total_sets ? Math.min(100, 50 + 2 * summary.total_sets) : 0 }
+          },
+        }
+      : undefined,
+  )
+}
+
+/** The server's summary of a finish that was queued (offline), once the queue has synced it. */
+export function useFinishResult(sessionId: string): FinishSummary | undefined {
+  const results = useMutationState({
+    filters: { mutationKey: workoutQueue.finish, status: 'success', predicate: (m) => (m.state.variables as FinishVars | undefined)?.sessionId === sessionId },
+    select: (m) => m.state.data as FinishSummary,
   })
+  return results[results.length - 1]
+}
+
+/** What the device knows about a session before the server has closed it: totals, but no points or PRs yet. */
+export function localFinishSummary(bundle: SessionBundle | null, now = Date.now()): FinishSummary {
+  const sets = bundle?.exercises.flatMap((e) => e.sets) ?? []
+  return {
+    duration_sec: bundle ? Math.max(0, Math.round((now - new Date(bundle.session.started_at).getTime()) / 1000)) : 0,
+    total_sets: workingSetCount(sets),
+    total_volume_kg: sessionVolumeKg(sets),
+    kcal_estimate: null,
+    kcal_weight_kg: null,
+    points_awarded: 0,
+    new_prs: [],
+  }
 }
 
 export function useDeleteSession() {

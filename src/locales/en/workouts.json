@@ -157,7 +157,9 @@
     "rpeShort": "RPE",
     "demoEnlarge": "Enlarge the movement",
     "demoShrink": "Shrink the movement",
-    "demoAlt": "Animation of {{name}}"
+    "demoAlt": "Animation of {{name}}",
+    "notSynced": "Not synced yet",
+    "notSaved": "Not saved"
   },
   "rest": {
     "title": "Rest",
@@ -179,7 +181,9 @@
     "prs_one": "New record",
     "prs_other": "{{count}} new records",
     "e1rm": "Est. 1RM {{value}} {{unit}}",
-    "viewDetail": "View details"
+    "viewDetail": "View details",
+    "queuedHero": "Saved",
+    "queuedBody": "Kept on this phone. Points and records are added once you are back online."
   },
   "cardio": {
     "quick": "Cardio",
