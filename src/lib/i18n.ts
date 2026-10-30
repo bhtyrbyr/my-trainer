@@ -1,6 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
+import { APP_NAME, LEGAL } from '@/config/brand'
 
 import trCommon from '@/locales/tr/common.json'
 import trAuth from '@/locales/tr/auth.json'
@@ -28,13 +29,15 @@ import trSleepWater from '@/locales/tr/sleepwater.json'
 import enSleepWater from '@/locales/en/sleepwater.json'
 import trPhotos from '@/locales/tr/photos.json'
 import enPhotos from '@/locales/en/photos.json'
+import trLegal from '@/locales/tr/legal.json'
+import enLegal from '@/locales/en/legal.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal },
 } as const
 
 void i18n
@@ -46,7 +49,8 @@ void i18n
     fallbackLng: 'tr',
     defaultNS: 'common',
     ns: Object.keys(resources.tr),
-    interpolation: { escapeValue: false },
+    // {{app}}, {{controller}}, {{email}} are available in every string (src/config/brand.json)
+    interpolation: { escapeValue: false, defaultVariables: { app: APP_NAME, controller: LEGAL.controller, email: LEGAL.contactEmail } },
     detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'], lookupLocalStorage: 'mt.locale' },
   })
 

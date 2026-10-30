@@ -1,0 +1,119 @@
+{
+  "notice": {
+    "eyebrow": "KVKK",
+    "title": "Aydınlatma metni",
+    "version": "Sürüm {{version}}",
+    "intro": "{{app}}, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında kişisel verilerini nasıl işlediğini bu metinde açıklar.",
+    "sections": [
+      {
+        "title": "Veri sorumlusu",
+        "items": ["{{controller}}", "İletişim ve KVKK başvuruları: {{email}}"]
+      },
+      {
+        "title": "İşlenen veriler",
+        "items": [
+          "Kimlik ve iletişim: Google hesabından gelen ad, e-posta adresi ve (istersen) Google profil fotoğrafı.",
+          "Profil: kullanıcı adı, görünen ad, profil fotoğrafı; isteğe bağlı boy, doğum yılı, cinsiyet ve hedef.",
+          "Kullanım: antrenman planları, seanslar, setler, kardiyo kayıtları, kişisel rekorlar, puanlar ve seri bilgisi.",
+          "Sağlık verileri (yalnızca açık rızanla): kilo, vücut ölçüleri ve yağ oranı tahmini, öğün ve besin değerleri, uyku ve su kayıtları, gelişim fotoğrafları.",
+          "Yapay zekâ: besin tahmini için yazdığın metin veya çektiğin yemek fotoğrafı (saklanmaz) ve istek sayısı/token miktarı.",
+          "Teknik: oturum bilgisi, IP adresi (barındırma sağlayıcılarının kayıtlarında) ve yalnızca sen gönderirsen hata raporu."
+        ]
+      },
+      {
+        "title": "Amaçlar",
+        "items": [
+          "Hesabını oluşturmak, girişini doğrulamak ve güvenliğini sağlamak.",
+          "Takip, antrenman, puan ve liderlik özelliklerini sunmak.",
+          "Besin tahmini gibi yapay zekâ özelliklerini çalıştırmak ve ücretsiz kotayı adil dağıtmak.",
+          "Hataları gidermek ve kötüye kullanımı önlemek.",
+          "Yasal yükümlülükleri yerine getirmek."
+        ]
+      },
+      {
+        "title": "Hukuki sebepler",
+        "items": [
+          "Hizmetin sunulması için gerekli olması (KVKK m. 5/2-c).",
+          "Güvenlik ve kötüye kullanımın önlenmesi için meşru menfaat (m. 5/2-f).",
+          "Hukuki yükümlülük (m. 5/2-ç).",
+          "Sağlık verileri için açık rıza (m. 6). Rıza vermezsen uygulamanın geri kalanını kullanmaya devam edebilirsin."
+        ]
+      },
+      {
+        "title": "Kimler görür, nereye aktarılır",
+        "items": [
+          "Diğer kullanıcılar yalnızca kullanıcı adını, görünen adını, profil fotoğrafını, puanını, seviyeni ve serini görür; liderlikte görünmeyi kapatabilirsin.",
+          "Verilerin satılmaz, reklam için kullanılmaz.",
+          "Hizmet için yurt dışındaki sağlayıcılar kullanılır: Supabase (veritabanı, dosyalar, giriş; sunucular Londra, Birleşik Krallık), Vercel (uygulamanın barındırılması; ABD merkezli), Google (Google ile giriş ve Gemini besin tahmini; ABD), OpenRouter (yedek besin tahmini, yalnızca metin; ABD).",
+          "Bu aktarımlar KVKK m. 9 kapsamında yapılır; sağlık verilerinin bu sunucularda işlenmesi için açık rızan ayrıca alınır.",
+          "Gelişim fotoğrafların cihazında şifrelenir; sunucuda ve sağlayıcılarda yalnızca okunamayan şifreli hâlleri bulunur."
+        ]
+      },
+      {
+        "title": "Toplama yöntemi",
+        "items": ["Google ile giriş ve uygulamaya kendi girdiğin bilgiler üzerinden, elektronik ortamda."]
+      },
+      {
+        "title": "Saklama süresi",
+        "items": [
+          "Hesabın açık olduğu sürece saklanır.",
+          "Sağlık verisi iznini geri alırsan bu kayıtlar silinir.",
+          "Hesabını silersen tüm verilerin ve dosyaların kalıcı olarak silinir; sağlayıcıların yedekleri kendi döngüleri içinde temizlenir."
+        ]
+      },
+      {
+        "title": "Hakların (KVKK m. 11)",
+        "items": [
+          "Verilerinin işlenip işlenmediğini öğrenme, bilgi isteme, amacını ve aktarıldığı yerleri öğrenme.",
+          "Eksik veya yanlış verilerin düzeltilmesini, silinmesini ya da yok edilmesini isteme.",
+          "Otomatik analiz sonucu aleyhine bir sonuca itiraz etme, zararın giderilmesini talep etme.",
+          "Uygulama içinden: Ayarlar > Gizlilik ve veriler bölümünden verilerini indirebilir, sağlık verisi iznini geri alabilir ve hesabını silebilirsin.",
+          "Diğer talepler için {{email}} adresine yazabilirsin."
+        ]
+      }
+    ],
+    "back": "Geri",
+    "close": "Kapat",
+    "openFull": "Aydınlatma metni"
+  },
+  "ack": {
+    "label": "<0>Aydınlatma metnini</0> okudum.",
+    "required": "Devam etmek için aydınlatma metnini okuduğunu onayla.",
+    "gateTitle": "Aydınlatma metni güncellendi",
+    "gateBody": "Devam etmeden önce kişisel verilerinin nasıl işlendiğini okumanı istiyoruz.",
+    "gateConfirm": "Okudum, devam et"
+  },
+  "health": {
+    "eyebrow": "Açık rıza",
+    "title": "Sağlık verilerin için iznin gerekli",
+    "body": "Kilo, vücut ölçüleri, öğünler, uyku, su ve gelişim fotoğrafları KVKK'ya göre sağlık verisidir. Bu bölümleri kullanmak için açık rızan gerekiyor.",
+    "statement": "Kilo, vücut ölçüleri ve yağ oranı, öğün ve besin değerleri, uyku ve su kayıtları ile gelişim fotoğraflarımın {{app}} tarafından bu takip özelliklerini sunmak amacıyla işlenmesine ve aydınlatma metninde belirtilen yurt dışındaki hizmet sağlayıcıların sunucularında saklanmasına açık rıza veriyorum.",
+    "withdrawNote": "İznini istediğin zaman Ayarlar'dan geri alabilirsin; o zaman bu kayıtlar silinir. İzin vermezsen antrenman, liderlik ve diğer bölümler çalışmaya devam eder.",
+    "agree": "Rıza veriyorum",
+    "later": "Şimdi değil",
+    "locked": "Sağlık verileri kapalı",
+    "lockedHint": "Vücut, beslenme, uyku-su ve fotoğraf kayıtları için izin ver.",
+    "enable": "İzin ver"
+  },
+  "settings": {
+    "section": "Gizlilik ve veriler",
+    "notice": "Aydınlatma metni",
+    "health": "Sağlık verisi izni",
+    "healthOn": "Açık",
+    "healthOff": "Kapalı",
+    "withdrawTitle": "İzni geri al?",
+    "withdrawBody": "Kilo, ölçü, öğün, uyku, su kayıtların ve gelişim fotoğrafların kalıcı olarak silinir. Bu kayıtlardan kazandığın puanlar da geri alınır. Bu işlem geri alınamaz.",
+    "withdrawConfirm": "İzni geri al ve sil",
+    "withdrawing": "Siliniyor…",
+    "export": "Verilerimi indir",
+    "exportHint": "Tüm kayıtların tek bir JSON dosyası olarak. Fotoğraflar şifreli kaldığı için dosyaya eklenmez.",
+    "exporting": "Hazırlanıyor…",
+    "delete": "Hesabımı sil",
+    "deleteTitle": "Hesabın kalıcı olarak silinsin mi?",
+    "deleteBody": "Profilin, tüm kayıtların, puanların, profil ve gelişim fotoğrafların silinir. Bu işlem geri alınamaz.",
+    "deleteType": "Onaylamak için kullanıcı adını yaz: {{username}}",
+    "deleteConfirm": "Hesabımı kalıcı olarak sil",
+    "deleting": "Siliniyor…",
+    "cancel": "Vazgeç"
+  }
+}

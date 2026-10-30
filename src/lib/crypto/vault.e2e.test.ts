@@ -20,6 +20,8 @@ describe.skipIf(!URL_)('photo vault end to end (local stack)', () => {
     expect(authErr).toBeNull()
     const uid = auth.user!.id
 
+    // health data (photos included) needs explicit consent first (KVKK art. 6)
+    expect((await sb.rpc('record_consent', { p_kind: 'health_data', p_version: 'e2e' })).error).toBeNull()
     const { record, key } = await createVault('e2e photo password')
     const { error: vErr } = await sb.from('photo_vault').insert({ user_id: uid, ...record })
     expect(vErr).toBeNull()

@@ -1,0 +1,10 @@
+{
+  "appName": "My Trainer",
+  "shortName": "My Trainer",
+  "legal": {
+    "controller": "My-Trainer-app dev team",
+    "contactEmail": "kvkk@myrtrainer-test.com",
+    "noticeVersion": "2026-10-30",
+    "healthConsentVersion": "2026-10-30"
+  }
+}

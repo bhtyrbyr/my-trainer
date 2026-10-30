@@ -19,7 +19,16 @@ import {
 import { MEAL_SLOTS, useMeals, type MealSlot } from '@/features/nutrition'
 import { useUserSettings } from '@/features/settings/hooks'
 import { usePhotoList } from '@/features/photos'
-import { DEFAULT_WATER_GOAL, splitDuration, useAddWater, useSleepWeek, useWater, waterTotal } from '@/features/sleepwater'
+import { useConsents } from '@/features/privacy/hooks'
+import { HealthLockedCard } from '@/features/privacy/components/HealthLockedCard'
+import {
+  DEFAULT_WATER_GOAL,
+  splitDuration,
+  useAddWater,
+  useSleepWeek,
+  useWater,
+  waterTotal,
+} from '@/features/sleepwater'
 import { sessionTitle, useBurnedOn, useSessionsOn } from '@/features/workouts'
 import { toLocalDateISO } from '@/lib/dates'
 import { DayPickerSheet } from '../components/DayPickerSheet'
@@ -60,6 +69,9 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const night = (sleep.data ?? []).find((n) => n.sleep_on === day) ?? null
   // dates and poses are plaintext, so the count works without unlocking the album
   const photos = usePhotoList(!preview)
+  // KVKK art. 6: without explicit consent the health cards collapse into one prompt
+  const consents = useConsents()
+  const healthOff = !preview && !consents.isLoading && !consents.health
   const photosToday = (photos.data ?? []).filter((p) => p.taken_on === day).length
   const goalKcal = preview ? 2200 : (settings?.daily_kcal ?? null)
 
@@ -81,7 +93,13 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const bodyIndex = bmi(lastWeigh?.kg, profile.data?.height)
   const upToDay = latestMeasurements((body.data ?? []).filter((r) => r.measured_on <= day))
   const measure = (k: string) => upToDay.find((m) => m.field === k)?.value ?? null
-  const fat = navyBodyFat({ sex: profile.data?.sex, heightCm: profile.data?.height, neckCm: measure('neck_cm'), waistCm: measure('waist_cm'), hipCm: measure('hip_cm') })
+  const fat = navyBodyFat({
+    sex: profile.data?.sex,
+    heightCm: profile.data?.height,
+    neckCm: measure('neck_cm'),
+    waistCm: measure('waist_cm'),
+    hipCm: measure('hip_cm'),
+  })
   const slots = MEAL_SLOTS.map((s) => {
     const rows = entries.filter((e) => e.meal_slot === s)
     return { slot: s as MealSlot, count: rows.length, kcal: rows.reduce((a, e) => a + e.kcal, 0) }
@@ -134,165 +152,222 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           </button>
         </div>
 
-        <ErrorNote error={meals.error ?? sessions.error ?? body.error ?? burned.error ?? profile.error ?? water.error ?? sleep.error} />
+        <ErrorNote
+          error={
+            meals.error ??
+            sessions.error ??
+            body.error ??
+            burned.error ??
+            profile.error ??
+            water.error ??
+            sleep.error
+          }
+        />
 
-        {/* One nutrition card: eaten | burned (never netted) on top, the day's meals by slot below. */}
-        <section
-          aria-label={t('track:nutrition.name')}
-          className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
-        >
-          <Link
-            to={`${base}/nutrition${dayQuery}`}
-            aria-label={t('track:energy.open')}
-            className="grid grid-cols-2 hover:bg-raised/40"
-          >
-            <Figure
-              eyebrow={t('nutrition:ledger.eaten')}
-              value={nf.format(eaten)}
-              sub={
-                goalKcal
-                  ? `${t('nutrition:ledger.goal', { kcal: nf.format(goalKcal) })} · ${
-                      eaten > goalKcal
-                        ? t('nutrition:ledger.over', { kcal: nf.format(eaten - goalKcal) })
-                        : t('nutrition:ledger.left', { kcal: nf.format(goalKcal - eaten) })
-                    }`
-                  : t('track:meals.items', { count: entries.length })
-              }
-              progress={goalKcal ? { value: eaten, goal: goalKcal } : undefined}
-            />
-            <Figure
-              eyebrow={t('nutrition:ledger.burned')}
-              value={nf.format(burned.data?.kcal ?? 0)}
-              approx={trained}
-              muted
-              border
-              sub={trained ? t('nutrition:ledger.burnedShort') : t('track:workouts.none')}
-            />
-          </Link>
-          <div className="border-t border-line">
-            {slots.length > 0 ? (
+        {healthOff ? (
+          <HealthLockedCard />
+        ) : (
+          <>
+            {/* One nutrition card: eaten | burned (never netted) on top, the day's meals by slot below. */}
+            <section
+              aria-label={t('track:nutrition.name')}
+              className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+            >
               <Link
                 to={`${base}/nutrition${dayQuery}`}
-                aria-label={t('track:meals.open')}
-                className="block hover:bg-raised/40"
+                aria-label={t('track:energy.open')}
+                className="grid grid-cols-2 hover:bg-raised/40"
               >
-                <ul className="divide-y divide-line">
-                  {slots.map((s) => (
-                    <li key={s.slot} className="flex h-12 items-center gap-3 px-4">
-                      <span className="flex-1 text-[14px] font-medium">{t(`nutrition:slots.${s.slot}`)}</span>
-                      <span className="text-[12px] text-ink-faint">
-                        {t('track:meals.items', { count: s.count })}
-                      </span>
-                      <span className="tabular w-20 text-right text-[14px] font-semibold">
-                        {nf.format(s.kcal)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <Figure
+                  eyebrow={t('nutrition:ledger.eaten')}
+                  value={nf.format(eaten)}
+                  sub={
+                    goalKcal
+                      ? `${t('nutrition:ledger.goal', { kcal: nf.format(goalKcal) })} · ${
+                          eaten > goalKcal
+                            ? t('nutrition:ledger.over', { kcal: nf.format(eaten - goalKcal) })
+                            : t('nutrition:ledger.left', { kcal: nf.format(goalKcal - eaten) })
+                        }`
+                      : t('track:meals.items', { count: entries.length })
+                  }
+                  progress={goalKcal ? { value: eaten, goal: goalKcal } : undefined}
+                />
+                <Figure
+                  eyebrow={t('nutrition:ledger.burned')}
+                  value={nf.format(burned.data?.kcal ?? 0)}
+                  approx={trained}
+                  muted
+                  border
+                  sub={trained ? t('nutrition:ledger.burnedShort') : t('track:workouts.none')}
+                />
               </Link>
-            ) : (
-              <Empty
-                text={t('track:meals.none')}
-                action={t('track:meals.add')}
-                to={`${base}/nutrition${dayQuery}`}
-              />
-            )}
-          </div>
-        </section>
-
-        {/* Water and sleep: the day's water with a one-tap +250 ml, and the night that ended this morning. */}
-        <section aria-label={t('sleepwater:title')} className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
-          <div className="flex items-center gap-3 p-4">
-            <Link to={`${base}/sleep-water${dayQuery}`} aria-label={t('track:water.open')} className="min-w-0 flex-1">
-              <p className="eyebrow">{t('track:water.name')}</p>
-              <p className="mt-2 flex items-baseline gap-1">
-                <span className="display tabular text-[30px] leading-none">{nf.format(waterMl)}</span>
-                <span className="tabular text-[12px] font-medium text-ink-faint">/ {nf.format(waterGoal)} ml</span>
-              </p>
-              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-raised" aria-hidden>
-                <div className="h-full rounded-full bg-volt" style={{ width: `${Math.min(100, (waterMl / waterGoal) * 100)}%` }} />
-              </div>
-            </Link>
-            <button
-              type="button"
-              aria-label={t('track:water.addLabel')}
-              disabled={addWater.isPending}
-              onClick={() => addWater.mutate({ day, ml: 250 })}
-              className="hairline flex h-14 shrink-0 items-center gap-1.5 rounded-[var(--radius-button)] bg-bg px-4 text-[15px] font-semibold transition-transform active:scale-[0.97] disabled:opacity-60"
-            >
-              {addWater.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Droplet className="size-4 text-volt" aria-hidden />}
-              {t('track:water.add')}
-            </button>
-          </div>
-          <ErrorNote error={addWater.error} className="mx-4 mb-3" />
-          <div className="border-t border-line">
-            {night ? (
-              <Link to={`${base}/sleep-water${dayQuery}`} className="flex min-h-12 items-center gap-3 px-4 py-2.5 hover:bg-raised/40">
-                <span className="eyebrow w-14 shrink-0">{t('track:sleep.name')}</span>
-                <span className="tabular flex-1 text-[15px] font-semibold">{t('sleepwater:sleep.duration', splitDuration(night.duration_min))}</span>
-                {night.quality != null && <span className="text-[12px] text-ink-faint">{t('sleepwater:sleep.qualityN', { n: night.quality })}</span>}
-                <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
-              </Link>
-            ) : (
-              <Empty text={t('track:sleep.none')} action={t('track:sleep.log')} to={`${base}/sleep-water${dayQuery}`} />
-            )}
-          </div>
-        </section>
-
-        {/* Body: latest weigh-in up to this day and the body mass index; opens the body page. */}
-        {lastWeigh ? (
-          <section
-            aria-label={t('track:body.name')}
-            className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
-          >
-            <Link
-              to={`${base}/body`}
-              aria-label={t('track:body.open')}
-              className="grid grid-cols-2 hover:bg-raised/40"
-            >
-              <Figure
-                eyebrow={t('body:lastWeigh')}
-                value={one.format(lastWeigh.kg)}
-                unit="kg"
-                sub={lastWeigh.day === day ? label : format(parseISO(lastWeigh.day), 'd MMM', { locale })}
-              />
-              <Figure
-                eyebrow={t('body:bmi.label')}
-                value={bodyIndex ? one.format(bodyIndex.value) : '–'}
-                unit=""
-                muted={!bodyIndex}
-                border
-                sub={bodyIndex ? t(`body:bmi.category.${bodyIndex.category}`) : t('body:bmi.needHeight')}
-              />
-            </Link>
-            {fat.ok && (
-              <Link to={`${base}/body`} className="block border-t border-line px-4 py-3 text-[13px] text-ink-muted hover:bg-raised/40">
-                {t('track:body.fat', { value: one.format(fat.value), category: t(`body:fat.category.${fat.category}`) })}
-              </Link>
-            )}
-            {(measureCount > 0 || bodyRow?.weight_kg == null) && (
               <div className="border-t border-line">
-                {measureCount > 0 ? (
-                  <p className="px-4 py-3 text-[13px] text-ink-muted">
-                    {t('track:body.measures', { count: measureCount })}
-                  </p>
+                {slots.length > 0 ? (
+                  <Link
+                    to={`${base}/nutrition${dayQuery}`}
+                    aria-label={t('track:meals.open')}
+                    className="block hover:bg-raised/40"
+                  >
+                    <ul className="divide-y divide-line">
+                      {slots.map((s) => (
+                        <li key={s.slot} className="flex h-12 items-center gap-3 px-4">
+                          <span className="flex-1 text-[14px] font-medium">
+                            {t(`nutrition:slots.${s.slot}`)}
+                          </span>
+                          <span className="text-[12px] text-ink-faint">
+                            {t('track:meals.items', { count: s.count })}
+                          </span>
+                          <span className="tabular w-20 text-right text-[14px] font-semibold">
+                            {nf.format(s.kcal)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Link>
                 ) : (
                   <Empty
-                    text={t('track:body.none')}
-                    action={t('track:body.log')}
-                    to={`${base}/body?log=${day}`}
+                    text={t('track:meals.none')}
+                    action={t('track:meals.add')}
+                    to={`${base}/nutrition${dayQuery}`}
                   />
                 )}
               </div>
+            </section>
+
+            {/* Water and sleep: the day's water with a one-tap +250 ml, and the night that ended this morning. */}
+            <section
+              aria-label={t('sleepwater:title')}
+              className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+            >
+              <div className="flex items-center gap-3 p-4">
+                <Link
+                  to={`${base}/sleep-water${dayQuery}`}
+                  aria-label={t('track:water.open')}
+                  className="min-w-0 flex-1"
+                >
+                  <p className="eyebrow">{t('track:water.name')}</p>
+                  <p className="mt-2 flex items-baseline gap-1">
+                    <span className="display tabular text-[30px] leading-none">{nf.format(waterMl)}</span>
+                    <span className="tabular text-[12px] font-medium text-ink-faint">
+                      / {nf.format(waterGoal)} ml
+                    </span>
+                  </p>
+                  <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-raised" aria-hidden>
+                    <div
+                      className="h-full rounded-full bg-volt"
+                      style={{ width: `${Math.min(100, (waterMl / waterGoal) * 100)}%` }}
+                    />
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  aria-label={t('track:water.addLabel')}
+                  disabled={addWater.isPending}
+                  onClick={() => addWater.mutate({ day, ml: 250 })}
+                  className="hairline flex h-14 shrink-0 items-center gap-1.5 rounded-[var(--radius-button)] bg-bg px-4 text-[15px] font-semibold transition-transform active:scale-[0.97] disabled:opacity-60"
+                >
+                  {addWater.isPending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Droplet className="size-4 text-volt" aria-hidden />
+                  )}
+                  {t('track:water.add')}
+                </button>
+              </div>
+              <ErrorNote error={addWater.error} className="mx-4 mb-3" />
+              <div className="border-t border-line">
+                {night ? (
+                  <Link
+                    to={`${base}/sleep-water${dayQuery}`}
+                    className="flex min-h-12 items-center gap-3 px-4 py-2.5 hover:bg-raised/40"
+                  >
+                    <span className="eyebrow w-14 shrink-0">{t('track:sleep.name')}</span>
+                    <span className="tabular flex-1 text-[15px] font-semibold">
+                      {t('sleepwater:sleep.duration', splitDuration(night.duration_min))}
+                    </span>
+                    {night.quality != null && (
+                      <span className="text-[12px] text-ink-faint">
+                        {t('sleepwater:sleep.qualityN', { n: night.quality })}
+                      </span>
+                    )}
+                    <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+                  </Link>
+                ) : (
+                  <Empty
+                    text={t('track:sleep.none')}
+                    action={t('track:sleep.log')}
+                    to={`${base}/sleep-water${dayQuery}`}
+                  />
+                )}
+              </div>
+            </section>
+
+            {/* Body: latest weigh-in up to this day and the body mass index; opens the body page. */}
+            {lastWeigh ? (
+              <section
+                aria-label={t('track:body.name')}
+                className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+              >
+                <Link
+                  to={`${base}/body`}
+                  aria-label={t('track:body.open')}
+                  className="grid grid-cols-2 hover:bg-raised/40"
+                >
+                  <Figure
+                    eyebrow={t('body:lastWeigh')}
+                    value={one.format(lastWeigh.kg)}
+                    unit="kg"
+                    sub={lastWeigh.day === day ? label : format(parseISO(lastWeigh.day), 'd MMM', { locale })}
+                  />
+                  <Figure
+                    eyebrow={t('body:bmi.label')}
+                    value={bodyIndex ? one.format(bodyIndex.value) : '–'}
+                    unit=""
+                    muted={!bodyIndex}
+                    border
+                    sub={bodyIndex ? t(`body:bmi.category.${bodyIndex.category}`) : t('body:bmi.needHeight')}
+                  />
+                </Link>
+                {fat.ok && (
+                  <Link
+                    to={`${base}/body`}
+                    className="block border-t border-line px-4 py-3 text-[13px] text-ink-muted hover:bg-raised/40"
+                  >
+                    {t('track:body.fat', {
+                      value: one.format(fat.value),
+                      category: t(`body:fat.category.${fat.category}`),
+                    })}
+                  </Link>
+                )}
+                {(measureCount > 0 || bodyRow?.weight_kg == null) && (
+                  <div className="border-t border-line">
+                    {measureCount > 0 ? (
+                      <p className="px-4 py-3 text-[13px] text-ink-muted">
+                        {t('track:body.measures', { count: measureCount })}
+                      </p>
+                    ) : (
+                      <Empty
+                        text={t('track:body.none')}
+                        action={t('track:body.log')}
+                        to={`${base}/body?log=${day}`}
+                      />
+                    )}
+                  </div>
+                )}
+              </section>
+            ) : (
+              <section
+                aria-label={t('track:body.name')}
+                className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
+              >
+                <Empty
+                  text={t('track:body.none')}
+                  action={t('track:body.log')}
+                  to={`${base}/body?log=${day}`}
+                />
+              </section>
             )}
-          </section>
-        ) : (
-          <section
-            aria-label={t('track:body.name')}
-            className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface"
-          >
-            <Empty text={t('track:body.none')} action={t('track:body.log')} to={`${base}/body?log=${day}`} />
-          </section>
+          </>
         )}
 
         <section
@@ -341,20 +416,23 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           </div>
         </section>
 
-        <Link
-          to={`${base}/photos`}
-          aria-label={t('track:photos.open')}
-          className="hairline flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] bg-surface px-4 py-3 hover:bg-raised/40"
-        >
-          <ImageIcon className="size-5 shrink-0 text-ink-muted" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold">{t('track:photos.name')}</span>
-            <span className="block text-[12px] text-ink-faint">
-              {photosToday ? t('track:photos.day', { count: photosToday }) : t('track:photos.none')} · {t('track:photos.hint')}
+        {!healthOff && (
+          <Link
+            to={`${base}/photos`}
+            aria-label={t('track:photos.open')}
+            className="hairline flex min-h-14 items-center gap-3 rounded-[var(--radius-card)] bg-surface px-4 py-3 hover:bg-raised/40"
+          >
+            <ImageIcon className="size-5 shrink-0 text-ink-muted" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-semibold">{t('track:photos.name')}</span>
+              <span className="block text-[12px] text-ink-faint">
+                {photosToday ? t('track:photos.day', { count: photosToday }) : t('track:photos.none')} ·{' '}
+                {t('track:photos.hint')}
+              </span>
             </span>
-          </span>
-          <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
-        </Link>
+            <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
+          </Link>
+        )}
 
         <p className="px-1 text-[12px] leading-snug text-ink-faint">
           <span className="font-semibold text-ink-muted">{t('track:soon.title')}:</span>{' '}

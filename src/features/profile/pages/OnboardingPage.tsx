@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Check, ImagePlus, Loader2, X } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -13,6 +13,9 @@ import { AvatarCropper } from '../components/AvatarCropper'
 import { cn } from '@/lib/utils'
 import { onboardingSchema, suggestUsername, type OnboardingInput, type OnboardingValues } from '../schema'
 import { completeOnboarding, isUsernameAvailable, uploadAvatar } from '../api'
+import { acknowledgeNotice } from '@/features/privacy/api'
+import { NoticeContent } from '@/features/privacy/components/NoticeContent'
+import { BottomSheet } from '@/features/nutrition/components/BottomSheet'
 
 type AvatarState = { blob: Blob; previewUrl: string } | null
 
@@ -25,7 +28,7 @@ const GOAL_OPTIONS = ['lose_fat', 'build_muscle', 'maintain', 'performance'] as 
  * one accent, one primary action pinned in the thumb zone.
  */
 export function OnboardingPage() {
-  const { t } = useTranslation(['onboarding', 'common'])
+  const { t } = useTranslation(['onboarding', 'common', 'legal'])
   const { user, refreshProfile, signOut } = useAuth()
   const navigate = useNavigate()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -37,6 +40,9 @@ export function OnboardingPage() {
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'ok' | 'taken'>('idle')
   const [submitError, setSubmitError] = useState<unknown>(null)
+  // KVKK: the privacy notice is read and acknowledged before any profile data is stored
+  const [noticeOk, setNoticeOk] = useState(false)
+  const [noticeOpen, setNoticeOpen] = useState(false)
 
   const meta = (user?.user_metadata ?? {}) as { full_name?: string; name?: string; avatar_url?: string; picture?: string }
   const googlePhoto = meta.avatar_url ?? meta.picture
@@ -121,6 +127,7 @@ export function OnboardingPage() {
       return
     }
     try {
+      await acknowledgeNotice()
       const path = await uploadAvatar(user.id, avatar.blob)
       await completeOnboarding(user.id, path, values)
       await refreshProfile()
@@ -140,7 +147,7 @@ export function OnboardingPage() {
     return m ? t(`onboarding:errors.${m}`) : null
   }
   const usernameError = fieldError('username') ?? (usernameStatus === 'taken' ? t('onboarding:errors.username_taken') : null)
-  const canSubmit = Boolean(avatar) && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !formState.isSubmitting
+  const canSubmit = noticeOk && Boolean(avatar) && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !formState.isSubmitting
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col pt-safe lg:max-w-lg">
@@ -160,7 +167,7 @@ export function OnboardingPage() {
         </button>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-7 px-6 pt-6 pb-36" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-7 px-6 pt-6 pb-52" noValidate>
         {/* Live leaderboard-row preview = avatar picker */}
         <section className="space-y-2">
           <div className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
@@ -273,17 +280,53 @@ export function OnboardingPage() {
         <ErrorNote error={submitError} />
 
         {/* Primary action pinned in the thumb zone */}
-        <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-bg via-bg/95 to-bg/0 px-6 pt-8 pb-safe">
+        <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-bg from-70% to-bg/0 px-6 pt-10 pb-safe">
           <div className="mx-auto max-w-md space-y-2 pb-5 lg:max-w-lg">
+            <label className="flex min-h-11 items-center gap-3 px-1 text-[13px] leading-snug text-ink-muted">
+              <input type="checkbox" checked={noticeOk} onChange={(e) => setNoticeOk(e.target.checked)} className="size-5 shrink-0 accent-[var(--color-volt)]" />
+              <span>
+                <Trans
+                  i18nKey="legal:ack.label"
+                  components={[
+                    <button
+                      key="notice"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setNoticeOpen(true)
+                      }}
+                      className="font-medium text-ink underline underline-offset-2"
+                    />,
+                  ]}
+                />
+              </span>
+            </label>
             <Button type="submit" size="lg" className="w-full" disabled={!canSubmit}>
               {formState.isSubmitting ? <Loader2 className="size-5 animate-spin" aria-hidden /> : t('onboarding:submit')}
             </Button>
-            <p className="text-center text-[11.5px] text-ink-faint">{avatar ? t('onboarding:ready') : t('onboarding:avatar.required')}</p>
+            <p className="text-center text-[11.5px] text-ink-faint">
+              {!avatar ? t('onboarding:avatar.required') : !noticeOk ? t('legal:ack.required') : t('onboarding:ready')}
+            </p>
           </div>
         </div>
       </form>
 
       {cropSource && <AvatarCropper image={cropSource} onConfirm={onCropConfirm} onCancel={closeCropper} />}
+      <BottomSheet open={noticeOpen} label={t('legal:notice.title')} closeLabel={t('legal:notice.close')} onClose={() => setNoticeOpen(false)}>
+        <div className="pb-6">
+          <NoticeContent />
+          <Button
+            size="lg"
+            className="mt-6 w-full"
+            onClick={() => {
+              setNoticeOk(true)
+              setNoticeOpen(false)
+            }}
+          >
+            {t('legal:ack.gateConfirm')}
+          </Button>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

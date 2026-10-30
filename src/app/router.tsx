@@ -8,6 +8,7 @@ import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { AccessDeniedPage } from '@/features/auth/pages/AccessDeniedPage'
 import { PendingApprovalPage } from '@/features/auth/pages/PendingApprovalPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
+import { HealthGate, NoticeGate } from '@/features/privacy/components/Gates'
 
 /**
  * Route-level code splitting: the shell, auth flow and dashboard ship in the main bundle; every other
@@ -90,6 +91,8 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  // public: the privacy notice must be readable before signing in
+  { path: '/privacy', lazy: page(() => import('@/features/privacy/pages/PrivacyNoticePage'), 'PrivacyNoticePage') },
   ...devRoutes,
   { path: '/auth/callback', element: <AuthCallbackPage /> },
   { path: '/denied', element: <AccessDeniedPage /> },
@@ -110,7 +113,9 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <RequireAuth>
-        <AppShell />
+        <NoticeGate>
+          <AppShell />
+        </NoticeGate>
       </RequireAuth>
     ),
     children: [
@@ -124,10 +129,16 @@ export const router = createBrowserRouter([
       { path: 'exercises', lazy: exercises.library },
       { path: 'exercises/:id', lazy: exercises.detail },
       { path: 'track', lazy: page(() => import('@/features/track/pages/TrackPage'), 'TrackPage') },
-      { path: 'track/body', lazy: body },
-      { path: 'track/nutrition', lazy: nutrition },
-      { path: 'track/sleep-water', lazy: sleepWater },
-      { path: 'track/photos', lazy: photos },
+      {
+        // health data (KVKK art. 6): explicit consent before these screens
+        element: <HealthGate />,
+        children: [
+          { path: 'track/body', lazy: body },
+          { path: 'track/nutrition', lazy: nutrition },
+          { path: 'track/sleep-water', lazy: sleepWater },
+          { path: 'track/photos', lazy: photos },
+        ],
+      },
       { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
