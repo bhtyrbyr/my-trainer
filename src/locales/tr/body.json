@@ -8,9 +8,9 @@
     "avg7": "7 günlük ortalama",
     "change": "{{value}} kg · {{period}}",
     "changeFlat": "Değişim yok · {{period}}",
-    "target": "Hedef {{kg}} kg",
-    "toTargetAbove": "{{kg}} kg kaldı",
-    "toTargetBelow": "Hedefin {{kg}} kg altında",
+    "target": "Hedef {{weight}}",
+    "toTargetAbove": "{{weight}} kaldı",
+    "toTargetBelow": "Hedefin {{weight}} altında",
     "atTarget": "Hedeftesin",
     "addTarget": "Hedef kilo ekle"
   },
@@ -20,8 +20,8 @@
     "save": "Kaydet",
     "update": "Güncelle",
     "more": "Başka gün ya da ölçü ekle",
-    "weightDec": "Kiloyu 0,1 azalt",
-    "weightInc": "Kiloyu 0,1 artır",
+    "weightDec": "Kiloyu {{step}} {{unit}} azalt",
+    "weightInc": "Kiloyu {{step}} {{unit}} artır",
     "points": "Günde bir kilo kaydı 10 puan."
   },
   "trend": {
@@ -56,8 +56,8 @@
     "last": "son {{value}}",
     "tapToAdd": "Eklemek için dokun",
     "remove": "{{field}} değerini kaldır",
-    "dec": "{{field}} 0,5 azalt",
-    "inc": "{{field}} 0,5 artır"
+    "dec": "{{field}} {{step}} {{unit}} azalt",
+    "inc": "{{field}} {{step}} {{unit}} artır"
   },
   "entries": {
     "title": "Kayıtlar",
@@ -69,7 +69,7 @@
     "title": "Kayıt",
     "date": "Tarih",
     "weight": "Kilo",
-    "measures": "Ölçüler (cm)",
+    "measures": "Ölçüler ({{unit}})",
     "save": "Kaydet",
     "delete": "Bu günün kaydını sil",
     "confirmDelete": "Silmek için tekrar dokun",
@@ -85,10 +85,6 @@
     "clear": "Hedefi kaldır",
     "hint": "Grafikte kesikli çizgi olarak görünür. Sadece sen görürsün."
   },
-  "units": {
-    "kg": "kg",
-    "cm": "cm"
-  },
   "actions": {
     "close": "Kapat",
     "cancel": "Vazgeç"
@@ -97,10 +93,10 @@
     "title": "Boy",
     "hint": "Vücut kitle indeksi (VKİ) için kullanılır. Sadece sen görürsün.",
     "save": "Kaydet",
-    "dec": "Boyu 1 cm azalt",
-    "inc": "Boyu 1 cm artır",
+    "dec": "Boyu {{step}} {{unit}} azalt",
+    "inc": "Boyu {{step}} {{unit}} artır",
     "add": "Boy ekle",
-    "value": "Boy {{cm}} cm"
+    "value": "Boy {{value}}"
   },
   "bmi": {
     "label": "VKİ",

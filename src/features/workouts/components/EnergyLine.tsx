@@ -1,5 +1,9 @@
 import { useTranslation } from 'react-i18next'
+import { useUnits } from '@/features/settings/useUnits'
 import { cn } from '@/lib/utils'
+
+/** what the server assumes without a weigh-in (supabase/migrations/*_exercise_energy.sql) */
+const ASSUMED_WEIGHT_KG = 70
 
 type Props = {
   kcal: number | null | undefined
@@ -14,7 +18,10 @@ type Props = {
  */
 export function EnergyLine({ kcal, weightKg, className }: Props) {
   const { t, i18n } = useTranslation('workouts')
+  const u = useUnits()
   if (kcal == null) return null
+  // a sentence, so no forced trailing ",0"; the reading keeps its body-weight rounding
+  const weight = (kg: number) => `${u.estimateValue(u.kg(kg, 'body'))} ${u.weightLabel}`
   const nf = new Intl.NumberFormat(i18n.language)
   return (
     <div className={cn('border-b border-line py-4', className)}>
@@ -27,7 +34,7 @@ export function EnergyLine({ kcal, weightKg, className }: Props) {
         </span>
       </div>
       <p className="mt-2 text-[12px] leading-snug text-ink-faint">
-        {weightKg != null ? t('energy.basis', { kg: nf.format(weightKg) }) : t('energy.assumedWeight')}
+        {weightKg != null ? t('energy.basis', { weight: weight(weightKg) }) : t('energy.assumedWeight', { weight: `${u.estimate(ASSUMED_WEIGHT_KG)} ${u.weightLabel}` })}
       </p>
     </div>
   )

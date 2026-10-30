@@ -5,6 +5,8 @@ import { enUS, tr } from 'date-fns/locale'
 import { LineChart as LineChartIcon, TrendingDown, TrendingUp } from 'lucide-react'
 import { CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { useUnits } from '@/features/settings/useUnits'
+import { kgToDisplay } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { useExerciseProgress, useRecentSets } from '../hooks'
 import {
@@ -19,19 +21,30 @@ import {
 
 const HISTORY_LIMIT = 10
 
+/** Weights in the user's unit (stored kg): real set weights keep their plate rounding, computed ones 1 decimal. */
 function useFormat() {
   const { i18n } = useTranslation()
+  const u = useUnits()
   const lang = i18n.resolvedLanguage ?? 'tr'
   return useMemo(() => {
     const locale = lang.startsWith('tr') ? tr : enUS
-    const num = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 })
     const pct = new Intl.NumberFormat(lang, { maximumFractionDigits: 1, signDisplay: 'exceptZero' })
+    const dash = (fn: (n: number) => string) => (n: number | null) => (n === null ? '–' : fn(n))
     return {
-      kg: (n: number | null) => (n === null ? '–' : num.format(n)),
+      unit: u.weightLabel,
+      /** stored kg -> exact number in the user's unit (chart data) */
+      toDisplay: (kg: number | null) => (kg === null ? null : kgToDisplay(kg, u.weight)),
+      /** a logged set weight (best, history) */
+      load: dash(u.load),
+      /** a computed weight (average, e1RM) */
+      est: dash(u.estimate),
+      /** chart numbers already in the user's unit */
+      loadValue: dash(u.loadValue),
+      estValue: dash(u.estimateValue),
       pct: (n: number | null) => (n === null ? '–' : `${pct.format(n)}%`),
       date: (d: Date | number, pattern: string) => format(d, pattern, { locale }),
     }
-  }, [lang])
+  }, [lang, u])
 }
 
 /**
@@ -105,8 +118,8 @@ function SummaryCard({ rows, summary }: { rows: ProgressPoint[]; summary: Return
       <div className="px-4 pt-4">
         <p className="eyebrow">{t('progress.average')}</p>
         <p className="mt-2 flex items-baseline gap-1.5">
-          <span className="display tabular text-[44px] leading-none">{f.kg(summary.average)}</span>
-          <span className="text-[17px] font-medium text-ink-muted">{t('progress.kg')}</span>
+          <span className="display tabular text-[44px] leading-none">{f.est(summary.average)}</span>
+          <span className="text-[17px] font-medium text-ink-muted">{f.unit}</span>
         </p>
       </div>
 
@@ -117,8 +130,8 @@ function SummaryCard({ rows, summary }: { rows: ProgressPoint[]; summary: Return
       )}
 
       <dl className="grid grid-cols-3 divide-x divide-line border-t border-line">
-        <Stat label={t('progress.best')} value={f.kg(summary.best)} unit={summary.best !== null ? t('progress.kg') : undefined} />
-        <Stat label={t('progress.e1rm')} value={f.kg(summary.e1rm)} unit={summary.e1rm !== null ? t('progress.kg') : undefined} />
+        <Stat label={t('progress.best')} value={f.load(summary.best)} unit={summary.best !== null ? f.unit : undefined} />
+        <Stat label={t('progress.e1rm')} value={f.est(summary.e1rm)} unit={summary.e1rm !== null ? f.unit : undefined} />
         <Stat
           label={t('progress.change')}
           title={t('progress.changeHint')}
@@ -149,12 +162,14 @@ function Stat({ label, value, unit, title }: { label: string; value: ReactNode; 
 
 type ChartPoint = { t: number; avg: number | null; best: number | null }
 
-function WeightChart({ rows, average }: { rows: ProgressPoint[]; average: number | null }) {
+function WeightChart({ rows, average: averageKg }: { rows: ProgressPoint[]; average: number | null }) {
   const { t } = useTranslation('exercises')
   const f = useFormat()
+  // the chart works in the user's unit so the axis ticks land on round lb / kg values
+  const average = f.toDisplay(averageKg)
   const [animate] = useState(() => typeof window === 'undefined' || !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
 
-  const data: ChartPoint[] = rows.map((r) => ({ t: new Date(r.started_at).getTime(), avg: r.avg_weight_kg, best: r.best_weight_kg }))
+  const data: ChartPoint[] = rows.map((r) => ({ t: new Date(r.started_at).getTime(), avg: f.toDisplay(r.avg_weight_kg), best: f.toDisplay(r.best_weight_kg) }))
   const values = data.flatMap((d) => [d.avg, d.best]).filter((v): v is number => v !== null)
   if (average !== null) values.push(average)
   const lo = values.length ? Math.min(...values) : 0
@@ -207,10 +222,10 @@ function WeightChart({ rows, average }: { rows: ProgressPoint[]; average: number
                   <div className="hairline rounded-[var(--radius-input)] bg-raised px-3 py-2 text-xs">
                     <p className="mb-1 font-semibold text-ink">{f.date(p.t, 'd MMM yyyy')}</p>
                     <p className="tabular text-ink-muted">
-                      <span className="text-volt">●</span> {t('progress.legend.avg')}: {f.kg(p.avg)} {t('progress.kg')}
+                      <span className="text-volt">●</span> {t('progress.legend.avg')}: {f.estValue(p.avg)} {f.unit}
                     </p>
                     <p className="tabular text-ink-muted">
-                      <span className="text-ink">●</span> {t('progress.legend.best')}: {f.kg(p.best)} {t('progress.kg')}
+                      <span className="text-ink">●</span> {t('progress.legend.best')}: {f.loadValue(p.best)} {f.unit}
                     </p>
                   </div>
                 )
@@ -251,7 +266,7 @@ function WeightChart({ rows, average }: { rows: ProgressPoint[]; average: number
         <LegendKey className="h-[3px] w-3.5 rounded-full bg-volt">{t('progress.legend.avg')}</LegendKey>
         <LegendKey className="size-[7px] rounded-full bg-ink">{t('progress.legend.best')}</LegendKey>
         <LegendKey className="w-3.5 border-t border-dashed border-ink-faint">
-          {t('progress.legend.periodAvg')} <span className="tabular text-ink">{f.kg(average)}</span>
+          {t('progress.legend.periodAvg')} <span className="tabular text-ink">{f.estValue(average)}</span>
         </LegendKey>
       </figcaption>
     </figure>
@@ -289,8 +304,8 @@ function History({ sessions, error }: { sessions: SessionSets[]; error: unknown 
                   <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-[14px] leading-snug">
                     {s.groups.map((g, i) => (
                       <span key={i} className={cn('tabular whitespace-nowrap', g.warmup && 'text-ink-faint')}>
-                        <span className={g.warmup ? '' : 'font-semibold text-ink'}>{g.weight === null ? t('progress.bodyweight') : f.kg(g.weight)}</span>
-                        {g.weight !== null && <span className="text-ink-faint"> {t('progress.kg')}</span>}
+                        <span className={g.warmup ? '' : 'font-semibold text-ink'}>{g.weight === null ? t('progress.bodyweight') : f.load(g.weight)}</span>
+                        {g.weight !== null && <span className="text-ink-faint"> {f.unit}</span>}
                         <span className={g.warmup ? '' : 'text-ink-muted'}>
                           {' '}
                           {g.count > 1 ? `${g.count}×${g.reps ?? '–'}` : `×${g.reps ?? '–'}`}
@@ -305,8 +320,8 @@ function History({ sessions, error }: { sessions: SessionSets[]; error: unknown 
                 </div>
                 {s.topWeight !== null && (
                   <span className="shrink-0 pt-0.5 text-right">
-                    <span className="tabular text-[15px] font-semibold">{f.kg(s.topWeight)}</span>
-                    <span className="text-xs text-ink-faint"> {t('progress.kg')}</span>
+                    <span className="tabular text-[15px] font-semibold">{f.load(s.topWeight)}</span>
+                    <span className="text-xs text-ink-faint"> {f.unit}</span>
                   </span>
                 )}
               </li>

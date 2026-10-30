@@ -75,7 +75,6 @@
     "changeHint": "Average weight, first vs last session",
     "sessions_one": "{{count}} session",
     "sessions_other": "{{count}} sessions",
-    "kg": "kg",
     "legend": {
       "avg": "Average weight",
       "best": "Top weight",

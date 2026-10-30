@@ -12,7 +12,6 @@ import {
   formatSetList,
   groupByWeekday,
   isoWeekday,
-  kgToUnit,
   matchTargets,
   monthGrid,
   nextExerciseIndex,
@@ -27,14 +26,11 @@ import {
   restRemainingMs,
   restRemainingSec,
   roundMinutes,
-  roundWeight,
   sessionVolumeKg,
   shouldAlertRestEnd,
   stepValue,
   toggleWeekday,
   trainingDays,
-  unitToKg,
-  weightStep,
   workingSetCount,
 } from './logic'
 
@@ -271,16 +267,6 @@ describe('numbers and units', () => {
     expect(stepValue(1, -1, 1)).toBe(1)
     expect(stepValue(50, 1, 1, 50)).toBe(50)
     expect(clamp(5, 1, 3)).toBe(3)
-  })
-
-  it('converts kg and lb both ways', () => {
-    expect(kgToUnit(100, 'kg')).toBe(100)
-    expect(roundWeight(kgToUnit(100, 'lb'), 'lb')).toBe(220.5)
-    expect(roundWeight(unitToKg(225, 'lb'), 'kg')).toBe(102)
-    expect(unitToKg(80, 'kg')).toBe(80)
-    expect(weightStep('kg')).toBe(2.5)
-    expect(weightStep('lb')).toBe(5)
-    expect(roundWeight(82.4999, 'kg')).toBe(82.5)
   })
 
   it('formats a set list without warmups', () => {

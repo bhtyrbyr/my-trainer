@@ -18,6 +18,7 @@ import {
 } from '@/features/body'
 import { MEAL_SLOTS, useMeals, type MealSlot } from '@/features/nutrition'
 import { useUserSettings } from '@/features/settings/hooks'
+import { useUnits } from '@/features/settings/useUnits'
 import { usePhotoList } from '@/features/photos'
 import { useConsents } from '@/features/privacy/hooks'
 import { HealthLockedCard } from '@/features/privacy/components/HealthLockedCard'
@@ -44,6 +45,7 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
   const lang = i18n.resolvedLanguage === 'en' ? 'en' : 'tr'
   const locale = lang === 'en' ? enUS : tr
   const nf = useMemo(() => new Intl.NumberFormat(lang), [lang])
+  const units = useUnits()
   const one = useMemo(
     () => new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     [lang],
@@ -319,8 +321,8 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
                 >
                   <Figure
                     eyebrow={t('body:lastWeigh')}
-                    value={one.format(lastWeigh.kg)}
-                    unit="kg"
+                    value={units.body(lastWeigh.kg)}
+                    unit={units.weightLabel}
                     sub={lastWeigh.day === day ? label : format(parseISO(lastWeigh.day), 'd MMM', { locale })}
                   />
                   <Figure

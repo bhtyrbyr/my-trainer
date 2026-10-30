@@ -71,7 +71,7 @@
     "change": "Another photo",
     "pose": "Pose",
     "date": "Date",
-    "weight": "Weight (optional)",
+    "weight": "Weight, {{unit}} (optional)",
     "note": "Note (optional)",
     "notePlaceholder": "E.g. cut week 3",
     "submit": "Encrypt and upload",
@@ -84,7 +84,7 @@
     "delete": "Delete photo",
     "confirmDelete": "Tap again to delete permanently",
     "close": "Close",
-    "weight": "{{kg}} kg",
+    "weight": "{{weight}}",
     "loading": "Decrypting…"
   },
   "compare": {

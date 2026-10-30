@@ -9,7 +9,10 @@ import { SleepWaterPage } from '@/features/sleepwater/pages/SleepWaterPage'
 import { NutritionPage } from '@/features/nutrition/pages/NutritionPage'
 import type { Food, MealEntry } from '@/features/nutrition/types'
 import { TrackPage } from '@/features/track/pages/TrackPage'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { settingsKeys } from '@/features/settings/hooks'
 import { toLocalDateISO } from '@/lib/dates'
+import type { UserSettings } from '@/lib/database.types'
 import { bodyKeys } from '../hooks'
 import { BodyPage } from '../pages/BodyPage'
 import { BodyPreviewContext } from '../previewContext'
@@ -92,9 +95,20 @@ function seed(empty: boolean, aiClosed: boolean) {
   return qc
 }
 
+/** ?units=imperial: show the preview in lb / in (seeds the settings cache the units hook reads). */
+function seedUnits(qc: QueryClient, userId: string, units: string | null) {
+  if (units !== 'imperial') return
+  qc.setQueryData(settingsKeys.me(userId), { user_id: userId, locale: 'tr', theme: 'system', unit_weight: 'lb', unit_length: 'in' } as UserSettings)
+}
+
 export function DevBodyLayout() {
   const [params] = useSearchParams()
-  const [client] = useState(() => seed(params.get('empty') === '1', params.get('ai') === 'closed'))
+  const { user } = useAuth()
+  const [client] = useState(() => {
+    const qc = seed(params.get('empty') === '1', params.get('ai') === 'closed')
+    seedUnits(qc, user?.id ?? '', params.get('units'))
+    return qc
+  })
   return (
     <QueryClientProvider client={client}>
       <BodyPreviewContext.Provider value={true}>

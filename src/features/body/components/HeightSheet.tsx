@@ -1,20 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { useUnits } from '@/features/settings/useUnits'
 import { Stepper } from '@/features/workouts'
+import { roundToStep } from '@/lib/units'
 import { useSetHeight } from '../hooks'
 
-/** Bottom sheet for height (cm), used for the body mass index. Private to the user. */
+/** Bottom sheet for height (stored in cm, entered in the user's unit), used for the body mass index. Private to the user. */
 export function HeightSheet({ open, current, onClose }: { open: boolean; current: number | null; onClose: () => void }) {
   const { t } = useTranslation('body')
+  const u = useUnits()
   const setHeight = useSetHeight()
-  const [value, setValue] = useState<number | null>(current ?? 175)
+  const step = u.steps.height
+  const [min, max] = u.lengthRange(100, 250, step)
+  const shown = useCallback((cm: number) => roundToStep(u.cm(cm), step), [u, step])
+  const [value, setValue] = useState<number | null>(shown(current ?? 175))
 
+  // re-seed on open and when the unit arrives or changes
   useEffect(() => {
-    if (open) setValue(current ?? 175)
-  }, [open, current])
+    if (open) setValue(shown(current ?? 175))
+  }, [open, current, shown])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -33,17 +40,22 @@ export function HeightSheet({ open, current, onClose }: { open: boolean; current
           label={t('height.title')}
           value={value}
           onChange={setValue}
-          step={1}
-          min={100}
-          max={250}
-          unit={t('units.cm')}
-          decLabel={t('height.dec')}
-          incLabel={t('height.inc')}
+          step={step}
+          min={min}
+          max={max}
+          decimal={u.length === 'in'}
+          unit={u.lengthLabel}
+          format={u.length === 'in' ? u.estimateValue : u.heightCm}
+          decLabel={t('height.dec', { step: u.estimateValue(step), unit: u.lengthLabel })}
+          incLabel={t('height.inc', { step: u.estimateValue(step), unit: u.lengthLabel })}
           className="mt-6 [&>label]:sr-only"
         />
+        {u.length === 'in' && value != null && (
+          <p className="tabular -mt-1 text-center text-[13px] text-ink-muted">{u.height(u.toCm(value))}</p>
+        )}
         <ErrorNote error={setHeight.error} className="mt-4" />
         <div className="mt-6 grid gap-2 pb-5">
-          <Button size="lg" disabled={value == null || setHeight.isPending} onClick={() => setHeight.mutate(value, { onSuccess: onClose })}>
+          <Button size="lg" disabled={value == null || setHeight.isPending} onClick={() => value != null && setHeight.mutate(u.toCm(value), { onSuccess: onClose })}>
             {setHeight.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
             {t('height.save')}
           </Button>

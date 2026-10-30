@@ -233,8 +233,8 @@
   },
   "energy": {
     "label": "Energy burned",
-    "basis": "Estimated for {{kg}} kg body weight. Not added to eaten calories.",
-    "assumedWeight": "Estimated with an assumed 70 kg. Log your weight under Track > Body for a better estimate.",
+    "basis": "Estimated for {{weight}} body weight. Not added to eaten calories.",
+    "assumedWeight": "Estimated with an assumed {{weight}}. Log your weight under Track > Body for a better estimate.",
     "short": "≈ {{kcal}} kcal",
     "todayEyebrow": "Burned today",
     "todaySessions_one": "Estimated from {{count}} workout",

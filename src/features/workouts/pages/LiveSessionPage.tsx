@@ -320,7 +320,7 @@ function Runner({ data, draft, update, label, byId, onPicked, onFinished, onDisc
         title={totalWorking > 0 ? t('session.finishTitle') : t('session.discardTitle')}
         body={
           totalWorking > 0
-            ? t('session.finishBody', { count: totalWorking, volume: w.formatTotal(sessionVolumeKg(allSets)), unit: w.unit })
+            ? t('session.finishBody', { count: totalWorking, volume: w.formatTotal(sessionVolumeKg(allSets)), unit: w.label })
             : t('session.discardBody')
         }
         confirmLabel={totalWorking > 0 ? t('session.finishConfirm') : t('session.discardConfirm')}
@@ -419,7 +419,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
               <span className="text-ink-faint">…</span>
             ) : lastList.length ? (
               <span className="tabular text-ink">
-                <span className="font-semibold">{lastList[0].replace(' × ', ` ${w.unit} × `)}</span>
+                <span className="font-semibold">{lastList[0].replace(' × ', ` ${w.label} × `)}</span>
                 {lastList.length > 1 && <span className="text-ink-muted">, {lastList.slice(1).join(', ')}</span>}
                 {lastDate && <span className="text-ink-faint"> · {format(new Date(lastDate), 'd MMM', { locale: dfLocale })}</span>}
               </span>
@@ -448,7 +448,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
                     {s.is_warmup ? <Thermometer className="size-3.5" aria-label={t('session.warmup')} /> : exercise.sets.filter((x, j) => j <= i && !x.is_warmup).length}
                   </span>
                   <span className="tabular flex-1 font-medium">
-                    {s.weight_kg != null ? `${w.format(s.weight_kg)} ${w.unit} × ${s.reps ?? 0}` : `${s.reps ?? 0} ${t('units.reps')}`}
+                    {s.weight_kg != null ? `${w.format(s.weight_kg)} ${w.label} × ${s.reps ?? 0}` : `${s.reps ?? 0} ${t('units.reps')}`}
                     {s.rpe != null && <span className="ml-2 text-[13px] font-normal text-ink-faint">{t('session.rpeShort')} {w.formatNumber(s.rpe)}</span>}
                   </span>
                   {isLast ? (
@@ -471,7 +471,7 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
       </section>
 
       <SetEntry
-        key={`${exercise.id}:${exercise.sets.length}:${last.isSuccess ? 1 : 0}`}
+        key={`${exercise.id}:${exercise.sets.length}:${last.isSuccess ? 1 : 0}:${w.unit}`}
         setNumber={working + 1}
         targetSets={target?.target_sets ?? null}
         initialWeight={prefill.weightKg != null ? w.toDisplay(prefill.weightKg) : null}
@@ -521,7 +521,7 @@ function SetEntry(props: EntryProps) {
   const complete = () =>
     canSave &&
     onComplete({
-      weightKg: weight === null || weight === 0 ? null : Math.round(w.toKg(weight) * 100) / 100,
+      weightKg: weight === null || weight === 0 ? null : w.toKg(weight),
       reps: reps!,
       rpe,
       warmup,
@@ -539,16 +539,16 @@ function SetEntry(props: EntryProps) {
 
       <div className="mt-4 space-y-5">
         <Stepper
-          label={w.unit}
+          label={w.label}
           value={weight}
           onChange={setWeight}
           step={w.step}
           min={0}
           max={w.unit === 'kg' ? 2000 : 4400}
           decimal
-          format={w.formatNumber}
-          decLabel={t('session.weightDec', { step: w.step, unit: w.unit })}
-          incLabel={t('session.weightInc', { step: w.step, unit: w.unit })}
+          format={w.formatValue}
+          decLabel={t('session.weightDec', { step: w.step, unit: w.label })}
+          incLabel={t('session.weightInc', { step: w.step, unit: w.label })}
         />
         <Stepper
           label={t('session.reps')}

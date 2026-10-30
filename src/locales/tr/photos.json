@@ -71,7 +71,7 @@
     "change": "Başka fotoğraf",
     "pose": "Poz",
     "date": "Tarih",
-    "weight": "Kilo (isteğe bağlı)",
+    "weight": "Kilo, {{unit}} (isteğe bağlı)",
     "note": "Not (isteğe bağlı)",
     "notePlaceholder": "Örn. kesim haftası 3",
     "submit": "Şifrele ve yükle",
@@ -84,7 +84,7 @@
     "delete": "Fotoğrafı sil",
     "confirmDelete": "Kalıcı olarak silmek için tekrar dokun",
     "close": "Kapat",
-    "weight": "{{kg}} kg",
+    "weight": "{{weight}}",
     "loading": "Çözülüyor…"
   },
   "compare": {

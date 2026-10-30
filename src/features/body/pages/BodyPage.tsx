@@ -5,6 +5,7 @@ import { ArrowLeft, Check, ChevronRight, Loader2, Plus, TrendingDown, TrendingUp
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { useUnits } from '@/features/settings/useUnits'
 import { Stepper } from '@/features/workouts'
 import { toLocalDateISO } from '@/lib/dates'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,8 @@ export function BodyPage() {
   const preview = useIsBodyPreview()
   const metrics = useBodyMetrics()
   const target = usePrivateWeights()
+  // steppers hold display-unit values: remount them if the unit arrives (settings load) or changes
+  const { weight: weightUnit } = useUnits()
   // ?log=YYYY-MM-DD (from the Track day view) opens the entry sheet for that day
   const [params, setParams] = useSearchParams()
   const logParam = params.get('log')
@@ -83,7 +86,7 @@ export function BodyPage() {
               onTarget={() => setTargetOpen(true)}
               onHeight={() => setHeightOpen(true)}
             />
-            <QuickLog rows={rows} lastWeight={latestWeight} onMore={() => setSheetDay(toLocalDateISO())} />
+            <QuickLog key={weightUnit} rows={rows} lastWeight={latestWeight} onMore={() => setSheetDay(toLocalDateISO())} />
           </div>
           <div className="space-y-10">
             {points.length > 0 && <WeightTrend points={points} target={targetKg} />}
@@ -139,6 +142,7 @@ function Hero({
 }) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
+  const u = useUnits()
   const [now] = useState(() => new Date())
   const month = filterPeriod(points, '1m', now)
   const s = summarizeWeight(month.length >= 2 ? month : points, target)
@@ -153,14 +157,17 @@ function Hero({
   }
 
   const periodLabel = t(`trend.period.${month.length >= 2 ? '1m' : 'all'}`)
+  // as the user reads it: "180.0 lb, target 170.0 lb, 10.0 lb to go" (not a separately converted kg gap)
+  const toTarget = target != null ? u.bodyDiff(target, s.latest.kg) : null
+  const withUnit = (n: string) => `${n} ${u.weightLabel}`
   return (
     <section className="rise-in pt-2" aria-label={t('title')}>
       <p className="eyebrow">{t('hero.eyebrow', { date: f.day(s.latest.day, 'd MMM') })}</p>
       <p className="mt-3 flex items-baseline gap-2">
         <span className="display tabular text-[88px] leading-[0.85] tracking-[-0.05em]">
-          {f.num(s.latest.kg)}
+          {u.body(s.latest.kg)}
         </span>
-        <span className="text-[20px] font-medium text-ink-muted">{t('units.kg')}</span>
+        <span className="text-[20px] font-medium text-ink-muted">{u.weightLabel}</span>
       </p>
 
       <dl className="mt-6 grid grid-cols-2 border-y border-line">
@@ -169,8 +176,8 @@ function Hero({
             {t('hero.avg7')}
           </dt>
           <dd className="tabular text-[20px] font-semibold leading-none">
-            {f.num(s.latest.avg7)}{' '}
-            <span className="text-[13px] font-medium text-ink-faint">{t('units.kg')}</span>
+            {u.bodyAverage(s.latest.avg7)}{' '}
+            <span className="text-[13px] font-medium text-ink-faint">{u.weightLabel}</span>
           </dd>
         </div>
         <div className="flex flex-col-reverse border-l border-line py-3.5 pl-4">
@@ -186,8 +193,8 @@ function Hero({
               '–'
             ) : (
               <>
-                {f.signed(s.change)}{' '}
-                <span className="text-[13px] font-medium text-ink-faint">{t('units.kg')}</span>
+                {u.signed(u.weightDelta(s.change))}{' '}
+                <span className="text-[13px] font-medium text-ink-faint">{u.weightLabel}</span>
               </>
             )}
           </dd>
@@ -205,13 +212,13 @@ function Hero({
           </span>
         ) : (
           <span className="tabular text-[14px] text-ink-muted">
-            <span className="font-semibold text-ink">{t('hero.target', { kg: f.num(target) })}</span>
+            <span className="font-semibold text-ink">{t('hero.target', { weight: withUnit(u.body(target)) })}</span>
             <span className="mx-2 text-ink-faint">·</span>
-            {s.toTarget === 0 || s.toTarget == null
+            {toTarget === 0 || toTarget == null
               ? t('hero.atTarget')
-              : s.toTarget > 0
-                ? t('hero.toTargetAbove', { kg: f.num(s.toTarget) })
-                : t('hero.toTargetBelow', { kg: f.num(-s.toTarget) })}
+              : toTarget > 0
+                ? t('hero.toTargetAbove', { weight: withUnit(u.oneDecimal(toTarget)) })
+                : t('hero.toTargetBelow', { weight: withUnit(u.oneDecimal(-toTarget)) })}
           </span>
         )}
         <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
@@ -224,6 +231,7 @@ function Hero({
 function BmiRow({ kg, height, onEdit }: { kg: number; height: number | null; onEdit: () => void }) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
+  const u = useUnits()
   const b = bmi(kg, height)
   return (
     <button
@@ -239,7 +247,7 @@ function BmiRow({ kg, height, onEdit }: { kg: number; height: number | null; onE
           <span className="mx-2 text-ink-faint">·</span>
           {t(`bmi.category.${b.category}`)}
           <span className="mx-2 text-ink-faint">·</span>
-          {t('height.value', { cm: Math.round(height) })}
+          {t('height.value', { value: u.height(height) })}
         </span>
       ) : (
         <span className="text-[14px] font-medium text-ink-muted group-hover:text-ink">
@@ -261,12 +269,15 @@ function QuickLog({
   onMore: () => void
 }) {
   const { t } = useTranslation('body')
-  const f = useBodyFormat()
+  const u = useUnits()
   const save = useSaveBodyMetric()
   const today = toLocalDateISO()
   const todayRow = rows.find((r) => r.measured_on === today)
-  const saved = todayRow?.weight_kg != null ? Number(todayRow.weight_kg) : null
-  const [value, setValue] = useState<number | null>(saved ?? lastWeight ?? 70)
+  // the stepper works in the user's unit; kg only at save
+  const saved = todayRow?.weight_kg != null ? u.kg(Number(todayRow.weight_kg), 'body') : null
+  const [value, setValue] = useState<number | null>(saved ?? u.kg(lastWeight ?? 70, 'body'))
+  const step = u.steps.body
+  const [min, max] = u.weightRange(20, 400, step)
   const dirty = value != null && value !== saved
 
   return (
@@ -286,14 +297,14 @@ function QuickLog({
         label={t('quick.today')}
         value={value}
         onChange={setValue}
-        step={0.1}
-        min={20}
-        max={400}
+        step={step}
+        min={min}
+        max={max}
         decimal
-        unit={t('units.kg')}
-        format={f.num}
-        decLabel={t('quick.weightDec')}
-        incLabel={t('quick.weightInc')}
+        unit={u.weightLabel}
+        format={u.bodyValue}
+        decLabel={t('quick.weightDec', { step: u.estimateValue(step), unit: u.weightLabel })}
+        incLabel={t('quick.weightInc', { step: u.estimateValue(step), unit: u.weightLabel })}
         className="mt-3 [&>label]:sr-only"
       />
       <ErrorNote error={save.error} className="mt-3" />
@@ -301,7 +312,7 @@ function QuickLog({
         size="lg"
         className="mt-4 w-full"
         disabled={!dirty || save.isPending}
-        onClick={() => value != null && save.mutate({ measured_on: today, weight_kg: value })}
+        onClick={() => value != null && save.mutate({ measured_on: today, weight_kg: u.toKg(value, 'body') })}
       >
         {save.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
         {saved != null ? t('quick.update') : t('quick.save')}
@@ -397,7 +408,7 @@ function Measurements({
       ) : (
         <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
           {list.map((m) => (
-            <MeasureLine key={m.field} m={m} label={t(`measure.fields.${m.field}`)} f={f} />
+            <MeasureLine key={m.field} m={m} label={t(`measure.fields.${m.field}`)} />
           ))}
         </ul>
       )}
@@ -405,14 +416,16 @@ function Measurements({
   )
 }
 
-function MeasureLine({ m, label, f }: { m: MeasureRow; label: string; f: ReturnType<typeof useBodyFormat> }) {
+function MeasureLine({ m, label }: { m: MeasureRow; label: string }) {
   const { t } = useTranslation('body')
+  const u = useUnits()
+  const delta = m.value != null && m.delta != null ? u.lengthDiff(m.value - m.delta, m.value) : null
   return (
     <li className="flex h-14 items-center gap-3 px-4">
       <span className="flex-1 text-[15px] font-medium">{label}</span>
-      {m.delta != null && m.delta !== 0 && (
+      {delta != null && delta !== 0 && (
         <span className="tabular text-[12px] text-ink-faint" title={t('measure.since')}>
-          {f.signed(m.delta)}
+          {u.signed(delta)}
         </span>
       )}
       <span
@@ -421,9 +434,9 @@ function MeasureLine({ m, label, f }: { m: MeasureRow; label: string; f: ReturnT
           m.value == null && 'text-ink-faint',
         )}
       >
-        {m.value == null ? '–' : f.num(m.value)}
+        {m.value == null ? '–' : u.len(m.value)}
         {m.value != null && (
-          <span className="ml-1 text-[12px] font-medium text-ink-faint">{t('units.cm')}</span>
+          <span className="ml-1 text-[12px] font-medium text-ink-faint">{u.lengthLabel}</span>
         )}
       </span>
     </li>
@@ -433,6 +446,7 @@ function MeasureLine({ m, label, f }: { m: MeasureRow; label: string; f: ReturnT
 function Entries({ rows, onOpen }: { rows: BodyMetric[]; onOpen: (day: string) => void }) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
+  const u = useUnits()
   if (rows.length === 0) return null
   return (
     <section aria-labelledby="entries-title">
@@ -460,7 +474,7 @@ function Entries({ rows, onOpen }: { rows: BodyMetric[]; onOpen: (day: string) =
                 </span>
                 <span className="tabular flex-1 text-[15px] font-semibold">
                   {r.weight_kg != null ? (
-                    `${f.num(Number(r.weight_kg))} ${t('units.kg')}`
+                    `${u.body(Number(r.weight_kg))} ${u.weightLabel}`
                   ) : (
                     <span className="font-normal text-ink-faint">–</span>
                   )}
