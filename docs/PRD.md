@@ -93,6 +93,7 @@ Soru-cevap turlarında netleşen isterler:
 - Fotoğraflar PWA çevrimdışı önbelleğine **şifresiz asla yazılmaz**; görüntüleme bellekte çözülür, `blob:` URL'si kapatınca iptal edilir.
 
 **M10 — AI koç (ücretsiz katman LLM)**
+- **Açık karar (2026-10-30, docs/LICENSING.md):** Gemini ve OpenRouter ücretsiz katmanları 18 yaş sınırı, "kişisel veri gönderme" maddesi (ücretsiz katman girdileri insanlarca okunabilir) ve AB/İngiltere/İsviçre kısıtı getiriyor. Ürün sahibi kararı: yapay zekâ özellikleri (besin tahmini dahil) yayından önce duruma göre **kaldırılabilir**. Faz 4 başında karar verilecek: (a) kaldır, (b) 18+ şartı + ilk kullanımda açık rıza + AB/UK/CH'de kapat + "tıbbi tavsiye değildir" uyarısı, (c) ücretli katman.
 - Sohbet: "Bu hafta nasıl gittim?", "Omuz programımı düzenle", "Bugün ne yiyeyim?" gibi sorular; bağlam olarak son 4 haftanın antrenman/kilo/beslenme/uyku özeti otomatik eklenir (fotoğraflar **asla** gönderilmez).
 - Haftalık değerlendirme kartı (dashboard'da, haftada 1 otomatik üretim) ve program önerisi (şablon olarak kaydedilebilir, JSON şema ile doğrulanır).
 - Sağlayıcı soyutlaması: `gemini` (birincil, Google AI Studio ücretsiz API anahtarı) ve `openrouter` (yedek, `:free` modeller). Kota/429 durumunda otomatik yedeğe geç, o da yoksa kural tabanlı öneriler.
