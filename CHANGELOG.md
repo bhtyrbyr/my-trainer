@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-10-30
 ### Added
 - **Workout energy estimate**: every finished session gets an estimated kcal burned, computed by the database (MET values from the 2024 Compendium of Physical Activities; strength by average RPE, cardio by activity and speed, the Keytel heart-rate equation when heart rate, weight, sex and age are known). Shown in the workout summary, session detail and history, and as "Burned today" on the dashboard. It earns no points and is never added to eaten calories.
 - **Body** (Track > Body): weigh-ins and circumferences (waist, chest, hips, arm, thigh), one entry per day. The last weigh-in, 7-day average and monthly change up top; one-tap logging of today's weight; trend chart (1 month to all time) with the 7-day average and an optional private target line; measurement changes and an editable entry log. Weight logs earn 10 points a day, measurements 15 a week (server-side). The workout energy estimate now uses the latest logged weight.
