@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(272);
+select plan(274);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -1059,16 +1059,16 @@ select ok(
   'push: the request is a POST with the dispatch secret header'
 );
 select is(
-  (select array_agg(ref order by ref) from private.reminder_log where user_id = :'ub' and day = current_date),
+  (select array_agg(split_part(ref, '@', 1) order by ref) from private.reminder_log where user_id = :'ub' and day = current_date),
   array['habit:' || :'bh1', 'habit:' || :'bh2', 'todo:' || :'bt1', 'todo:' || :'bt2'],
   'push: exactly the due, unfinished habits and to-dos are logged'
 );
 select is(
-  (select count(*)::int from private.reminder_log where ref in ('habit:' || :'bh3', 'habit:' || :'bh4', 'habit:' || :'bh5', 'habit:' || :'bh6')),
+  (select count(*)::int from private.reminder_log where split_part(ref, '@', 1) in ('habit:' || :'bh3', 'habit:' || :'bh4', 'habit:' || :'bh5', 'habit:' || :'bh6')),
   0, 'push: done, not-due-today, out-of-window and archived habits are not reminded'
 );
 select is(
-  (select count(*)::int from private.reminder_log where ref in ('todo:' || :'bt3', 'todo:' || :'bt4', 'todo:' || :'bt5', 'todo:' || :'bt6')),
+  (select count(*)::int from private.reminder_log where split_part(ref, '@', 1) in ('todo:' || :'bt3', 'todo:' || :'bt4', 'todo:' || :'bt5', 'todo:' || :'bt6')),
   0, 'push: completed, not-yet-due and archived to-dos are not reminded'
 );
 select is(public.dispatch_reminders(), 0, 'push: a second run in the same window queues nothing (reminder_log dedupe)');
@@ -1095,9 +1095,18 @@ insert into public.habits (id, user_id, name, rule, starts_on, remind_at) values
 insert into public.habit_logs (user_id, habit_id, day) values (:'ub', :'bq1', '2026-10-26'), (:'ub', :'bq2', '2026-10-26'), (:'ub', :'bq2', '2026-10-25');
 reset role;
 select is(
-  (select array_agg(ref order by ref) from private.reminders_due('2026-10-28', '11:55', '12:00') where ref in ('habit:' || :'bq1', 'habit:' || :'bq2')),
+  (select array_agg(split_part(ref, '@', 1) order by ref) from private.reminders_due('2026-10-28', '11:55', '12:00') where split_part(ref, '@', 1) in ('habit:' || :'bq1', 'habit:' || :'bq2')),
   array['habit:' || :'bq2'],
   'push: weekly_count habits are reminded only while the week''s quota is open (last week''s days do not count)'
+);
+select is(
+  (select ref from private.reminders_due('2026-10-28', '11:55', '12:00') where split_part(ref, '@', 1) = 'habit:' || :'bq2'),
+  'habit:' || :'bq2' || '@12:00', 'push: the dedupe key carries the reminder time'
+);
+update public.habits set remind_at = '11:58' where id = :'bq2';
+select is(
+  (select ref from private.reminders_due('2026-10-28', '11:55', '12:00') where split_part(ref, '@', 1) = 'habit:' || :'bq2'),
+  'habit:' || :'bq2' || '@11:58', 'push: moving the reminder time re-arms it (new key, sent again the same day)'
 );
 
 -- Blocked users and users without a device get nothing (and nothing is logged for them)
