@@ -3,7 +3,7 @@ import { LEGAL } from '@/config/brand'
 import { PHOTO_BUCKET } from '@/features/photos/api'
 import { AVATAR_BUCKET } from '@/features/profile/api'
 
-export type ConsentRow = { kind: 'privacy_notice' | 'health_data'; version: string; granted: boolean; created_at: string }
+export type ConsentRow = { kind: 'privacy_notice' | 'health_data' | 'adult' | 'ai_processing'; version: string; granted: boolean; created_at: string }
 
 /** The caller's consent log, newest first (RLS: own rows only). */
 export async function listConsents(): Promise<ConsentRow[]> {
@@ -14,6 +14,23 @@ export async function listConsents(): Promise<ConsentRow[]> {
 
 export async function acknowledgeNotice(): Promise<void> {
   const { error } = await supabase.rpc('record_consent', { p_kind: 'privacy_notice', p_version: LEGAL.noticeVersion })
+  if (error) throw error
+}
+
+/** The user confirms being 18 or older (the app and the Gemini/OpenRouter terms require it). */
+export async function confirmAdult(): Promise<void> {
+  const { error } = await supabase.rpc('record_consent', { p_kind: 'adult', p_version: LEGAL.noticeVersion })
+  if (error) throw error
+}
+
+export async function grantAiConsent(): Promise<void> {
+  await confirmAdult()
+  const { error } = await supabase.rpc('record_consent', { p_kind: 'ai_processing', p_version: LEGAL.aiConsentVersion })
+  if (error) throw error
+}
+
+export async function withdrawAiConsent(): Promise<void> {
+  const { error } = await supabase.rpc('withdraw_ai_consent', { p_version: LEGAL.aiConsentVersion })
   if (error) throw error
 }
 

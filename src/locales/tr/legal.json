@@ -69,6 +69,13 @@
         ]
       },
       {
+        "title": "Yaş sınırı",
+        "items": [
+          "Uygulama 18 yaşından büyükler içindir; kayıt sırasında bunu onaylarsın.",
+          "Yapay zekâ özellikleri ayrıca açık rızana bağlıdır ve Avrupa Ekonomik Alanı, Birleşik Krallık ve İsviçre'de kullanılamaz."
+        ]
+      },
+      {
         "title": "Hakların (KVKK m. 11)",
         "items": [
           "Verilerinin işlenip işlenmediğini öğrenme, bilgi isteme, amacını ve aktarıldığı yerleri öğrenme.",
@@ -88,7 +95,9 @@
     "required": "Devam etmek için aydınlatma metnini okuduğunu onayla.",
     "gateTitle": "Aydınlatma metni güncellendi",
     "gateBody": "Devam etmeden önce kişisel verilerinin nasıl işlendiğini okumanı istiyoruz.",
-    "gateConfirm": "Okudum, devam et"
+    "gateConfirm": "Okudum, devam et",
+    "adult": "18 yaşından büyüğüm.",
+    "adultRequired": "Uygulamayı kullanmak için 18 yaşından büyük olmalısın."
   },
   "health": {
     "eyebrow": "Açık rıza",
@@ -122,5 +131,20 @@
     "deleteConfirm": "Hesabımı kalıcı olarak sil",
     "deleting": "Siliniyor…",
     "cancel": "Vazgeç"
+  },
+  "ai": {
+    "eyebrow": "Yapay zekâ",
+    "title": "Yapay zekâ tahmini için iznin gerekli",
+    "body": "Yemek tahmini, yazdığın metni ya da çektiğin fotoğrafı Google Gemini'ye (yedek olarak metin için OpenRouter'a) gönderir. Ücretsiz katmanda Google bu içerikleri ürünlerini geliştirmek için kullanabilir ve insanlar tarafından okunabilir. Kimliğin, adın ya da e-postan gönderilmez; fotoğrafın konum bilgisi silinir.",
+    "adult": "18 yaşından büyüğüm.",
+    "region": "Avrupa Ekonomik Alanı, Birleşik Krallık ya da İsviçre'de bulunmuyorum.",
+    "statement": "Yemek metnimin ve fotoğraflarımın besin tahmini için Google Gemini ve OpenRouter'a gönderilmesine ve bu sağlayıcıların koşullarına göre işlenmesine açık rıza veriyorum.",
+    "hint": "Kişisel bilgi yazma (ad, sağlık durumu vb.). İznini Ayarlar'dan geri alabilirsin; o zaman yapay zekâ kapanır, elle giriş ve arama çalışmaya devam eder.",
+    "agree": "Rıza veriyorum",
+    "disclaimer": "Bu bir tahmindir; tıbbi ya da diyetisyen tavsiyesi değildir. Değerleri eklemeden önce kontrol et.",
+    "setting": "Yapay zekâ izni",
+    "withdrawTitle": "Yapay zekâ iznini geri al?",
+    "withdrawBody": "Yemek tahmini kapanır. Daha önce eklediğin öğünler silinmez; Google'a gönderilmiş içerikler onların koşullarına tabidir.",
+    "withdrawConfirm": "İzni geri al"
   }
 }

@@ -20,7 +20,7 @@ Research summary, not legal advice. Items marked **[lawyer]** need a Turkish IP/
 ## Before a public launch
 
 1. ~~Replace or license the ExerciseDB GIFs and copied texts.~~ Done 2026-10-30 (catalog v2).
-2. AI: 18+ rule, explicit consent naming Google and OpenRouter, no identifiers, off for EEA/UK/CH, "not medical advice"; decide on the paid tier.
+2. ~~AI: 18+ rule, explicit consent naming Google and OpenRouter, no identifiers, off for EEA/UK/CH, "not medical advice".~~ Done 2026-10-30 (kept on the free tier by the product owner's decision). The region check depends on a country header from the edge; users also self-declare it.
 3. About/Licences page (TR + EN): Open Food Facts, USDA, wger/Termininja, OSS and font notices; OFF credit under food search.
 4. Open Food Facts: API usage form.
 5. Google OAuth: production mode, homepage + privacy policy + terms on a verified (custom) domain, brand verification.

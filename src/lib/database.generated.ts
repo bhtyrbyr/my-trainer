@@ -1614,6 +1614,7 @@ export type Database = {
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
       ai_availability: { Args: Record<PropertyKey, never>; Returns: Json }
+      ai_consent_of: { Args: { p_user: string }; Returns: boolean }
       ai_decide: { Args: { p_user: string }; Returns: Json }
       ai_log_usage: {
         Args: {
@@ -1782,6 +1783,7 @@ export type Database = {
         }
       }
       unregister_push: { Args: { p_endpoint: string }; Returns: undefined }
+      withdraw_ai_consent: { Args: { p_version: string }; Returns: undefined }
       withdraw_health_consent: { Args: { p_version: string }; Returns: undefined }
     }
     Enums: {

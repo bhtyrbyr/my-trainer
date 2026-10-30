@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+### Added
+- **AI safeguards** (Gemini / OpenRouter free tiers): the app is 18+ (confirmed at sign-up, and once by existing users); AI food estimates need explicit consent naming the providers, that free-tier content may be used for product improvement and read by humans, and the region limit (not in the EEA, UK or Switzerland); the server refuses without consent, and requests from those regions are refused when the edge reports a country. Estimates carry a "not medical or dietary advice" note. AI consent can be withdrawn in Settings > Privacy & data. The privacy notice gained an age-limit section.
 ### Changed
 - **Exercise catalog**: replaced with openly licensed sources: 888 exercises from wger (texts, CC BY-SA) with workout-guide / Everkinetic illustrations (CC BY-SA 4.0) played as a short animation, and the muscle map where there is no illustration. A credit line on every exercise and a Licences page (Profile > About). Turkish names are filled gradually by a quota-safe translation.
 ### Removed

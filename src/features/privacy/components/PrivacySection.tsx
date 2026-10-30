@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Download, FileText, HeartPulse, Loader2, Trash2 } from 'lucide-react'
+import { ChevronRight, Download, FileText, HeartPulse, Loader2, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { BottomSheet } from '@/features/nutrition/components/BottomSheet'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { useConsents, useDeleteMyAccount, useExportMyData, useWithdrawHealthConsent } from '../hooks'
+import { useConsents, useDeleteMyAccount, useExportMyData, useWithdrawAiConsent, useWithdrawHealthConsent } from '../hooks'
+import { AiConsentCard } from './AiConsent'
 import { HealthConsentScreen } from './Gates'
 import { cn } from '@/lib/utils'
 
@@ -18,7 +19,7 @@ export function PrivacySection() {
   const { profile } = useAuth()
   const consents = useConsents()
   const exporter = useExportMyData()
-  const [sheet, setSheet] = useState<'grant' | 'withdraw' | 'delete' | null>(null)
+  const [sheet, setSheet] = useState<'grant' | 'withdraw' | 'aiGrant' | 'aiWithdraw' | 'delete' | null>(null)
   const close = () => setSheet(null)
 
   return (
@@ -36,6 +37,15 @@ export function PrivacySection() {
         <span className="flex-1 text-[15px]">{t('settings.health')}</span>
         <span className={cn('text-[13px] font-medium', consents.health ? 'text-volt' : 'text-ink-faint')}>
           {consents.health ? t('settings.healthOn') : t('settings.healthOff')}
+        </span>
+        <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+      </button>
+
+      <button type="button" className={row} onClick={() => setSheet(consents.ai ? 'aiWithdraw' : 'aiGrant')}>
+        <Sparkles className="size-5 text-ink-muted" aria-hidden />
+        <span className="flex-1 text-[15px]">{t('ai.setting')}</span>
+        <span className={cn('text-[13px] font-medium', consents.ai ? 'text-volt' : 'text-ink-faint')}>
+          {consents.ai ? t('settings.healthOn') : t('settings.healthOff')}
         </span>
         <ChevronRight className="size-4 text-ink-faint" aria-hidden />
       </button>
@@ -59,6 +69,14 @@ export function PrivacySection() {
       </BottomSheet>
       <BottomSheet open={sheet === 'withdraw'} label={t('settings.withdrawTitle')} closeLabel={t('notice.close')} onClose={close}>
         <WithdrawSheetBody onCancel={close} />
+      </BottomSheet>
+      <BottomSheet open={sheet === 'aiGrant'} label={t('ai.title')} closeLabel={t('notice.close')} onClose={close}>
+        <div className="pb-5">
+          <AiConsentCard onDone={close} />
+        </div>
+      </BottomSheet>
+      <BottomSheet open={sheet === 'aiWithdraw'} label={t('ai.withdrawTitle')} closeLabel={t('notice.close')} onClose={close}>
+        <AiWithdrawBody onCancel={close} />
       </BottomSheet>
       <BottomSheet open={sheet === 'delete'} label={t('settings.deleteTitle')} closeLabel={t('notice.close')} onClose={close}>
         <DeleteSheetBody username={profile?.username ?? ''} onCancel={close} />
@@ -122,6 +140,25 @@ function DeleteSheetBody({ username, onCancel }: { username: string; onCancel: (
       <Button size="lg" variant="danger" className="w-full" disabled={!ok || del.isPending} onClick={() => del.mutate()}>
         {del.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
         {del.isPending ? t('settings.deleting') : t('settings.deleteConfirm')}
+      </Button>
+      <Button size="lg" variant="ghost" className="w-full" onClick={onCancel}>
+        {t('settings.cancel')}
+      </Button>
+    </div>
+  )
+}
+
+function AiWithdrawBody({ onCancel }: { onCancel: () => void }) {
+  const { t } = useTranslation('legal')
+  const withdraw = useWithdrawAiConsent()
+  return (
+    <div className="space-y-4 pb-5">
+      <h2 className="text-[20px] font-semibold tracking-tight">{t('ai.withdrawTitle')}</h2>
+      <p className="text-[14px] leading-relaxed text-ink-muted">{t('ai.withdrawBody')}</p>
+      <ErrorNote error={withdraw.error} />
+      <Button size="lg" variant="danger" className="w-full" disabled={withdraw.isPending} onClick={() => withdraw.mutate(undefined, { onSuccess: onCancel })}>
+        {withdraw.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
+        {t('ai.withdrawConfirm')}
       </Button>
       <Button size="lg" variant="ghost" className="w-full" onClick={onCancel}>
         {t('settings.cancel')}

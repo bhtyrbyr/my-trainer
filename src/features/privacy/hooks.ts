@@ -13,7 +13,9 @@ export function useConsents() {
   const noticeAcked = rows.some((r) => r.kind === 'privacy_notice' && r.granted && r.version === LEGAL.noticeVersion)
   // the newest health row decides (a withdrawal is a newer row with granted = false)
   const health = rows.find((r) => r.kind === 'health_data')?.granted ?? false
-  return { ...q, noticeAcked, health }
+  const adult = rows.some((r) => r.kind === 'adult' && r.granted)
+  const ai = rows.find((r) => r.kind === 'ai_processing')?.granted ?? false
+  return { ...q, noticeAcked, health, adult, ai }
 }
 
 /** Health-data tables (and anything derived from them) change meaning when consent changes. */
@@ -30,7 +32,29 @@ function useAfterHealthChange() {
 
 export function useAcknowledgeNotice() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: api.acknowledgeNotice, onSuccess: () => qc.invalidateQueries({ queryKey: consentKeys.all }) })
+  return useMutation({
+    mutationFn: async ({ adult }: { adult: boolean }) => {
+      if (adult) await api.confirmAdult()
+      await api.acknowledgeNotice()
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: consentKeys.all }),
+  })
+}
+
+/** AI consent changes what the AI status card says: refresh consents and availability. */
+function useAfterAiChange() {
+  const qc = useQueryClient()
+  return () => Promise.all([qc.invalidateQueries({ queryKey: consentKeys.all }), qc.invalidateQueries({ queryKey: ['nutrition'] })])
+}
+
+export function useGrantAiConsent() {
+  const after = useAfterAiChange()
+  return useMutation({ mutationFn: api.grantAiConsent, onSuccess: () => void after() })
+}
+
+export function useWithdrawAiConsent() {
+  const after = useAfterAiChange()
+  return useMutation({ mutationFn: api.withdrawAiConsent, onSuccess: () => void after() })
 }
 
 export function useGrantHealthConsent() {
