@@ -5,22 +5,19 @@ export const FRAME_MS = 700
 
 export type ExerciseMedia =
   | { kind: 'frames'; paths: string[] }
-  /** legacy ExerciseDB GIF, only while old rows still carry one */
-  | { kind: 'gif'; path: string }
   | { kind: 'none' }
 
-/** What to show for an exercise: its illustration frames, else a leftover GIF, else nothing (muscle map). */
-export function exerciseMedia(ex: Pick<Exercise, 'media_frames' | 'gif_path'> | null | undefined): ExerciseMedia {
+/** What to show for an exercise: its illustration frames, else nothing (the muscle map). */
+export function exerciseMedia(ex: Pick<Exercise, 'media_frames'> | null | undefined): ExerciseMedia {
   const frames = (ex?.media_frames ?? []).filter(Boolean)
   if (frames.length) return { kind: 'frames', paths: frames }
-  if (ex?.gif_path) return { kind: 'gif', path: ex.gif_path }
   return { kind: 'none' }
 }
 
-/** The single path a still thumbnail needs (first frame or the GIF). */
-export function thumbPath(ex: Pick<Exercise, 'media_frames' | 'gif_path'> | null | undefined): string | null {
+/** The single path a still thumbnail needs (the first frame). */
+export function thumbPath(ex: Pick<Exercise, 'media_frames'> | null | undefined): string | null {
   const m = exerciseMedia(ex)
-  return m.kind === 'frames' ? m.paths[0] : m.kind === 'gif' ? m.path : null
+  return m.kind === 'frames' ? m.paths[0] : null
 }
 
 export type Credit =

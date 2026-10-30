@@ -170,12 +170,12 @@ update public.exercises set name_en = 'HACKED' where id = :'ex1';
 select is((select name_en from public.exercises where id = :'ex1'), 'Barbell Bench Press', 'catalog exercise update affects 0 rows');
 delete from public.exercises where id = :'ex1';
 select is((select count(*)::int from public.exercises where not is_custom), 2, 'catalog exercise delete affects 0 rows');
-insert into public.exercises (id, external_id, source, name_en, is_custom, user_id, gif_path)
-values (:'ex3', 'fake-ext', 'exercisedb', 'My Cable Curl', false, :'ub', 'gifs/0001.gif');
+insert into public.exercises (id, external_id, source, name_en, is_custom, user_id, media_frames)
+values (:'ex3', 'fake-ext', 'wger', 'My Cable Curl', false, :'ub', '{frames/x/1.svg}');
 select is(
-  (select is_custom::text || ':' || source || ':' || coalesce(external_id, 'null') || ':' || coalesce(gif_path, 'null') || ':' || user_id::text
+  (select is_custom::text || ':' || source || ':' || coalesce(external_id, 'null') || ':' || cardinality(media_frames) || ':' || user_id::text
      from public.exercises where id = :'ex3'),
-  'true:custom:null:null:00000000-0000-0000-0000-00000000000b',
+  'true:custom:null:0:00000000-0000-0000-0000-00000000000b',
   'custom exercise is forced to is_custom/source=custom/external_id=null/owner'
 );
 select is((select count(*)::int from public.exercises), 3, 'bob sees catalog + his custom exercise');
@@ -1148,17 +1148,17 @@ set local request.jwt.claims = '';
 
 -- source check: the new sources are accepted, anything else is not
 select lives_ok(
-  $$ insert into public.exercises (id, external_id, source, name_en, gif_path, instructions_en) values
-       ('00000000-0000-0000-0000-00000000cc01', 'edb-cv-old', 'exercisedb', 'Old Row', 'gifs/edb-cv-old.gif', '{pull}'),
-       ('00000000-0000-0000-0000-00000000cc02', 'wger:cv-new', 'wger', 'Barbell Row', null, '{pull}'),
-       ('00000000-0000-0000-0000-00000000cc03', 'wg:cv-row', 'workout-guide', 'Cable Row', null, '{}'),
-       ('00000000-0000-0000-0000-00000000cc04', 'edb-cv-ret', 'exercisedb', 'Retired Curl', 'gifs/edb-cv-ret.gif', '{curl}'),
-       ('00000000-0000-0000-0000-00000000cc05', 'edb-cv-del', 'legacy', 'Unused Curl', null, '{}') $$,
-  'catalog v2: source check accepts exercisedb, wger, workout-guide and legacy'
+  $$ insert into public.exercises (id, external_id, source, name_en, media_frames, instructions_en) values
+       ('00000000-0000-0000-0000-00000000cc01', 'wger:cv-old', 'wger', 'Old Row', '{frames/cv-old/1.svg}', '{pull}'),
+       ('00000000-0000-0000-0000-00000000cc02', 'wger:cv-new', 'wger', 'Barbell Row', '{}', '{pull}'),
+       ('00000000-0000-0000-0000-00000000cc03', 'wg:cv-row', 'workout-guide', 'Cable Row', '{}', '{}'),
+       ('00000000-0000-0000-0000-00000000cc04', 'wger:cv-ret', 'wger', 'Retired Curl', '{frames/cv-ret/1.svg}', '{curl}'),
+       ('00000000-0000-0000-0000-00000000cc05', 'wger:cv-del', 'legacy', 'Unused Curl', '{}', '{}') $$,
+  'catalog v2: source check accepts wger, workout-guide and legacy'
 );
 select throws_ok(
-  $$ insert into public.exercises (external_id, source, name_en) values ('x-cv-bad', 'exercisedb-v2', 'Bad') $$,
-  '23514', null, 'catalog v2: an unknown source is rejected'
+  $$ insert into public.exercises (external_id, source, name_en) values ('x-cv-bad', 'exercisedb', 'Bad') $$,
+  '23514', null, 'catalog v2: the removed exercisedb source (and any unknown one) is rejected'
 );
 update public.exercises set media_frames = '{frames/cable-row/1.svg,frames/cable-row/2.svg}',
        attribution = '{"text":{"author":"Bryl Lim","license":"MIT"},"changes":[]}', instructions_tr = '{pull}'
@@ -1304,9 +1304,9 @@ select is(public.retire_catalog_exercise(:'cv_ret'), 'retired', 'retire: a refer
 select is(public.retire_catalog_exercise(:'cv_del'), 'deleted', 'retire: an unreferenced exercise is deleted');
 reset role;
 select is(
-  (select source || ':' || name_en || ':' || coalesce(gif_path, 'null') || ':' || cardinality(instructions_en) || ':'
+  (select source || ':' || name_en || ':' || cardinality(instructions_en) || ':'
           || coalesce(instructions_tr::text, 'null') || ':' || cardinality(media_frames) from public.exercises where id = :'cv_ret'),
-  'legacy:Retired Curl:null:0:null:0', 'retire: the kept row is legacy with media and instructions cleared'
+  'legacy:Retired Curl:0:null:0', 'retire: the kept row is legacy with media and instructions cleared'
 );
 select is((select count(*)::int from public.exercises where id = :'cv_del'), 0, 'retire: the unreferenced row is gone');
 select is((select exercise_id from public.session_exercises where id = :'cv_se2'), :'cv_ret'::uuid, 'retire: history still points at the legacy row');

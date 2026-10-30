@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Dumbbell, SearchX } from 'lucide-react'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
-import { useExercise, useMediaUrl } from '../hooks'
+import { useExercise } from '../hooks'
 import { exerciseCredits, exerciseMedia, type Credit } from '../media'
 import { exerciseName, exerciseSteps } from '../name'
 import type { Exercise } from '../types'
@@ -76,7 +76,6 @@ function Hero({ ex, lang, className }: { ex: Exercise; lang: string | undefined;
           <Flipbook paths={media.paths} label={t('detail.mediaLabel', { name })} className="aspect-square h-[88%]" />
         </div>
       )}
-      {media.kind === 'gif' && <LegacyGif path={media.path} name={name} />}
 
       {ex.body_parts.length > 0 && <p className="eyebrow">{ex.body_parts.map(vocab.bodyPart).join(' · ')}</p>}
       <h1 className="display mt-2 text-[32px] lg:text-[40px]">{name}</h1>
@@ -102,19 +101,6 @@ function Hero({ ex, lang, className }: { ex: Exercise; lang: string | undefined;
   )
 }
 
-/** ExerciseDB GIF on its white plate: legacy rows only, until the catalog switch removes them. */
-function LegacyGif({ path, name }: { path: string; name: string }) {
-  const { data: url } = useMediaUrl(path)
-  return (
-    <div className="mb-6 flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-white">
-      {url ? (
-        <img src={url} alt={name} decoding="async" className="h-full w-full object-contain" />
-      ) : (
-        <span aria-hidden className="size-full animate-pulse bg-white" />
-      )}
-    </div>
-  )
-}
 
 /** "Text: wger contributors, CC BY-SA 4.0 · Illustration: Bryl Lim / Everkinetic, CC BY-SA 4.0 · Turkish: machine translation" */
 function Credits({ credits }: { credits: Credit[] }) {

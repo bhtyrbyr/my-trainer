@@ -1,9 +1,9 @@
 // Pure helpers for scripts/sync-catalog.mjs (unit-tested in src/lib/catalogLib.test.ts).
-// No I/O here: selection, vocabulary mapping, attribution, legacy matching and translation validation.
+// No I/O here: selection, vocabulary mapping, attribution and translation validation.
 // Contract: docs/catalog-v2-spec.md ("Sources", "Selection", "Sync script").
 
 // ---------------------------------------------------------------------------------------------
-// Vocabulary (existing ExerciseDB-style terms; see src/locales/*/exercises.json and
+// Vocabulary (the app's existing terms; see src/locales/*/exercises.json and
 // scripts/muscle-aliases.json). Every value emitted below must be one of these.
 
 export const BODY_PARTS = ['back', 'cardio', 'chest', 'lower arms', 'lower legs', 'neck', 'shoulders', 'upper arms', 'upper legs', 'waist']
@@ -761,58 +761,7 @@ export function checkCoreLifts(rows) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Legacy map: old ExerciseDB rows -> new external_id (or null)
-
-/**
- * `legacy`: [{ external_id, name_en, equipment[] }] (ExerciseDB rows), `rows`: the new catalog.
- * Only an exact match on name tokens (equipment words and filler removed) plus the same equipment set
- * counts. Ambiguous or missing -> null, with the reason and the closest same-name candidates for review.
- */
-export function buildLegacyMap(legacy, rows) {
-  const byName = new Map()
-  for (const r of rows) {
-    const n = nameMatchKey(r.name_en, r.equipment)
-    if (!byName.has(n)) byName.set(n, [])
-    byName.get(n).push(r)
-  }
-  const entries = []
-  for (const old of [...legacy].sort((a, b) => String(a.external_id).localeCompare(String(b.external_id)))) {
-    const eq = (old.equipment ?? []).map((e) => (e === 'olympic barbell' ? 'barbell' : e))
-    const near = byName.get(nameMatchKey(old.name_en, eq)) ?? []
-    const exact = near.filter((r) => equipmentKey(r.equipment) === equipmentKey(eq))
-    const compatible = near.filter((r) => equipmentCompatible(r.equipment, eq))
-    // Twins across sources are merged in buildCatalog, so more than one candidate is real ambiguity.
-    const pick = exact.length === 1 ? exact[0] : !exact.length && compatible.length === 1 ? compatible[0] : null
-    if (pick) {
-      entries.push({
-        old: old.external_id,
-        old_name: old.name_en,
-        old_equipment: eq,
-        new: pick.external_id,
-        new_name: pick.name_en,
-        reason: exact.length ? 'same name tokens and equipment' : `same name tokens, equipment covered by [${pick.equipment.join(', ')}]`,
-      })
-      continue
-    }
-    const hits = exact.length ? exact : compatible
-    if (hits.length > 1) {
-      entries.push({ old: old.external_id, old_name: old.name_en, old_equipment: eq, new: null, new_name: null, reason: `ambiguous: ${hits.length} candidates (${hits.map((h) => h.external_id).join(', ')})` })
-      continue
-    }
-    entries.push({
-      old: old.external_id,
-      old_name: old.name_en,
-      old_equipment: eq,
-      new: null,
-      new_name: null,
-      reason: near.length ? `same name, different equipment: ${near.slice(0, 3).map((r) => `${r.external_id} [${r.equipment.join(', ')}]`).join('; ')}` : 'no candidate with the same name and equipment',
-    })
-  }
-  return entries
-}
-
-// ---------------------------------------------------------------------------------------------
-// Translation (Gemini Flash Lite)
+// Translation
 
 export const TRANSLATE_BATCH = 20
 export const NAME_TR_MAX = 120

@@ -3,7 +3,7 @@ import tr from '@/locales/tr/exercises.json'
 import en from '@/locales/en/exercises.json'
 import { vocabKey } from './name'
 
-// Every value present in the ExerciseDB catalog (1500 exercises, snapshot 2026-10-25).
+// Every vocabulary term the catalog sync maps onto (body parts, muscles, equipment).
 const BODY_PARTS = ['back', 'cardio', 'chest', 'lower arms', 'lower legs', 'neck', 'shoulders', 'upper arms', 'upper legs', 'waist']
 const MUSCLES = [
   'abdominals', 'abductors', 'adductors', 'ankle stabilizers', 'ankles', 'back', 'biceps', 'brachialis', 'calves',

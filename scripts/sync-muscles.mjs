@@ -33,7 +33,7 @@ const LICENSE = {
 }
 const RETRIES = 3
 const BACKOFF_BASE_MS = 1000
-const API_MIN_INTERVAL_MS = 1100 // ExerciseDB JSON pages (Cloudflare limit ~10 req / 10 s)
+const API_MIN_INTERVAL_MS = 1100 // wger API pages
 const MEDIA_MIN_INTERVAL_MS = 150 // wger.de downloads
 const DB_CHUNK = 200
 const STORAGE_PAGE = 1000

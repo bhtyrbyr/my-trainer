@@ -313,7 +313,6 @@ export type Database = {
           created_at: string
           equipment: string[]
           external_id: string | null
-          gif_path: string | null
           id: string
           instructions_en: string[]
           instructions_tr: string[] | null
@@ -335,7 +334,6 @@ export type Database = {
           created_at?: string
           equipment?: string[]
           external_id?: string | null
-          gif_path?: string | null
           id?: string
           instructions_en?: string[]
           instructions_tr?: string[] | null
@@ -356,7 +354,6 @@ export type Database = {
           created_at?: string
           equipment?: string[]
           external_id?: string | null
-          gif_path?: string | null
           id?: string
           instructions_en?: string[]
           instructions_tr?: string[] | null

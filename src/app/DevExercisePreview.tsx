@@ -48,7 +48,6 @@ const ex = (
     'Lower the weight to its starting height under control before pressing again.',
   ],
   instructions_tr: null,
-  gif_path: null,
   media_frames: frames ? [1, 2, 3].map((n) => `frames/${frames}/${n}.svg`) : [],
   attribution: frames
     ? {

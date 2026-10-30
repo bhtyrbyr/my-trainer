@@ -100,7 +100,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       # Exercise catalog v2 (wger + workout-guide, docs/catalog-v2-spec.md): rows and SVG frames, then at most
       # 30 Gemini Flash Lite translation requests (the user reserve is kept). Never blocks the app deploy.
-      # --replace-legacy is never run here: it needs the product owner's review of scripts/out/legacy-map.json.
       - name: Exercise catalog sync
         continue-on-error: true
         timeout-minutes: 20
@@ -109,18 +108,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      # One-time ExerciseDB removal, approved by the product owner on 2026-10-30 with the reviewed map
-      # (scripts/legacy-map.reviewed.json): repoint matched history, keep other used exercises by name only,
-      # delete the rest and every ExerciseDB GIF. Idempotent; remove this step once it has run.
-      - name: Remove ExerciseDB (legacy replacement)
-        timeout-minutes: 20
-        run: |
-          mkdir -p scripts/out
-          cp scripts/legacy-map.reviewed.json scripts/out/legacy-map.json
-          node scripts/sync-catalog.mjs --replace-legacy
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   vercel:
     name: Vercel production deploy

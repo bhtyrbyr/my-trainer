@@ -3,22 +3,21 @@ import { exerciseCredits, exerciseMedia, isMachineTranslated, thumbPath } from '
 import type { ExerciseAttribution } from './types'
 
 describe('exerciseMedia', () => {
-  it('prefers illustration frames, in order', () => {
-    const ex = { media_frames: ['frames/squat/1.svg', 'frames/squat/2.svg'], gif_path: 'gifs/x.gif' }
+  it('uses illustration frames, in order', () => {
+    const ex = { media_frames: ['frames/squat/1.svg', 'frames/squat/2.svg'] }
     expect(exerciseMedia(ex)).toEqual({ kind: 'frames', paths: ['frames/squat/1.svg', 'frames/squat/2.svg'] })
     expect(thumbPath(ex)).toBe('frames/squat/1.svg')
   })
 
-  it('falls back to a legacy GIF, then to nothing', () => {
-    expect(exerciseMedia({ media_frames: [], gif_path: 'gifs/x.gif' })).toEqual({ kind: 'gif', path: 'gifs/x.gif' })
-    expect(exerciseMedia({ media_frames: [], gif_path: null })).toEqual({ kind: 'none' })
+  it('falls back to nothing (the muscle map)', () => {
+    expect(exerciseMedia({ media_frames: [] })).toEqual({ kind: 'none' })
     expect(exerciseMedia(undefined)).toEqual({ kind: 'none' })
-    expect(thumbPath({ media_frames: [], gif_path: null })).toBeNull()
+    expect(thumbPath({ media_frames: [] })).toBeNull()
   })
 
-  it('ignores empty frame entries and a missing column (old rows before the migration)', () => {
-    expect(exerciseMedia({ media_frames: ['', 'frames/a/1.svg'], gif_path: null })).toEqual({ kind: 'frames', paths: ['frames/a/1.svg'] })
-    expect(exerciseMedia({ gif_path: null } as never)).toEqual({ kind: 'none' })
+  it('ignores empty frame entries and a missing column', () => {
+    expect(exerciseMedia({ media_frames: ['', 'frames/a/1.svg'] })).toEqual({ kind: 'frames', paths: ['frames/a/1.svg'] })
+    expect(exerciseMedia({} as never)).toEqual({ kind: 'none' })
   })
 })
 

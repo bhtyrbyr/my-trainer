@@ -6,7 +6,7 @@ type Kind = 'bodyPart' | 'muscle' | 'equipment'
 
 /**
  * Localised labels for catalog vocabulary (`exercises:bodyPart.*`, `muscle.*`, `equipment.*`).
- * Unknown values (custom exercises, a new ExerciseDB term) fall back to the raw value with a capital letter.
+ * Unknown values (custom exercises, a new source term) fall back to the raw value with a capital letter.
  */
 export function useVocab() {
   const { t } = useTranslation('exercises')

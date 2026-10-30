@@ -12,17 +12,13 @@
 //                 manifest metadata MIT. Bump WG_SHA deliberately and re-run with --force-media.
 //
 // Usage
-//   node scripts/sync-catalog.mjs --dry-run                fetch, select, map; writes scripts/out/catalog-plan.json
-//                                                          and scripts/out/legacy-map.json; no DB writes, no
-//                                                          credentials needed
+//   node scripts/sync-catalog.mjs --dry-run                fetch, select, map; writes scripts/out/catalog-plan.json;
+//                                                          no DB writes, no credentials needed
 //   node scripts/sync-catalog.mjs                          upsert rows, upload frames, meta, translate (default 30 req)
 //   node scripts/sync-catalog.mjs --translate-limit=N      max Gemini Flash Lite requests this run (20 exercises
 //                                                          each, default 30, 0 = no translation)
 //   node scripts/sync-catalog.mjs --skip-media             rows only (keeps media_frames already set)
 //   node scripts/sync-catalog.mjs --force-media            re-upload every frame (after a WG_SHA bump)
-//   node scripts/sync-catalog.mjs --replace-legacy         ONLY after the product owner reviewed legacy-map.json:
-//                                                          repoint/retire ExerciseDB rows via the two RPCs, then
-//                                                          delete exercise-media/gifs/*. Add --dry-run to preview.
 //
 // Credentials (never committed; `*.local` is gitignored)
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  GitHub Secrets in CI, or ./.env.sync.local locally
@@ -30,9 +26,6 @@
 //   GEMINI_LITE_MODEL                        optional, default gemini-3.5-flash-lite; must be a Flash Lite model
 // The service role is used only here, server-side (CLAUDE.md rule 3); third-party APIs are called only
 // from scripts/* (rule 4).
-//
-// Old ExerciseDB names for legacy-map.json come from, in order: the database (with credentials), the
-// local cache scripts/out/exercisedb-cache.json, or one paced fetch of the ExerciseDB list (then cached).
 //
 // Behaviour
 //   - Idempotent: rows upserted by external_id (`wger:<uuid>`, `wg:<slug>`); name_tr / instructions_tr are
@@ -52,7 +45,6 @@ import {
   TRANSLATE_BATCH,
   TRANSLATE_SCHEMA,
   buildCatalog,
-  buildLegacyMap,
   buildTranslatePrompt,
   checkCoreLifts,
   isFlashLite,
@@ -87,7 +79,6 @@ const META = {
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const OUT = resolve(root, 'scripts/out')
 const PLAN_FILE = resolve(OUT, 'catalog-plan.json')
-const LEGACY_FILE = resolve(OUT, 'legacy-map.json')
 
 // ---------------------------------------------------------------------------
 // CLI + env
@@ -99,7 +90,6 @@ if (args.help) {
   process.exit(0)
 }
 const DRY_RUN = Boolean(args['dry-run'])
-const REPLACE_LEGACY = Boolean(args['replace-legacy'])
 const SKIP_MEDIA = Boolean(args['skip-media'])
 const FORCE_MEDIA = Boolean(args['force-media'])
 const CONCURRENCY = Math.max(1, Number(args.concurrency ?? 4) || 4)
@@ -112,7 +102,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const GEMINI_KEY = process.env.GEMINI_API_KEY
 const GEMINI_MODEL = process.env.GEMINI_LITE_MODEL || 'gemini-3.5-flash-lite'
 const HAS_CREDS = Boolean(SUPABASE_URL && SERVICE_KEY)
-if ((!DRY_RUN || REPLACE_LEGACY) && !HAS_CREDS) {
+if (!DRY_RUN && !HAS_CREDS) {
   fail('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required (environment or ./.env.sync.local). Use --dry-run to plan without credentials.')
 }
 const supabase = HAS_CREDS ? createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } }) : null
@@ -133,10 +123,6 @@ const stats = {
   translateRequests: 0,
   translated: 0,
   translateRejected: 0,
-  legacyReplaced: 0,
-  legacyRetired: 0,
-  legacyDeleted: 0,
-  gifsDeleted: 0,
 }
 const warnings = []
 const errors = []
@@ -153,9 +139,8 @@ const geminiGate = makeGate(GEMINI_MIN_INTERVAL_MS)
 // ---------------------------------------------------------------------------
 
 try {
-  log(`sync-catalog  mode=${DRY_RUN ? 'DRY RUN' : 'write'}${REPLACE_LEGACY ? ' replace-legacy' : ''}  credentials=${HAS_CREDS ? 'yes' : 'no'}  workout-guide@${WG_SHA.slice(0, 7)}`)
-  if (REPLACE_LEGACY) await replaceLegacy()
-  else await sync()
+  log(`sync-catalog  mode=${DRY_RUN ? 'DRY RUN' : 'write'}  credentials=${HAS_CREDS ? 'yes' : 'no'}  workout-guide@${WG_SHA.slice(0, 7)}`)
+  await sync()
   process.exitCode = errors.length ? 1 : 0
 } catch (err) {
   hardError(err?.stack || String(err))
@@ -183,11 +168,9 @@ async function sync() {
   if (missingCore.length) warn(`core lift(s) missing from the selection: ${missingCore.map((c) => c.lift).join(', ')}`)
   log(`[select] ${rows.length} exercise(s): ${catalog.stats.wgerSelected} wger + ${catalog.stats.wgAdded} workout-guide-only; ${catalog.stats.wgMatchedToWger} workout-guide entries lend frames to wger rows`)
 
-  // 3. Legacy map + curated Turkish names
-  const legacy = await loadLegacyRows()
-  const legacyMap = buildLegacyMap(legacy.rows, rows)
+  // 3. Curated Turkish names
   const curated = curatedNames()
-  writeOutputs({ catalog, core, legacy, legacyMap, curated, licenses })
+  writeOutputs({ catalog, core, curated, licenses })
 
   if (DRY_RUN) return
 
@@ -237,7 +220,7 @@ async function sync() {
   }
 
   // 9. Turkish machine translation
-  await translateMissing(legacyMap, legacy.rows)
+  await translateMissing(curated)
 }
 
 // ---------------------------------------------------------------------------
@@ -271,17 +254,6 @@ async function fetchPaged(start) {
   return out
 }
 
-/** Old ExerciseDB rows still in the database (only until the one-time removal has run). Never fetched from ExerciseDB. */
-async function loadLegacyRows() {
-  if (supabase) {
-    const rows = await selectAll('exercises', 'external_id,name_en,equipment', (q) => q.eq('source', 'exercisedb'))
-    log(`[legacy] ${rows.length} ExerciseDB row(s) left in the database`)
-    return { origin: 'database', rows }
-  }
-  log('[legacy] no database access: legacy map skipped')
-  return { origin: 'none', rows: [] }
-}
-
 /** scripts/exercise-names-tr.json: curated Turkish names keyed by catalog external_id. */
 function curatedNames() {
   const file = resolve(root, 'scripts/exercise-names-tr.json')
@@ -295,7 +267,7 @@ function curatedNames() {
   return out
 }
 
-function writeOutputs({ catalog, core, legacy, legacyMap, curated, licenses }) {
+function writeOutputs({ catalog, core, curated, licenses }) {
   mkdirSync(OUT, { recursive: true })
   const rows = catalog.rows
   const byBodyPart = countBy(rows.flatMap((r) => r.body_parts))
@@ -320,22 +292,7 @@ function writeOutputs({ catalog, core, legacy, legacyMap, curated, licenses }) {
     })),
   }
   writeFileSync(PLAN_FILE, `${JSON.stringify(plan, null, 2)}\n`)
-  const matched = legacyMap.filter((e) => e.new).length
-  writeFileSync(
-    LEGACY_FILE,
-    `${JSON.stringify(
-      {
-        generated_at: new Date().toISOString(),
-        note: 'old ExerciseDB external_id -> new external_id (null = retire: kept as source=legacy when referenced, else deleted). Review before running --replace-legacy.',
-        old_rows_from: legacy.origin,
-        stats: { total: legacyMap.length, matched, unmatched: legacyMap.length - matched, distinct_targets: new Set(legacyMap.filter((e) => e.new).map((e) => e.new)).size },
-        entries: legacyMap,
-      },
-      null,
-      2,
-    )}\n`,
-  )
-  log(`[out] ${rel(PLAN_FILE)} (${rows.length} exercises), ${rel(LEGACY_FILE)} (${matched}/${legacyMap.length} matched)`)
+  log(`[out] ${rel(PLAN_FILE)} (${rows.length} exercises)`)
 }
 
 // ---------------------------------------------------------------------------
@@ -410,7 +367,7 @@ async function liteBudget() {
   return rpd - (count ?? 0) - USER_RESERVE
 }
 
-async function translateMissing(legacyMap, legacyRows) {
+async function translateMissing(curated) {
   if (TRANSLATE_LIMIT === 0) { log('[translate] disabled (--translate-limit=0)'); return }
   if (!GEMINI_KEY) { log('[translate] GEMINI_API_KEY not set: Turkish fields stay empty for now'); return }
   if (!isFlashLite(GEMINI_MODEL)) { hardError(`[translate] ${GEMINI_MODEL} is not a Flash Lite model; refusing to translate`); return }
@@ -420,11 +377,9 @@ async function translateMissing(legacyMap, legacyRows) {
   log(`[translate] ${todo.length} row(s) need Turkish; up to ${TRANSLATE_LIMIT} request(s) of ${TRANSLATE_BATCH}`)
   if (!todo.length) return
 
-  // House style from the curated list: old English name -> curated Turkish name.
-  const oldName = new Map(legacyRows.map((r) => [r.external_id, r.name_en]))
-  const file = resolve(root, 'scripts/exercise-names-tr.json')
-  const names = existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')).names ?? {}) : {}
-  const examples = legacyMap.filter((e) => e.new && names[e.old]).slice(0, 12).map((e) => [oldName.get(e.old) ?? e.old_name, names[e.old]])
+  // House style from the curated list: English name -> curated Turkish name.
+  const englishName = new Map(rows.map((r) => [r.external_id, r.name_en]))
+  const examples = [...curated].filter(([id]) => englishName.has(id)).slice(0, 12).map(([id, tr]) => [englishName.get(id), tr])
 
   let failures = 0
   for (let i = 0; i < todo.length && stats.translateRequests < TRANSLATE_LIMIT; i += TRANSLATE_BATCH) {
@@ -504,61 +459,6 @@ async function geminiTranslate(items, examples) {
   } catch {
     throw new Error(`gemini returned non-JSON (${text.slice(0, 80)})`)
   }
-}
-
-// ---------------------------------------------------------------------------
-// --replace-legacy
-// ---------------------------------------------------------------------------
-
-async function replaceLegacy() {
-  if (!existsSync(LEGACY_FILE)) throw new Error(`${rel(LEGACY_FILE)} not found: run --dry-run first and have it reviewed`)
-  const map = JSON.parse(readFileSync(LEGACY_FILE, 'utf8'))
-  const entries = Array.isArray(map.entries) ? map.entries : []
-  log(`[legacy] ${entries.length} reviewed entr(ies) from ${rel(LEGACY_FILE)} (generated ${map.generated_at})`)
-
-  const oldRows = await selectAll('exercises', 'id,external_id', (q) => q.eq('source', 'exercisedb'))
-  const newRows = await selectAll('exercises', 'id,external_id', (q) => q.in('source', ['wger', 'workout-guide']))
-  const oldByExt = new Map(oldRows.map((r) => [r.external_id, r.id]))
-  const newByExt = new Map(newRows.map((r) => [r.external_id, r.id]))
-  const inMap = new Set(entries.map((e) => e.old))
-  const notInMap = oldRows.filter((r) => !inMap.has(r.external_id))
-  if (notInMap.length) warn(`${notInMap.length} ExerciseDB row(s) are not in legacy-map.json and stay untouched (${notInMap.slice(0, 5).map((r) => r.external_id).join(', ')}...)`)
-  const missingTargets = entries.filter((e) => e.new && !newByExt.has(e.new))
-  if (missingTargets.length) throw new Error(`${missingTargets.length} target row(s) are not in the database yet (e.g. ${missingTargets[0].new}); run the normal sync first`)
-
-  const todo = entries.filter((e) => oldByExt.has(e.old))
-  log(`[legacy] ${todo.length} to process (${todo.filter((e) => e.new).length} replace, ${todo.filter((e) => !e.new).length} retire); ${entries.length - todo.length} already done`)
-  if (DRY_RUN) { log('[legacy] dry run: no RPCs called, no GIFs deleted'); return }
-
-  for (const e of todo) {
-    const oldId = oldByExt.get(e.old)
-    if (e.new) {
-      const { error } = await withRetry(() => supabase.rpc('replace_catalog_exercise', { p_old: oldId, p_new: newByExt.get(e.new) }), `replace ${e.old}`)
-      if (error) { hardError(`replace ${e.old} -> ${e.new}: ${error.message}`); continue }
-      stats.legacyReplaced++
-    } else {
-      const { data, error } = await withRetry(() => supabase.rpc('retire_catalog_exercise', { p_id: oldId }), `retire ${e.old}`)
-      if (error) { hardError(`retire ${e.old}: ${error.message}`); continue }
-      if (data === 'deleted') stats.legacyDeleted++
-      else stats.legacyRetired++
-    }
-  }
-  log(`[legacy] replaced ${stats.legacyReplaced}, retired ${stats.legacyRetired}, deleted ${stats.legacyDeleted}`)
-
-  // GIFs go only when every ExerciseDB row is gone (replaced, retired with gif_path cleared, or deleted).
-  const { count, error } = await supabase.from('exercises').select('id', { count: 'exact', head: true }).eq('source', 'exercisedb')
-  if (error) throw new Error(`count exercisedb rows: ${error.message}`)
-  if (errors.length || (count ?? 0) > 0) { warn(`GIFs kept: ${count ?? '?'} ExerciseDB row(s) remain or errors occurred`); return }
-  for (;;) {
-    const { data, error: e } = await withRetry(() => supabase.storage.from(BUCKET).list('gifs', { limit: 100, offset: 0 }), 'list gifs')
-    if (e) throw new Error(`list gifs: ${e.message}`)
-    const paths = (data ?? []).filter((o) => o.id).map((o) => `gifs/${o.name}`)
-    if (!paths.length) break
-    const { error: re } = await withRetry(() => supabase.storage.from(BUCKET).remove(paths), 'remove gifs')
-    if (re) throw new Error(`remove gifs: ${re.message}`)
-    stats.gifsDeleted += paths.length
-  }
-  log(`[legacy] deleted ${stats.gifsDeleted} GIF(s) from ${BUCKET}/gifs`)
 }
 
 // ---------------------------------------------------------------------------
@@ -712,14 +612,7 @@ function* chunks(arr, size) { for (let i = 0; i < arr.length; i += size) yield a
 function fail(msg) { console.error(`error: ${msg}`); process.exit(1) }
 
 function printSummary() {
-  const rows = REPLACE_LEGACY
-    ? [
-        ['legacy', 'replaced', stats.legacyReplaced],
-        ['legacy', 'retired (kept as legacy)', stats.legacyRetired],
-        ['legacy', 'deleted (unreferenced)', stats.legacyDeleted],
-        ['legacy', 'GIFs deleted', stats.gifsDeleted],
-      ]
-    : [
+  const rows = [
         ['media', 'frames already in place', stats.framesKept],
         ['media', 'frames uploaded', stats.framesUploaded],
         ['media', 'frames failed', stats.framesFailed],

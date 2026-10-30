@@ -1,7 +1,7 @@
 import type { Tables } from '@/lib/database.types'
 
-/** Where a catalog row comes from (catalog v2). `legacy` rows are retired ExerciseDB rows kept for history. */
-export type ExerciseSource = 'exercisedb' | 'wger' | 'workout-guide' | 'legacy' | 'custom'
+/** Where a catalog row comes from (catalog v2). `legacy` rows are retired catalog rows kept by name for history. */
+export type ExerciseSource = 'wger' | 'workout-guide' | 'legacy' | 'custom'
 
 /** Sources shown in the library, pickers and search; everything else is readable only by id (history). */
 export const LISTED_SOURCES = ['wger', 'workout-guide', 'custom'] as const satisfies readonly ExerciseSource[]
@@ -36,4 +36,4 @@ export type ExerciseFilters = {
 }
 
 export const EXERCISE_COLUMNS =
-  'id, external_id, source, name_en, name_tr, body_parts, target_muscles, secondary_muscles, equipment, instructions_en, instructions_tr, gif_path, media_frames, attribution, is_custom, user_id, created_at, updated_at'
+  'id, external_id, source, name_en, name_tr, body_parts, target_muscles, secondary_muscles, equipment, instructions_en, instructions_tr, media_frames, attribution, is_custom, user_id, created_at, updated_at'
