@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(175);
+select plan(183);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -599,6 +599,36 @@ select is((select coalesce(sum(points), 0)::int from public.point_events where u
 reset role;
 select is((select public from storage.buckets where id = 'progress-photos'), false, 'photos: the bucket is private');
 select is((select allowed_mime_types from storage.buckets where id = 'progress-photos'), array['application/octet-stream'], 'photos: the bucket only accepts ciphertext');
+
+-- pre-publication privacy audit ---------------------------------------------------------------
+reset role;
+insert into storage.objects (bucket_id, name) values
+  ('avatars', '00000000-0000-0000-0000-00000000000a/a.jpg'),
+  ('avatars', '00000000-0000-0000-0000-00000000000b/b.jpg');
+select is(
+  (select count(*)::int from information_schema.role_table_grants where table_schema = 'public' and grantee = 'anon'),
+  0, 'privacy: the anon role has no privilege on any table'
+);
+select is(
+  (select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('authenticated', c.oid, 'TRUNCATE')),
+  0, 'privacy: no table can be truncated by signed-in users'
+);
+select is(
+  (select count(*)::int from pg_tables where schemaname = 'public' and not rowsecurity),
+  0, 'privacy: every public table has row level security on'
+);
+set local role anon;
+set local request.jwt.claims = '{"role":"anon"}';
+select is((select count(*)::int from storage.objects where bucket_id = 'avatars'), 0, 'privacy: anonymous visitors cannot list avatars');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select is((select array_agg(name) from storage.objects where bucket_id = 'avatars'), array['00000000-0000-0000-0000-00000000000b/b.jpg'], 'privacy: users list only their own avatar folder');
+select is((select count(*)::int from public.app_config), 0, 'privacy: non-admins cannot read app_config (admin e-mail)');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select ok((select count(*) from public.app_config) > 0, 'privacy: the admin still reads app_config');
+select is((select count(*)::int from storage.objects where bucket_id = 'avatars'), 2, 'privacy: the admin can list avatars (rejected-user cleanup)');
+reset role;
 
 select * from finish();
 rollback;
