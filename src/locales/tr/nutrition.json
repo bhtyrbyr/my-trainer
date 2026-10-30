@@ -125,7 +125,7 @@
     "grams": "Miktar",
     "addGrams": "Ekle · {{kcal}} kcal",
     "hint": "Yemeğin adını yaz: önce kayıtlı yiyeceklerine ve besin veritabanına bakılır, bulamazsan paketli ürünlerde ya da yapay zekâyla arayabilirsin.",
-    "offCredit": "Paketli ürün verisi: Open Food Facts (ODbL). Değerler 100 g başınadır."
+    "offCredit": "Paketli ürün verisi: <0>Open Food Facts</0> (ODbL). Değerler 100 g başınadır."
   },
   "aiStatus": {
     "user_daily": {

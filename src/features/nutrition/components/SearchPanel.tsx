@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Loader2, Package, Search, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -164,7 +164,20 @@ export function SearchPanel({ onPickSaved, onAdd, onAskAi, makeKey }: Props) {
               ) : (
                 products.isSuccess && <p className="text-[13px] text-ink-muted">{t('search.noProducts')}</p>
               )}
-              <p className="text-[11px] text-ink-faint">{t('search.offCredit')}</p>
+              <p className="text-[11px] text-ink-faint">
+                <Trans
+                  i18nKey="nutrition:search.offCredit"
+                  components={[
+                    <a
+                      key="off"
+                      href="https://world.openfoodfacts.org"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="underline decoration-line-strong underline-offset-2 hover:text-ink-muted"
+                    />,
+                  ]}
+                />
+              </p>
             </>
           ) : (
             <Button variant="secondary" className="w-full" onClick={() => setProductQ(q)}>

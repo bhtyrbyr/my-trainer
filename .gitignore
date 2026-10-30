@@ -13,3 +13,6 @@ coverage
 
 # Claude Code agent worktrees (local only)
 .claude/worktrees/
+
+# sync-catalog outputs (plans, legacy map, ExerciseDB name cache; local only)
+scripts/out/

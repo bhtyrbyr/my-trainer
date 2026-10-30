@@ -9,7 +9,10 @@
   "account": "Account",
   "signedInAs": "Signed in as",
   "about": "About",
-  "attribution": "Exercise data and GIFs: ExerciseDB (open source). Muscle diagrams: wger (CC-BY-SA).",
+  "licenses": {
+    "link": "Licences",
+    "hint": "Exercise and food data, illustrations, fonts and software"
+  },
   "version": "Version {{version}}",
   "commit": "Source code of this build (commit)",
   "saved": "Saved",

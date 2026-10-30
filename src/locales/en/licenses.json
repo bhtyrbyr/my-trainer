@@ -1,0 +1,48 @@
+{
+  "back": "Back",
+  "eyebrow": "About",
+  "title": "Licences",
+  "intro": "{{app}} is built on openly licensed data, drawings, fonts and software. These are the people and projects behind them, and the terms we use their work under.",
+  "opens": "opens in a new tab",
+  "licenseLabel": "Licence",
+  "groups": {
+    "exercises": "Exercises",
+    "food": "Food data",
+    "fonts": "Fonts",
+    "libraries": "Software"
+  },
+  "sources": {
+    "wger": {
+      "title": "wger exercise database",
+      "holder": "wger contributors",
+      "license": "CC BY-SA 3.0 / 4.0 or CC0, per exercise",
+      "note": "Exercise names, descriptions, muscles and equipment. Mapped onto the app's muscle and equipment names; Turkish text is a machine translation where an exercise says so. Each exercise credits its own source."
+    },
+    "workoutGuide": {
+      "title": "workout-guide illustrations",
+      "holder": "Bryl Lim; 76 drawings traced from Everkinetic",
+      "license": "CC BY-SA 4.0 (drawings), MIT (metadata)",
+      "note": "Three-frame movement drawings, recoloured to the app theme and played as a flipbook."
+    },
+    "muscles": {
+      "title": "Muscle diagrams",
+      "holder": "Termininja (Wikimedia Commons), via wger",
+      "license": "CC BY-SA 3.0",
+      "note": "Based on the \"Muscular system\" drawing. Recoloured: worked muscles are painted in the app's accent."
+    },
+    "usda": {
+      "title": "USDA FoodData Central",
+      "holder": "U.S. Department of Agriculture, Agricultural Research Service",
+      "license": "Public domain (CC0 1.0)",
+      "note": "Cite as: U.S. Department of Agriculture, Agricultural Research Service. FoodData Central. fdc.nal.usda.gov. Turkish food names are our machine translation."
+    },
+    "off": {
+      "title": "Open Food Facts",
+      "holder": "Open Food Facts contributors",
+      "license": "ODbL 1.0 (database), DbCL 1.0 (contents)",
+      "note": "Packaged product search. Values are shown as published there; not for medical use."
+    }
+  },
+  "fontsNote": "Self-hosted from the @fontsource packages.",
+  "texts": "Full licence texts"
+}

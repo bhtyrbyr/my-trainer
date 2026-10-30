@@ -12,7 +12,8 @@ import { ExerciseDetailPage } from '@/features/exercises/pages/ExerciseDetailPag
  * Dev-only previews of the exercise library and detail screens without a session: the TanStack Query
  * cache is seeded with sample rows before the real pages render (no preview props in the pages).
  * Media resolves to `/dev-media.local/...` (gitignored); drop wger SVGs (muscles/front.svg, back.svg,
- * main/<id>.svg, secondary/<id>.svg) and a few ExerciseDB GIFs (gifs/<id>.gif) there to see images.
+ * main/<id>.svg, secondary/<id>.svg) and workout-guide frames (frames/<slug>/1..3.svg for bench-press,
+ * deadlift, barbell-row) there to see images. Rows without frames show the muscle figure.
  *   /__dev/exercises             library
  *   /__dev/exercises/sample-bench detail with progress   (?empty=1 for the "no sessions yet" state)
  */
@@ -27,11 +28,11 @@ const ex = (
   target_muscles: string[],
   secondary_muscles: string[],
   equipment: string[],
-  gif = true,
+  frames?: string,
 ): Exercise => ({
   id,
-  external_id: external,
-  source: 'exercisedb',
+  external_id: frames ? `wg:${frames}` : `wger:${external}`,
+  source: frames ? 'workout-guide' : 'wger',
   name_en,
   name_tr,
   body_parts,
@@ -47,7 +48,15 @@ const ex = (
     'Lower the weight to its starting height under control before pressing again.',
   ],
   instructions_tr: null,
-  gif_path: gif ? `gifs/${external}.gif` : null,
+  gif_path: null,
+  media_frames: frames ? [1, 2, 3].map((n) => `frames/${frames}/${n}.svg`) : [],
+  attribution: frames
+    ? {
+        text: { author: 'wger contributors', license: 'CC BY-SA 4.0', url: 'https://wger.de' },
+        media: { author: 'Bryl Lim / Everkinetic', license: 'CC BY-SA 4.0', url: 'https://github.com/bryllim/workout-guide' },
+        changes: ['translated to Turkish (machine)'],
+      }
+    : { text: { author: 'wger contributors', license: 'CC BY-SA 4.0', url: 'https://wger.de' }, media: null, changes: [] },
   is_custom: false,
   user_id: null,
   created_at: '2026-10-25T00:00:00Z',
@@ -55,11 +64,11 @@ const ex = (
 })
 
 const EXERCISES: Exercise[] = [
-  ex('sample-bench', 'EIeI8Vf', 'barbell bench press', 'Halter Bench Press', ['chest'], ['pectorals'], ['triceps', 'deltoids', 'rotator cuff'], ['barbell']),
-  ex('sample-deadlift', 'ila4NZS', 'barbell deadlift', 'Halter Deadlift', ['upper legs'], ['glutes'], ['hamstrings', 'erector spinae'], ['barbell']),
+  ex('sample-bench', 'EIeI8Vf', 'barbell bench press', 'Halter Bench Press', ['chest'], ['pectorals'], ['triceps', 'deltoids', 'rotator cuff'], ['barbell'], 'bench-press'),
+  ex('sample-deadlift', 'ila4NZS', 'barbell deadlift', 'Halter Deadlift', ['upper legs'], ['glutes'], ['hamstrings', 'erector spinae'], ['barbell'], 'deadlift'),
   ex('sample-squat', 'qXTaZnJ', 'barbell full squat', 'Halter Squat', ['upper legs'], ['glutes'], ['quadriceps', 'hamstrings', 'calves', 'core'], ['barbell']),
   ex('sample-pushdown', '3ZflifB', 'cable pushdown', 'Kablo Triceps Pushdown', ['upper arms'], ['triceps'], ['forearms'], ['cable']),
-  ex('sample-row', 'A3P4O0R', 'cable seated row', 'Oturarak Kablo Row', ['back'], ['upper back'], ['biceps', 'forearms'], ['cable'], false),
+  ex('sample-row', 'A3P4O0R', 'cable seated row', 'Oturarak Kablo Row', ['back'], ['upper back'], ['biceps', 'forearms'], ['cable'], 'barbell-row'),
   ex('sample-incline', 'ns0SIbU', 'dumbbell incline bench press', 'Incline Dambıl Bench Press', ['chest'], ['pectorals'], ['deltoids', 'triceps'], ['dumbbell']),
   ex('sample-lateral', 'DsgkuIt', 'dumbbell lateral raise', 'Dambıl Yan Açış (Lateral Raise)', ['shoulders'], ['deltoids'], ['trapezius'], ['dumbbell']),
   ex('sample-pullup', 'lBDjFxJ', 'pull-up', 'Barfiks', ['back'], ['latissimus dorsi'], ['biceps', 'forearms'], ['bodyweight']),
@@ -145,12 +154,12 @@ function Seed({ children }: { children: ReactNode }) {
     })
     for (const e of EXERCISES) {
       qc.setQueryData(exerciseKeys.one(e.id), e)
-      if (e.gif_path) qc.setQueryData(exerciseKeys.media(e.gif_path), MEDIA_BASE + e.gif_path)
+      for (const p of e.media_frames) qc.setQueryData(exerciseKeys.media(p), MEDIA_BASE + p)
     }
     qc.setQueryData(exerciseKeys.muscles, CATALOG)
     for (const e of EXERCISES) {
       const paths = muscleMapPaths(resolveMuscleMap(e.target_muscles, e.secondary_muscles, CATALOG))
-      qc.setQueryData(exerciseKeys.mediaBatch(paths), Object.fromEntries(paths.map((p) => [p, MEDIA_BASE + p])))
+      for (const p of paths) qc.setQueryData(exerciseKeys.media(p), MEDIA_BASE + p)
       qc.setQueryData(exerciseKeys.progress(e.id), empty || e.id !== 'sample-bench' ? [] : sampleProgress(now))
       qc.setQueryData(exerciseKeys.recentSets(e.id, 10), empty || e.id !== 'sample-bench' ? [] : sampleSets(now))
     }

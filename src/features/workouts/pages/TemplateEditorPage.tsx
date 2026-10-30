@@ -171,7 +171,7 @@ export function TemplateForm({ template }: { template: TemplateWithExercises | n
                       className="flex w-full items-center gap-3 px-4 py-3 text-left"
                     >
                       <span className="tabular w-5 text-[13px] font-semibold text-ink-faint">{String(index + 1).padStart(2, '0')}</span>
-                      <ExerciseThumb gifPath={ex?.gif_path ?? null} size={44} />
+                      <ExerciseThumb exercise={ex} size={44} />
                       <span className="min-w-0 flex-1">
                         <span className="line-clamp-2 text-[15px] font-semibold leading-snug">{ex ? exerciseName(ex, i18n.resolvedLanguage) : '…'}</span>
                         <span className="tabular block text-[13px] text-ink-muted">

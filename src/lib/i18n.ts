@@ -33,13 +33,15 @@ import trLegal from '@/locales/tr/legal.json'
 import trToday from '@/locales/tr/today.json'
 import enToday from '@/locales/en/today.json'
 import enLegal from '@/locales/en/legal.json'
+import trLicenses from '@/locales/tr/licenses.json'
+import enLicenses from '@/locales/en/licenses.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal, today: trToday },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal, today: enToday },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal, today: trToday, licenses: trLicenses },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal, today: enToday, licenses: enLicenses },
 } as const
 
 void i18n

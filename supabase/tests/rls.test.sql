@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(274);
+select plan(308);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -1127,6 +1127,195 @@ select is(
   (select count(*)::int from private.reminder_log where user_id = :'ub' and ref like 'habit:%' and day = current_date), 3,
   'push: and his due items are not logged (they go out once he subscribes)'
 );
+set local request.jwt.claims = '';
+
+-- =============================================================================
+-- Catalog v2: new sources, media columns, replace/retire RPCs (service_role only)
+-- =============================================================================
+\set cv_old '00000000-0000-0000-0000-00000000cc01'
+\set cv_new '00000000-0000-0000-0000-00000000cc02'
+\set cv_wg  '00000000-0000-0000-0000-00000000cc03'
+\set cv_ret '00000000-0000-0000-0000-00000000cc04'
+\set cv_del '00000000-0000-0000-0000-00000000cc05'
+\set cv_cus '00000000-0000-0000-0000-00000000cc06'
+\set cv_t1  '00000000-0000-0000-0000-00000000cc11'
+\set cv_t2  '00000000-0000-0000-0000-00000000cc12'
+\set cv_s1  '00000000-0000-0000-0000-00000000cc21'
+\set cv_se1 '00000000-0000-0000-0000-00000000cc22'
+\set cv_se2 '00000000-0000-0000-0000-00000000cc23'
+reset role;
+set local request.jwt.claims = '';
+
+-- source check: the new sources are accepted, anything else is not
+select lives_ok(
+  $$ insert into public.exercises (id, external_id, source, name_en, gif_path, instructions_en) values
+       ('00000000-0000-0000-0000-00000000cc01', 'edb-cv-old', 'exercisedb', 'Old Row', 'gifs/edb-cv-old.gif', '{pull}'),
+       ('00000000-0000-0000-0000-00000000cc02', 'wger:cv-new', 'wger', 'Barbell Row', null, '{pull}'),
+       ('00000000-0000-0000-0000-00000000cc03', 'wg:cv-row', 'workout-guide', 'Cable Row', null, '{}'),
+       ('00000000-0000-0000-0000-00000000cc04', 'edb-cv-ret', 'exercisedb', 'Retired Curl', 'gifs/edb-cv-ret.gif', '{curl}'),
+       ('00000000-0000-0000-0000-00000000cc05', 'edb-cv-del', 'legacy', 'Unused Curl', null, '{}') $$,
+  'catalog v2: source check accepts exercisedb, wger, workout-guide and legacy'
+);
+select throws_ok(
+  $$ insert into public.exercises (external_id, source, name_en) values ('x-cv-bad', 'exercisedb-v2', 'Bad') $$,
+  '23514', null, 'catalog v2: an unknown source is rejected'
+);
+update public.exercises set media_frames = '{frames/cable-row/1.svg,frames/cable-row/2.svg}',
+       attribution = '{"text":{"author":"Bryl Lim","license":"MIT"},"changes":[]}', instructions_tr = '{pull}'
+ where id in (:'cv_wg', :'cv_ret');
+select throws_ok(
+  $$ update public.exercises set attribution = '"just text"' where id = '00000000-0000-0000-0000-00000000cc03' $$,
+  '23514', null, 'catalog v2: attribution must be a JSON object'
+);
+
+-- read policy: wger / workout-guide / legacy rows are catalog rows; custom media rules still hold
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select is(
+  (select array_agg(source order by source) from public.exercises where id in (:'cv_new', :'cv_wg', :'cv_del')),
+  array['legacy', 'wger', 'workout-guide'], 'catalog v2: signed-in users read wger, workout-guide and legacy rows'
+);
+insert into public.exercises (id, source, name_en, is_custom, user_id, media_frames, attribution)
+values (:'cv_cus', 'wger', 'My Row', false, :'ub', '{frames/cable-row/1.svg}', '{"text":{"author":"me"}}');
+select is(
+  (select source || ':' || cardinality(media_frames) || ':' || coalesce(attribution::text, 'null') from public.exercises where id = :'cv_cus'),
+  'custom:0:null', 'catalog v2: a custom exercise cannot claim a source, catalog frames or a credit line'
+);
+update public.exercises set media_frames = '{frames/cable-row/2.svg}' where id = :'cv_cus';
+select is((select cardinality(media_frames) from public.exercises where id = :'cv_cus'), 0, 'catalog v2: a custom exercise cannot be pointed at catalog frames later');
+update public.exercises set media_frames = '{}' where id = :'cv_wg';
+select is((select cardinality(media_frames) from public.exercises where id = :'cv_wg'), 2, 'catalog v2: clients cannot edit catalog frames');
+
+-- Both RPCs are service_role only
+select ok(
+  not has_function_privilege('anon', 'public.replace_catalog_exercise(uuid, uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'public.replace_catalog_exercise(uuid, uuid)', 'execute')
+  and has_function_privilege('service_role', 'public.replace_catalog_exercise(uuid, uuid)', 'execute'),
+  'catalog v2: replace_catalog_exercise is executable by service_role only'
+);
+select ok(
+  not has_function_privilege('anon', 'public.retire_catalog_exercise(uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'public.retire_catalog_exercise(uuid)', 'execute')
+  and has_function_privilege('service_role', 'public.retire_catalog_exercise(uuid)', 'execute'),
+  'catalog v2: retire_catalog_exercise is executable by service_role only'
+);
+select throws_ok(
+  $$ select public.replace_catalog_exercise('00000000-0000-0000-0000-00000000cc01', '00000000-0000-0000-0000-00000000cc02') $$,
+  '42501', null, 'catalog v2: a signed-in user cannot call replace_catalog_exercise'
+);
+select throws_ok(
+  $$ select public.retire_catalog_exercise('00000000-0000-0000-0000-00000000cc04') $$,
+  '42501', null, 'catalog v2: a signed-in user cannot call retire_catalog_exercise'
+);
+set local role anon;
+set local request.jwt.claims = '{"role":"anon"}';
+select throws_ok(
+  $$ select public.retire_catalog_exercise('00000000-0000-0000-0000-00000000cc05') $$,
+  '42501', null, 'catalog v2: anon cannot call retire_catalog_exercise'
+);
+
+-- Bob's history on the old exercise: template t1 holds old + new (collision), t2 only old; one session
+-- with two sets; PRs on two days, the later day colliding with a better PR on the new exercise.
+reset role;
+set local request.jwt.claims = '';
+insert into public.workout_templates (id, user_id, name) values (:'cv_t1', :'ub', 'Pull A'), (:'cv_t2', :'ub', 'Pull B');
+insert into public.template_exercises (template_id, user_id, exercise_id, position, target_sets) values
+  (:'cv_t1', :'ub', :'cv_old', 1, 4), (:'cv_t1', :'ub', :'cv_new', 2, 3), (:'cv_t2', :'ub', :'cv_old', 1, 5);
+insert into public.workout_sessions (id, user_id, kind, started_at, ended_at)
+values (:'cv_s1', :'ub', 'strength', now() - interval '1 day', null);
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values
+  (:'cv_se1', :'cv_s1', :'ub', :'cv_old', 1), (:'cv_se2', :'cv_s1', :'ub', :'cv_ret', 2);
+insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps) values
+  (:'cv_se1', :'cv_s1', :'ub', 1, 80, 8), (:'cv_se1', :'cv_s1', :'ub', 2, 80, 8), (:'cv_se2', :'cv_s1', :'ub', 1, 20, 10);
+insert into public.personal_records (user_id, exercise_id, weight_kg, reps, e1rm, achieved_on) values
+  (:'ub', :'cv_old', 70, 8, 88.67, current_date - 2),
+  (:'ub', :'cv_old', 80, 8, 101.33, current_date - 1),
+  (:'ub', :'cv_new', 85, 8, 107.67, current_date - 1);   -- same day, better, a silent baseline (no award)
+select public.award_points(:'ub', 'personal_record', current_date - 2, 'personal_records', :'cv_old' || ':' || (current_date - 2)::text);
+select public.award_points(:'ub', 'personal_record', current_date - 1, 'personal_records', :'cv_old' || ':' || (current_date - 1)::text);
+create temp table t_cv as
+  select (select total_points from public.profiles where user_id = :'ub') as total_before,
+         (select points from public.point_events where user_id = :'ub' and ref_table = 'personal_records'
+            and ref_id = :'cv_old' || ':' || (current_date - 1)::text) as day1_points,
+         (select count(*)::int from public.point_events where user_id = :'ub') as events_before,
+         null::jsonb as r;
+grant all on t_cv to service_role;
+select ok((select day1_points > 0 from t_cv), 'catalog v2 fixture: the old exercise''s PR earned points');
+
+select throws_like(
+  $$ select public.replace_catalog_exercise('00000000-0000-0000-0000-00000000cc01', '00000000-0000-0000-0000-00000000cc06') $$,
+  '%NOT_CATALOG%', 'catalog v2: replace refuses a custom exercise as target'
+);
+select throws_like(
+  $$ select public.replace_catalog_exercise('00000000-0000-0000-0000-00000000cc01', '00000000-0000-0000-0000-00000000cc05') $$,
+  '%TARGET_IS_LEGACY%', 'catalog v2: replace refuses a legacy row as target'
+);
+set local role service_role;
+update t_cv set r = public.replace_catalog_exercise(:'cv_old', :'cv_new');
+reset role;
+select is((select count(*)::int from public.exercises where id = :'cv_old'), 0, 'replace: the old exercise is deleted');
+select is(
+  (select array_agg(t.name || ':' || te.position || ':' || te.target_sets order by t.name, te.position)
+     from public.template_exercises te join public.workout_templates t on t.id = te.template_id
+    where te.template_id in (:'cv_t1', :'cv_t2') and te.exercise_id = :'cv_new'),
+  array['Pull A:2:3', 'Pull B:1:5'],
+  'replace: template entries move to the new exercise; a template that already had it keeps its own entry'
+);
+select is((select count(*)::int from public.template_exercises where template_id in (:'cv_t1', :'cv_t2')), 2, 'replace: no duplicate entry in the colliding template');
+select is((select exercise_id from public.session_exercises where id = :'cv_se1'), :'cv_new'::uuid, 'replace: the session exercise is repointed');
+select is(
+  (select count(*)::int from public.session_sets ss join public.session_exercises se on se.id = ss.session_exercise_id
+    where se.exercise_id = :'cv_new' and ss.session_id = :'cv_s1'),
+  2, 'replace: the logged sets follow their session exercise'
+);
+select is(
+  (select array_agg(achieved_on::text || ':' || e1rm order by achieved_on) from public.personal_records where user_id = :'ub' and exercise_id = :'cv_new'),
+  array[(current_date - 2)::text || ':88.67', (current_date - 1)::text || ':107.67'],
+  'replace: PRs move; on a same-day collision the better record survives'
+);
+select is(
+  (select array_agg(ref_id order by ref_id) from public.point_events
+    where user_id = :'ub' and ref_table = 'personal_records' and ref_id like '00000000-0000-0000-0000-00000000cc0%'),
+  array[:'cv_new' || ':' || (current_date - 2)::text, :'cv_new' || ':' || (current_date - 1)::text],
+  'replace: PR awards are re-keyed to the new exercise (no old refs left)'
+);
+select is(
+  (select points from public.point_events where user_id = :'ub' and ref_table = 'personal_records' and ref_id = :'cv_new' || ':' || (current_date - 1)::text),
+  (select day1_points from t_cv),
+  'replace: the surviving record takes over the larger same-day award'
+);
+select is((select total_points from public.profiles where user_id = :'ub'), (select total_before from t_cv), 'replace: no points are awarded or lost');
+select is((select count(*)::int from public.point_events where user_id = :'ub'), (select events_before from t_cv), 'replace: no point event is added');
+select is(
+  (select r from t_cv),
+  '{"template_entries_repointed": 1, "template_entries_dropped": 1, "session_exercises_repointed": 1,
+    "personal_records_repointed": 1, "personal_records_merged": 1}'::jsonb,
+  'replace: the result reports what was dropped and merged'
+);
+delete from public.personal_records where user_id = :'ub' and exercise_id = :'cv_new' and achieved_on = current_date - 1;
+select is(
+  (select total_points from public.profiles where user_id = :'ub'), (select total_before - day1_points from t_cv),
+  'replace: deleting a repointed PR still revokes its points'
+);
+
+-- retire: referenced -> legacy shell; unreferenced -> deleted
+set local role service_role;
+select is(public.retire_catalog_exercise(:'cv_ret'), 'retired', 'retire: a referenced exercise is kept');
+select is(public.retire_catalog_exercise(:'cv_del'), 'deleted', 'retire: an unreferenced exercise is deleted');
+reset role;
+select is(
+  (select source || ':' || name_en || ':' || coalesce(gif_path, 'null') || ':' || cardinality(instructions_en) || ':'
+          || coalesce(instructions_tr::text, 'null') || ':' || cardinality(media_frames) from public.exercises where id = :'cv_ret'),
+  'legacy:Retired Curl:null:0:null:0', 'retire: the kept row is legacy with media and instructions cleared'
+);
+select is((select count(*)::int from public.exercises where id = :'cv_del'), 0, 'retire: the unreferenced row is gone');
+select is((select exercise_id from public.session_exercises where id = :'cv_se2'), :'cv_ret'::uuid, 'retire: history still points at the legacy row');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select is((select name_en from public.exercises where id = :'cv_ret'), 'Retired Curl', 'retire: the legacy row stays readable for history');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select is((select count(*)::int from public.template_exercises where template_id in (:'cv_t1', :'cv_t2')), 0, 'catalog v2: alice sees none of bob''s repointed template entries');
+reset role;
 set local request.jwt.claims = '';
 
 -- pre-publication privacy audit ---------------------------------------------------------------

@@ -1,20 +1,41 @@
-import { Dumbbell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMediaUrl } from '../hooks'
+import { exerciseMedia } from '../media'
+import type { Exercise } from '../types'
+import { Flipbook } from './Flipbook'
+import { MuscleGlyph } from './MuscleMap'
 
-/** Square GIF thumbnail on a light card (ExerciseDB GIFs have white backgrounds). Falls back to an icon. */
-export function ExerciseThumb({ gifPath, size = 56, className }: { gifPath: string | null; size?: number; className?: string }) {
-  const { data: url } = useMediaUrl(gifPath)
+type ThumbExercise = Pick<Exercise, 'media_frames' | 'gif_path' | 'target_muscles' | 'secondary_muscles'>
+
+/**
+ * Square thumbnail beside an exercise name (decorative: the name next to it carries the meaning).
+ * First illustration frame, still, in ink on a raised plate; a leftover legacy GIF on its white card;
+ * otherwise the muscle figure with the target muscles in volt.
+ */
+export function ExerciseThumb({ exercise, size = 56, className }: { exercise: ThumbExercise | null | undefined; size?: number; className?: string }) {
+  const media = exerciseMedia(exercise)
   return (
     <span
-      className={cn('flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-input)] bg-white', !gifPath && 'bg-raised', className)}
+      aria-hidden
+      className={cn(
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-input)]',
+        media.kind === 'gif' ? 'bg-white' : 'bg-raised',
+        className,
+      )}
       style={{ width: size, height: size }}
     >
-      {gifPath && url ? (
-        <img src={url} alt="" loading="lazy" decoding="async" className="size-full object-contain" />
-      ) : (
-        <Dumbbell className="size-5 text-ink-faint" aria-hidden />
-      )}
+      {media.kind === 'frames' ? (
+        <Flipbook paths={media.paths} still className="size-full" />
+      ) : media.kind === 'gif' ? (
+        <LegacyGif path={media.path} />
+      ) : exercise ? (
+        <MuscleGlyph target={exercise.target_muscles} secondary={exercise.secondary_muscles} className="h-[86%]" />
+      ) : null}
     </span>
   )
+}
+
+function LegacyGif({ path }: { path: string }) {
+  const { data: url } = useMediaUrl(path)
+  return url ? <img src={url} alt="" loading="lazy" decoding="async" className="size-full object-contain" /> : null
 }

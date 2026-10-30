@@ -394,9 +394,9 @@ function ExerciseStage({ exercise, index, count, ex, name, saving, error, onComp
   return (
     <div className="flex flex-1 flex-col lg:grid lg:grid-cols-2 lg:gap-10 lg:px-6">
       <section className="rise-in px-5 pt-5 lg:px-0">
-        {demoExpanded && <ExerciseDemo gifPath={ex?.gif_path ?? null} name={name} expanded onToggle={toggleDemo} />}
+        {demoExpanded && <ExerciseDemo exercise={ex} name={name} expanded onToggle={toggleDemo} />}
         <div className={cn('flex items-start gap-4', demoExpanded && 'mt-4')}>
-          {!demoExpanded && <ExerciseDemo gifPath={ex?.gif_path ?? null} name={name} expanded={false} onToggle={toggleDemo} />}
+          {!demoExpanded && <ExerciseDemo exercise={ex} name={name} expanded={false} onToggle={toggleDemo} />}
           <div className="min-w-0 flex-1">
             <p className="eyebrow tabular">{t('session.exerciseOf', { n: index + 1, total: count })}</p>
             <h1 className="display mt-1.5 line-clamp-3 text-[26px] leading-[1.05]">{name}</h1>

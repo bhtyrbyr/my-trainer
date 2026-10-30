@@ -58,6 +58,11 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         ],
       },
       {
+        path: '/__dev/licenses',
+        element: <AppShell />,
+        children: [{ index: true, lazy: page(() => import('@/features/settings/pages/LicensesPage'), 'LicensesPage') }],
+      },
+      {
         path: '/__dev/ai-usage',
         element: <AppShell />,
         children: [{ index: true, lazy: page(() => import('@/features/admin/dev/DevAiUsagePreview'), 'DevAiUsagePreview') }],
@@ -144,6 +149,7 @@ export const router = createBrowserRouter([
       { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
+      { path: 'settings/licenses', lazy: page(() => import('@/features/settings/pages/LicensesPage'), 'LicensesPage') },
       {
         path: 'admin/error-reports',
         lazy: async () => {
