@@ -7,7 +7,10 @@
     "sections": [
       {
         "title": "Data controller",
-        "items": ["{{controller}}", "Contact and data-protection requests: {{email}}"]
+        "items": [
+          "{{controller}}",
+          "Contact and data-protection requests: {{email}}"
+        ]
       },
       {
         "title": "Data we process",
@@ -17,7 +20,8 @@
           "Usage: workout plans, sessions, sets, cardio entries, personal records, points and streaks.",
           "Health data (only with your explicit consent): weight, body measurements and body-fat estimate, meals and nutrients, sleep and water entries, progress photos.",
           "AI: the text you type or the meal photo you take for a nutrition estimate (not stored), plus request and token counts.",
-          "Technical: session data, IP address (in our hosting providers' logs) and an error report only if you send one."
+          "Technical: session data, IP address (in our hosting providers' logs) and an error report only if you send one.",
+          "Notifications (if you turn them on): your device's push address and encryption keys, and reminder times."
         ]
       },
       {
@@ -46,12 +50,15 @@
           "Your data is never sold or used for advertising.",
           "The service uses providers abroad: Supabase (database, files, sign-in; servers in London, United Kingdom), Vercel (hosting; US-based), Google (Google sign-in and Gemini nutrition estimates; US), OpenRouter (fallback nutrition estimates, text only; US).",
           "These transfers are made under KVKK art. 9; processing health data on these servers is covered by your separate explicit consent.",
+          "Reminder notifications are delivered through your browser's push service (Apple, Google or Mozilla); their content is end-to-end encrypted and those services cannot read it.",
           "Progress photos are encrypted on your device; the server and providers only hold unreadable ciphertext."
         ]
       },
       {
         "title": "How we collect it",
-        "items": ["Electronically, through Google sign-in and what you enter in the app."]
+        "items": [
+          "Electronically, through Google sign-in and what you enter in the app."
+        ]
       },
       {
         "title": "Retention",

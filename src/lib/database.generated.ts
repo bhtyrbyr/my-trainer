@@ -998,6 +998,43 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       session_exercises: {
         Row: {
           created_at: string
@@ -1617,6 +1654,7 @@ export type Database = {
       can_access: { Args: Record<PropertyKey, never>; Returns: boolean }
       cardio_met: { Args: { p_activity: string; p_speed_kmh: number }; Returns: number }
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined }
+      dispatch_reminders: { Args: Record<PropertyKey, never>; Returns: number }
       e1rm: { Args: { p_reps: number; p_weight: number }; Returns: number }
       effective_streak: { Args: { p_current: number; p_last_active: string }; Returns: number }
       estimate_session_kcal: {
@@ -1677,10 +1715,15 @@ export type Database = {
         }[]
       }
       progress_photo_object_count: { Args: Record<PropertyKey, never>; Returns: number }
+      prune_push_subscriptions: { Args: { p_endpoints: string[]; p_secret: string }; Returns: number }
       recompute_streak: { Args: { p_user: string }; Returns: undefined }
       record_consent: { Args: { p_kind: string; p_version: string }; Returns: undefined }
       recurrence_matches: { Args: { p_day: string; p_rule: Json; p_starts_on: string }; Returns: boolean }
       recurrence_valid: { Args: { p_allow_weekly_count: boolean; p_rule: Json }; Returns: boolean }
+      register_push: {
+        Args: { p_auth: string; p_endpoint: string; p_p256dh: string; p_user_agent?: string }
+        Returns: undefined
+      }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
       search_food_catalog: {
         Args: { p_limit?: number; p_query: string }
@@ -1708,6 +1751,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      set_push_config: { Args: { p_secret: string; p_url: string }; Returns: undefined }
       strength_met: { Args: { p_avg_rpe: number }; Returns: number }
       sync_protein_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
       sync_water_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
@@ -1732,6 +1776,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      unregister_push: { Args: { p_endpoint: string }; Returns: undefined }
       withdraw_health_consent: { Args: { p_version: string }; Returns: undefined }
     }
     Enums: {

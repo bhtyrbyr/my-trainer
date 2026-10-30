@@ -125,7 +125,12 @@
     "save": "Kaydet",
     "create": "Ekle",
     "cancel": "Vazgeç",
-    "close": "Kapat"
+    "close": "Kapat",
+    "reminder": "Hatırlatma saati",
+    "reminderNone": "Yok",
+    "reminderHint": "Bildirimleri Ayarlar > Bildirimler bölümünden bu cihazda aç.",
+    "reminderNeedsDay": "Hatırlatma için bir gün ya da tekrar seç.",
+    "reminderClear": "Hatırlatmayı kaldır"
   },
   "schedule": {
     "daily": "Her gün",
@@ -135,5 +140,14 @@
     "weekly_count": "Haftada {{n}} gün",
     "monthly": "Her ayın {{day}}. günü",
     "every": "{{n}} günde bir"
+  },
+  "notify": {
+    "section": "Bildirimler",
+    "device": "Bu cihazda hatırlatmalar",
+    "onHint": "Hatırlatma saati verdiğin alışkanlık ve görevler için bildirim gelir.",
+    "offHint": "Açınca, hatırlatma saati verdiğin alışkanlık ve görevler için bildirim gelir.",
+    "needsInstall": "iPhone'da önce Safari'de Paylaş > Ana Ekrana Ekle, sonra uygulamayı ana ekrandan açıp burayı aç.",
+    "unsupported": "Bu tarayıcı bildirimleri desteklemiyor.",
+    "denied": "Bildirim izni kapalı. Telefon ya da tarayıcı ayarlarından bu uygulamaya izin ver."
   }
 }

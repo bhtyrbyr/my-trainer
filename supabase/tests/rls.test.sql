@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(232);
+select plan(272);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -19,7 +19,9 @@ select is(
      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.prosecdef
       and has_function_privilege('anon', p.oid, 'execute')
-      and p.proname not in ('rls_auto_enable')),
+      -- prune_push_subscriptions: the push-send Edge Function has no user JWT and no service_role, so
+      -- it calls this with the anon key; the shared dispatch secret is checked inside (FORBIDDEN).
+      and p.proname not in ('rls_auto_enable', 'prune_push_subscriptions')),
   '{}'::text[],
   'anon cannot execute any security-definer function'
 );
@@ -31,7 +33,8 @@ select is(
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
         'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
-        'get_leaderboard', 'has_health_consent', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'record_consent', 'rls_auto_enable', 'withdraw_health_consent')),
+        'get_leaderboard', 'has_health_consent', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'prune_push_subscriptions', 'record_consent',
+        'register_push', 'rls_auto_enable', 'unregister_push', 'withdraw_health_consent')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -876,6 +879,246 @@ select ok(
   'habits/todos IDOR: alice''s updates and deletes left bob''s rows untouched'
 );
 reset role;
+
+-- push reminders (Faz 3 step 4) -----------------------------------------------------------------
+\set pe1 'https://fcm.googleapis.com/fcm/send/device-one'
+\set pk 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM'
+\set pa 'tBHItJI5svbpez7KI4CCXg'
+\set psecret 'test-dispatch-secret-0123456789abcdef'
+\set purl 'http://127.0.0.1:9/push'
+reset role;
+select ok(
+  not has_function_privilege('authenticated', 'public.dispatch_reminders()', 'execute')
+  and not has_function_privilege('anon', 'public.dispatch_reminders()', 'execute')
+  and not has_function_privilege('authenticated', 'public.set_push_config(text, text)', 'execute')
+  and not has_function_privilege('anon', 'public.set_push_config(text, text)', 'execute')
+  and has_function_privilege('service_role', 'public.set_push_config(text, text)', 'execute'),
+  'push: dispatch_reminders and set_push_config are not executable by clients (set_push_config: service_role only)'
+);
+select ok(
+  not has_schema_privilege('authenticated', 'private', 'usage') and not has_schema_privilege('anon', 'private', 'usage')
+  and not has_table_privilege('authenticated', 'private.push_config', 'select')
+  and not has_table_privilege('authenticated', 'private.reminder_log', 'select')
+  and not has_table_privilege('anon', 'private.push_config', 'select')
+  and not has_function_privilege('authenticated', 'private.reminders_due(date, time, time)', 'execute'),
+  'push: the private schema (dispatch secret, reminder log, due query) is closed to clients'
+);
+select is(
+  (select count(*)::int from cron.job where jobname = 'push-reminders' and schedule = '*/5 * * * *' and command = 'select public.dispatch_reminders()'),
+  1, 'push: the dispatcher is scheduled every 5 minutes'
+);
+select ok(
+  (select prosecdef and 'TimeZone=Europe/Istanbul' = any (proconfig) from pg_proc where oid = 'public.dispatch_reminders()'::regprocedure),
+  'push: dispatch_reminders is security definer and runs on Istanbul time'
+);
+select is(public.dispatch_reminders(), 0, 'push: without push_config the dispatcher does nothing');
+
+-- Subscriptions: register, validate, cap, move between accounts, unregister
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select public.register_push(:'pe1', :'pk', :'pa', 'Mozilla/5.0 (iPhone)');
+select is(
+  (select user_id from public.push_subscriptions where endpoint = :'pe1'), :'ua'::uuid,
+  'push: register_push stores the device for the caller'
+);
+select throws_ok(
+  $$ select public.register_push('http://push.example.com/x', 'abc', 'def', null) $$,
+  '22023', 'BAD_ENDPOINT', 'push: endpoints must be https'
+);
+select throws_ok(
+  format('select public.register_push(%L, %L, %L, null)', 'https://push.example.com/' || repeat('x', 1000), 'abc', 'def'),
+  '22023', 'BAD_ENDPOINT', 'push: endpoints over 1000 characters are rejected'
+);
+select throws_ok(
+  $$ select public.register_push('https://push.example.com/k', repeat('k', 201), 'def', null) $$,
+  '22023', 'BAD_KEY', 'push: oversized keys are rejected'
+);
+select throws_ok(
+  $$ insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ('00000000-0000-0000-0000-00000000000a', 'https://push.example.com/direct', 'k', 'a') $$,
+  '42501', null, 'push: clients cannot insert subscriptions directly'
+);
+select throws_ok(
+  $$ update public.push_subscriptions set p256dh = 'x' $$,
+  '42501', null, 'push: clients cannot update subscriptions'
+);
+select lives_ok(
+  $$ select public.register_push('https://push.example.com/alice-' || lpad(g::text, 2, '0'), 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', 'tBHItJI5svbpez7KI4CCXg', null)
+       from generate_series(1, 11) g $$,
+  'push: alice registers 11 more devices'
+);
+select ok(
+  (select count(*) = 10 from public.push_subscriptions)
+  and not exists (select 1 from public.push_subscriptions where endpoint in (:'pe1', 'https://push.example.com/alice-01'))
+  and exists (select 1 from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11'),
+  'push: at most 10 devices per user, the oldest are dropped'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select public.register_push('https://push.example.com/alice-11', :'pk', :'pa', null);
+select is(
+  (select array_agg(endpoint) from public.push_subscriptions), array['https://push.example.com/alice-11'],
+  'push: re-registering an endpoint from another account moves it there (bob sees only his device)'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select ok(
+  (select count(*) = 9 from public.push_subscriptions)
+  and not exists (select 1 from public.push_subscriptions where user_id = :'ub' or endpoint = 'https://push.example.com/alice-11'),
+  'push IDOR: alice sees only her own devices, not the one that moved to bob'
+);
+select public.unregister_push('https://push.example.com/alice-11');
+delete from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11';
+select public.unregister_push('https://push.example.com/alice-10');
+select is((select count(*)::int from public.push_subscriptions), 8, 'push: unregister_push removes the caller''s own device');
+reset role;
+select is(
+  (select count(*)::int from public.push_subscriptions where user_id = :'ub'), 1,
+  'push IDOR: alice''s unregister and delete left bob''s device untouched'
+);
+
+-- Config + prune (the Edge Function's anon-key path)
+set local role authenticated;
+select throws_ok(
+  $$ select public.set_push_config('https://evil.example.com/x', repeat('s', 40)) $$,
+  '42501', null, 'push: a signed-in user cannot change the push config'
+);
+select throws_ok($$ select * from private.push_config $$, '42501', null, 'push: a signed-in user cannot read the dispatch secret');
+select throws_ok(
+  $$ select public.prune_push_subscriptions('anything', array['https://push.example.com/alice-09']) $$,
+  '42501', 'FORBIDDEN', 'push: prune is refused while no secret is configured'
+);
+reset role;
+select throws_ok(
+  $$ select public.set_push_config('http://127.0.0.1:9/push', 'short') $$,
+  '22023', 'BAD_SECRET', 'push: the dispatch secret must be at least 32 characters'
+);
+select public.set_push_config(:'purl', :'psecret');
+set local role anon;
+set local request.jwt.claims = '{"role":"anon"}';
+select throws_ok(
+  $$ select public.prune_push_subscriptions('wrong-secret-wrong-secret-wrong-secret', array['https://push.example.com/alice-09']) $$,
+  '42501', 'FORBIDDEN', 'push: prune with a wrong secret is refused'
+);
+select is(
+  public.prune_push_subscriptions(:'psecret', array['https://push.example.com/alice-09', 'https://push.example.com/unknown']), 1,
+  'push: prune with the dispatch secret deletes the dead endpoints'
+);
+reset role;
+select is((select count(*)::int from public.push_subscriptions where user_id = :'ua'), 7, 'push: the pruned device is gone');
+
+-- Dispatcher. The window is [Istanbul now - 5 min, now] (clamped at midnight) and now() is fixed for
+-- the whole transaction, so these reminder times are deterministic: r_in is inside (now - 1 min, or
+-- 00:00 in the first minute of the day), r_out is outside (now + 2 min, or now - 10 min after 23:58).
+select (case when lt >= time '00:01' then lt - interval '1 minute' else time '00:00' end)::text as r_in,
+       (case when lt < time '23:58' then lt + interval '2 minutes' else lt - interval '10 minutes' end)::text as r_out,
+       extract(isodow from d)::int as dow,
+       extract(isodow from d)::int % 7 + 1 as other_dow
+  from (select (now() at time zone 'Europe/Istanbul')::time as lt, (now() at time zone 'Europe/Istanbul')::date as d) x \gset
+\set bh1 '00000000-0000-0000-0000-000000000401'
+\set bh2 '00000000-0000-0000-0000-000000000402'
+\set bh3 '00000000-0000-0000-0000-000000000403'
+\set bh4 '00000000-0000-0000-0000-000000000404'
+\set bh5 '00000000-0000-0000-0000-000000000405'
+\set bh6 '00000000-0000-0000-0000-000000000406'
+\set bh7 '00000000-0000-0000-0000-000000000407'
+\set bq1 '00000000-0000-0000-0000-000000000408'
+\set bq2 '00000000-0000-0000-0000-000000000409'
+\set bt1 '00000000-0000-0000-0000-000000000411'
+\set bt2 '00000000-0000-0000-0000-000000000412'
+\set bt3 '00000000-0000-0000-0000-000000000413'
+\set bt4 '00000000-0000-0000-0000-000000000414'
+\set bt5 '00000000-0000-0000-0000-000000000415'
+\set bt6 '00000000-0000-0000-0000-000000000416'
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.habits (id, user_id, name, rule, target_count, remind_at, archived_at) values
+  (:'bh1', :'ub', 'A esneme', '{"type":"daily"}', 1, :'r_in', null),                                               -- due
+  (:'bh2', :'ub', 'B kitap', '{"type":"daily"}', 3, :'r_in', null),                                                -- 2 of 3: due
+  (:'bh3', :'ub', 'Z bitti', '{"type":"daily"}', 1, :'r_in', null),                                                -- done today
+  (:'bh4', :'ub', 'Z baska gun', jsonb_build_object('type', 'weekly', 'days', jsonb_build_array(:other_dow)), 1, :'r_in', null), -- not today
+  (:'bh5', :'ub', 'Z sonra', '{"type":"daily"}', 1, :'r_out', null),                                               -- outside the window
+  (:'bh6', :'ub', 'Z arsiv', '{"type":"daily"}', 1, :'r_in', now());                                               -- archived
+insert into public.habit_logs (user_id, habit_id, day, count) values (:'ub', :'bh2', current_date, 2), (:'ub', :'bh3', current_date, 1);
+insert into public.todos (id, user_id, title, due_on, rule, starts_on, remind_at, archived_at) values
+  (:'bt1', :'ub', 'C fatura', current_date, null, current_date, :'r_in', null),                                    -- one-off due today
+  (:'bt2', :'ub', 'D rapor', null, jsonb_build_object('type', 'weekly', 'days', jsonb_build_array(:dow)), current_date - 14, :'r_in', null), -- occurrence
+  (:'bt3', :'ub', 'Z odendi', current_date, null, current_date, :'r_in', null),                                    -- completed
+  (:'bt4', :'ub', 'Z yarin', current_date + 1, null, current_date, :'r_in', null),                                 -- due tomorrow
+  (:'bt5', :'ub', 'Z gunluk', null, '{"type":"daily"}', current_date - 3, :'r_in', null),                          -- today's occurrence done
+  (:'bt6', :'ub', 'Z durdu', null, '{"type":"daily"}', current_date - 3, :'r_in', now());                          -- archived
+insert into public.todo_completions (user_id, todo_id, day) values (:'ub', :'bt3', current_date), (:'ub', :'bt5', current_date);
+reset role;
+select is(public.dispatch_reminders(), 1, 'push: one message is queued for bob''s single device');
+select is(
+  (select convert_from(q.body, 'UTF8')::jsonb from net.http_request_queue q where q.url = :'purl'),
+  jsonb_build_object('messages', jsonb_build_array(jsonb_build_object(
+    'endpoint', 'https://push.example.com/alice-11', 'p256dh', :'pk', 'auth', :'pa',
+    'payload', jsonb_build_object('body', 'A esneme, B kitap, C fatura +1', 'url', '/track', 'tag', 'reminders-' || current_date::text)))),
+  'push: the batch carries the device keys and a grouped body (3 names + count)'
+);
+select ok(
+  (select q.method = 'POST' and q.headers ->> 'x-dispatch-secret' = :'psecret' from net.http_request_queue q where q.url = :'purl'),
+  'push: the request is a POST with the dispatch secret header'
+);
+select is(
+  (select array_agg(ref order by ref) from private.reminder_log where user_id = :'ub' and day = current_date),
+  array['habit:' || :'bh1', 'habit:' || :'bh2', 'todo:' || :'bt1', 'todo:' || :'bt2'],
+  'push: exactly the due, unfinished habits and to-dos are logged'
+);
+select is(
+  (select count(*)::int from private.reminder_log where ref in ('habit:' || :'bh3', 'habit:' || :'bh4', 'habit:' || :'bh5', 'habit:' || :'bh6')),
+  0, 'push: done, not-due-today, out-of-window and archived habits are not reminded'
+);
+select is(
+  (select count(*)::int from private.reminder_log where ref in ('todo:' || :'bt3', 'todo:' || :'bt4', 'todo:' || :'bt5', 'todo:' || :'bt6')),
+  0, 'push: completed, not-yet-due and archived to-dos are not reminded'
+);
+select is(public.dispatch_reminders(), 0, 'push: a second run in the same window queues nothing (reminder_log dedupe)');
+select is((select count(*)::int from net.http_request_queue where url = :'purl'), 1, 'push: and adds no request');
+select ok(
+  (select last_used_at is not null from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11'),
+  'push: the targeted device is stamped last_used_at'
+);
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.habits (id, user_id, name, remind_at) values (:'bh7', :'ub', 'E yeni', :'r_in');
+reset role;
+select is(public.dispatch_reminders(), 1, 'push: a newly due item is still sent after the others were');
+select is(
+  (select convert_from(q.body, 'UTF8')::jsonb #>> '{messages,0,payload,body}' from net.http_request_queue q where q.url = :'purl' order by q.id desc limit 1),
+  'E yeni', 'push: and only that item is in the new message'
+);
+
+-- weekly_count: reminded only while the ISO week's quota is open (fixed past week: Mon 2026-10-26 done)
+set local role authenticated;
+insert into public.habits (id, user_id, name, rule, starts_on, remind_at) values
+  (:'bq1', :'ub', 'Q bir', '{"type":"weekly_count","n":1}', '2026-10-19', '12:00'),
+  (:'bq2', :'ub', 'Q iki', '{"type":"weekly_count","n":2}', '2026-10-19', '12:00');
+insert into public.habit_logs (user_id, habit_id, day) values (:'ub', :'bq1', '2026-10-26'), (:'ub', :'bq2', '2026-10-26'), (:'ub', :'bq2', '2026-10-25');
+reset role;
+select is(
+  (select array_agg(ref order by ref) from private.reminders_due('2026-10-28', '11:55', '12:00') where ref in ('habit:' || :'bq1', 'habit:' || :'bq2')),
+  array['habit:' || :'bq2'],
+  'push: weekly_count habits are reminded only while the week''s quota is open (last week''s days do not count)'
+);
+
+-- Blocked users and users without a device get nothing (and nothing is logged for them)
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+update public.profiles set is_blocked = true where user_id = :'ub';
+set local request.jwt.claims = '';
+insert into public.habits (user_id, name, remind_at) values (:'ub', 'F engelli', :'r_in');
+select is(public.dispatch_reminders(), 0, 'push: a blocked user gets no reminders');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+update public.profiles set is_blocked = false where user_id = :'ub';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+delete from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11';
+select is((select count(*)::int from public.push_subscriptions), 0, 'push: the owner can delete his own device');
+reset role;
+select is(public.dispatch_reminders(), 0, 'push: a user without a device gets no message');
+select is(
+  (select count(*)::int from private.reminder_log where user_id = :'ub' and ref like 'habit:%' and day = current_date), 3,
+  'push: and his due items are not logged (they go out once he subscribes)'
+);
+set local request.jwt.claims = '';
 
 -- pre-publication privacy audit ---------------------------------------------------------------
 reset role;

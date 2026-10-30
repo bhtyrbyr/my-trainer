@@ -16,6 +16,7 @@ export type HabitInput = {
   rule: RecurrenceRule
   target_count: number
   unit: string | null
+  remind_at: string | null
 }
 
 export type TodoInput = {
@@ -24,6 +25,7 @@ export type TodoInput = {
   priority: Priority
   due_on: string | null
   rule: RecurrenceRule | null
+  remind_at: string | null
 }
 
 /** How far back the screens load habit logs (streaks, heatmaps) and to-do completions. */

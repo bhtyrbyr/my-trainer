@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - **Habits** (Track, and Track > Habits): yes/no habits or a daily target with a counter (20 pages, 8 glasses); every day, chosen weekdays, N days a week or every N days. One-tap tick on the day view, +/- for counters, current streak and a five-week heatmap per habit, archive and restore. 10 points per completed habit, at most 50 a day (server-side).
 - **To-dos** (Track, and Track > To-dos): one-off to-dos with an optional day, priority and note, and recurring ones (every day, weekdays, monthly, every N days). Overdue one-offs carry over to today until done; the to-do page groups overdue, today, upcoming, undated, recurring and recently done. 5 points per completed to-do, at most 30 a day.
 - A shared recurrence engine (TypeScript and SQL, tested against the same vectors).
+- **Reminder notifications**: optional reminder time on habits and to-dos; Settings > Notifications turns them on per device (on iPhone after adding the app to the Home Screen). A database cron job finds due, unfinished items every 5 minutes and an Edge Function delivers end-to-end encrypted Web Push (RFC 8291 + VAPID, no third-party push service account). The privacy notice was updated for push addresses, so everyone confirms it once more.
 
 ## [0.3.0] - 2026-10-30
 ### Added

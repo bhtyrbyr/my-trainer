@@ -37,3 +37,7 @@ file_size_limit = "20MiB"
 
 [edge_runtime]
 enabled = true
+
+# pg_cron/pg_net call it without a user JWT; it checks the x-dispatch-secret header instead.
+[functions.push-send]
+verify_jwt = false

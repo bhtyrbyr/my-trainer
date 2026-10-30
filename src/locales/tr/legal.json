@@ -7,7 +7,10 @@
     "sections": [
       {
         "title": "Veri sorumlusu",
-        "items": ["{{controller}}", "İletişim ve KVKK başvuruları: {{email}}"]
+        "items": [
+          "{{controller}}",
+          "İletişim ve KVKK başvuruları: {{email}}"
+        ]
       },
       {
         "title": "İşlenen veriler",
@@ -17,7 +20,8 @@
           "Kullanım: antrenman planları, seanslar, setler, kardiyo kayıtları, kişisel rekorlar, puanlar ve seri bilgisi.",
           "Sağlık verileri (yalnızca açık rızanla): kilo, vücut ölçüleri ve yağ oranı tahmini, öğün ve besin değerleri, uyku ve su kayıtları, gelişim fotoğrafları.",
           "Yapay zekâ: besin tahmini için yazdığın metin veya çektiğin yemek fotoğrafı (saklanmaz) ve istek sayısı/token miktarı.",
-          "Teknik: oturum bilgisi, IP adresi (barındırma sağlayıcılarının kayıtlarında) ve yalnızca sen gönderirsen hata raporu."
+          "Teknik: oturum bilgisi, IP adresi (barındırma sağlayıcılarının kayıtlarında) ve yalnızca sen gönderirsen hata raporu.",
+          "Bildirimler (açarsan): cihazının bildirim adresi ve şifreleme anahtarları, hatırlatma saatleri."
         ]
       },
       {
@@ -46,12 +50,15 @@
           "Verilerin satılmaz, reklam için kullanılmaz.",
           "Hizmet için yurt dışındaki sağlayıcılar kullanılır: Supabase (veritabanı, dosyalar, giriş; sunucular Londra, Birleşik Krallık), Vercel (uygulamanın barındırılması; ABD merkezli), Google (Google ile giriş ve Gemini besin tahmini; ABD), OpenRouter (yedek besin tahmini, yalnızca metin; ABD).",
           "Bu aktarımlar KVKK m. 9 kapsamında yapılır; sağlık verilerinin bu sunucularda işlenmesi için açık rızan ayrıca alınır.",
+          "Hatırlatma bildirimleri, cihazının tarayıcısına ait bildirim servisi (Apple, Google veya Mozilla) üzerinden iletilir; bildirim içeriği uçtan uca şifrelidir ve bu servisler okuyamaz.",
           "Gelişim fotoğrafların cihazında şifrelenir; sunucuda ve sağlayıcılarda yalnızca okunamayan şifreli hâlleri bulunur."
         ]
       },
       {
         "title": "Toplama yöntemi",
-        "items": ["Google ile giriş ve uygulamaya kendi girdiğin bilgiler üzerinden, elektronik ortamda."]
+        "items": [
+          "Google ile giriş ve uygulamaya kendi girdiğin bilgiler üzerinden, elektronik ortamda."
+        ]
       },
       {
         "title": "Saklama süresi",

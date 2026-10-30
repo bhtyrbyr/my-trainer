@@ -26,6 +26,8 @@ export function classifyError(err: unknown): AppError {
   if (/ALREADY_FINISHED/.test(message)) return { key: 'errors.alreadyFinished', code }
   if (/FUTURE_DATE/.test(message)) return { key: 'errors.futureDate', code }
   if (/BAD_PATH/.test(message)) return { key: 'errors.badPath', code }
+  if (/PUSH_DENIED/.test(message)) return { key: 'errors.pushDenied', code }
+  if (/PUSH_UNSUPPORTED|PUSH_NOT_CONFIGURED|BAD_ENDPOINT|BAD_KEY/.test(message)) return { key: 'errors.pushUnsupported', code }
   if (/ALREADY_DONE/.test(message)) return { key: 'errors.alreadyDone', code }
   if (/NOT_DUE/.test(message)) return { key: 'errors.notDue', code }
   if (/LIMIT_REACHED/.test(message)) return { key: 'errors.limitReached', code }

@@ -65,6 +65,8 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // reminder notifications (push + notificationclick); public/push-sw.js
+        importScripts: ['push-sw.js'],
         navigateFallbackDenylist: [/^\/auth\/callback/],
         runtimeCaching: [
           {

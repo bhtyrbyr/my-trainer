@@ -76,3 +76,10 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - **Rights (art. 11)**: Settings > Privacy & data offers the notice, the consent switch, a JSON export of every own row, and account deletion (files through the Storage API first, then `delete_my_account()`, which refuses to remove the last admin).
 - **Pre-publication audit (2026-10-30)**: all public tables have RLS; anon holds no table privilege; nobody can TRUNCATE; avatars cannot be listed anonymously; `app_config` (admin e-mail) is admin-only. Only Google sign-in is enabled (e-mail/phone/anonymous off), the app sends no e-mail, fonts are self-hosted.
 - The notice text is a draft written without legal review; have it checked (and VERBIS obligations clarified) before a public launch.
+
+## Reminder notifications (Web Push)
+
+- Subscriptions (`push_subscriptions`) are readable/deletable only by their owner and written through `register_push()` / `unregister_push()`; a device that switches accounts moves to the new owner.
+- `dispatch_reminders()` (pg_cron, every 5 minutes, security definer, granted to nobody) queues messages with pg_net to the `push-send` Edge Function. The function has `verify_jwt = false` and instead requires the shared `PUSH_DISPATCH_SECRET` (constant-time compare); it never uses service_role and reads no data. Dead endpoints are pruned through `prune_push_subscriptions(secret, endpoints)`, the only function granted to anon: it can only delete and needs the 32+ character secret (hash compared).
+- Payloads (up to three item names) are encrypted to the device per RFC 8291; the push services (Apple, Google, Mozilla) cannot read them. The crypto was cross-checked against the reference `http_ece` decryptor and is covered by `src/lib/webpush.test.ts`.
+- Secrets: `VAPID_PRIVATE_KEY` and `PUSH_DISPATCH_SECRET` exist only in GitHub Secrets and Supabase function secrets (set by deploy.yml); the public VAPID key is built into the client.

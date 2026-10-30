@@ -62,7 +62,9 @@
     "lastAdmin": "You are the only admin. Make someone else an admin before deleting your account.",
     "alreadyDone": "This to-do is already done. Refresh the page.",
     "notDue": "This to-do is not scheduled for that day.",
-    "limitReached": "You reached the limit (50 active habits, 500 to-dos). Archive or delete the ones you no longer use."
+    "limitReached": "You reached the limit (50 active habits, 500 to-dos). Archive or delete the ones you no longer use.",
+    "pushDenied": "Notification permission was not granted. You can allow it in the phone or browser settings.",
+    "pushUnsupported": "Notifications cannot be turned on here. On iPhone, add the app to the Home Screen first."
   },
   "update": {
     "title": "New version released",

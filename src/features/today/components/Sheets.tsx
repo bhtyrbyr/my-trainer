@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Archive, ArchiveRestore, Loader2, Square, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, BellRing, Loader2, Square, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { BottomSheet } from '@/features/nutrition/components/BottomSheet'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { useArchiveHabit, useDeleteHabit, useDeleteTodo, useSaveHabit, useSaveTodo, useStopTodo } from '../hooks'
 import type { Habit, Priority, Todo } from '../types'
 import { Chip, RulePicker } from './RulePicker'
+import { usePushState } from '@/features/notifications/hooks'
 
 const field = 'hairline h-12 w-full rounded-[var(--radius-input)] bg-bg px-3 text-[16px] text-ink outline-none placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-volt'
 const label = 'mb-1.5 block text-[11px] font-medium uppercase tracking-[0.06em] text-ink-faint'
@@ -27,6 +28,7 @@ export function HabitSheet({ open, habit, onClose }: { open: boolean; habit?: Ha
   const [counter, setCounter] = useState(false)
   const [target, setTarget] = useState<number | null>(8)
   const [unit, setUnit] = useState('')
+  const [remind, setRemind] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -36,6 +38,7 @@ export function HabitSheet({ open, habit, onClose }: { open: boolean; habit?: Ha
     setCounter((habit?.target_count ?? 1) > 1)
     setTarget(habit && habit.target_count > 1 ? habit.target_count : 8)
     setUnit(habit?.unit ?? '')
+    setRemind(habit?.remind_at?.slice(0, 5) ?? null)
     save.reset()
   }, [open, habit])
 
@@ -50,6 +53,7 @@ export function HabitSheet({ open, habit, onClose }: { open: boolean; habit?: Ha
           rule,
           target_count: counter ? (target ?? 1) : 1,
           unit: counter ? unit.trim() || null : null,
+          remind_at: remind,
         },
       },
       { onSuccess: onClose },
@@ -91,6 +95,7 @@ export function HabitSheet({ open, habit, onClose }: { open: boolean; habit?: Ha
             </div>
           )}
         </div>
+        <ReminderField value={remind} onChange={setRemind} />
         <ErrorNote error={save.error ?? archive.error ?? del.error} />
         <div className="grid gap-2">
           <Button size="lg" disabled={!ok || save.isPending} onClick={submit}>
@@ -132,6 +137,7 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
   const [priority, setPriority] = useState<Priority>(0)
   const [due, setDue] = useState<string | null>(null)
   const [rule, setRule] = useState<RecurrenceRule | null>(null)
+  const [remind, setRemind] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -140,6 +146,7 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
     setPriority((todo?.priority ?? 0) as Priority)
     setDue(todo ? (todo.rule ? todo.starts_on : todo.due_on) : (defaultDay ?? today))
     setRule(todo?.rule ?? null)
+    setRemind(todo?.remind_at?.slice(0, 5) ?? null)
     save.reset()
   }, [open, todo, defaultDay])
 
@@ -148,7 +155,7 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
   const ok = title.trim().length > 0
   const submit = () =>
     save.mutate(
-      { id: todo?.id, input: { title: title.trim(), note: note.trim() || null, priority, due_on: rule ? (due ?? today) : due, rule } },
+      { id: todo?.id, input: { title: title.trim(), note: note.trim() || null, priority, due_on: rule ? (due ?? today) : due, rule, remind_at: rule || due ? remind : null } },
       { onSuccess: onClose },
     )
 
@@ -193,6 +200,7 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
           <span className={label}>{t('form.note')}</span>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} rows={2} className={cn(field, 'h-auto py-2.5')} />
         </label>
+        <ReminderField value={remind} onChange={setRemind} disabledHint={!rule && !due ? t('form.reminderNeedsDay') : undefined} />
         <ErrorNote error={save.error ?? stop.error ?? del.error} />
         <div className="grid gap-2">
           <Button size="lg" disabled={!ok || save.isPending} onClick={submit}>
@@ -221,5 +229,42 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
         </div>
       </div>
     </BottomSheet>
+  )
+}
+
+/** Optional reminder time (local). Shows how to turn notifications on when this device has them off. */
+function ReminderField({ value, onChange, disabledHint }: { value: string | null; onChange: (v: string | null) => void; disabledHint?: string }) {
+  const { t } = useTranslation('today')
+  const push = usePushState()
+  const offHere = push.data?.configured && !push.data.enabled
+  if (!push.data?.configured) return null
+  return (
+    <div>
+      <span className={label}>{t('form.reminder')}</span>
+      {disabledHint ? (
+        <p className="text-[13px] text-ink-faint">{disabledHint}</p>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <label className="hairline flex h-11 items-center gap-2 rounded-full bg-bg pl-3 pr-1 text-[14px]">
+              <BellRing className={cn('size-4', value ? 'text-volt' : 'text-ink-faint')} aria-hidden />
+              <input
+                type="time"
+                aria-label={t('form.reminder')}
+                value={value ?? ''}
+                onChange={(e) => onChange(e.target.value || null)}
+                className="h-10 bg-transparent pr-2 text-[15px] text-ink outline-none"
+              />
+            </label>
+            {value && (
+              <button type="button" onClick={() => onChange(null)} aria-label={t('form.reminderClear')} className="flex size-11 items-center justify-center rounded-full text-ink-faint hover:text-ink">
+                <X className="size-4" aria-hidden />
+              </button>
+            )}
+          </div>
+          {value && offHere && <p className="mt-1.5 text-[12px] leading-snug text-ink-faint">{t('form.reminderHint')}</p>}
+        </>
+      )}
+    </div>
   )
 }

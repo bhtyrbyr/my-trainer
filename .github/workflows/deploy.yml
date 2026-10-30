@@ -9,6 +9,9 @@
 #   VERCEL_ORG_ID           from `vercel link` -> .vercel/project.json
 #   VERCEL_PROJECT_ID       from `vercel link` -> .vercel/project.json
 # VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are configured in the Vercel project (pulled by `vercel pull`).
+# Optional, for reminder notifications (docs/faz3-spec.md section 5); without them the feature stays hidden:
+#   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY   from `npx web-push generate-vapid-keys`
+#   PUSH_DISPATCH_SECRET                  any long random string (e.g. `openssl rand -hex 32`)
 name: Deploy (production)
 on:
   workflow_run:
@@ -55,6 +58,31 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      # Reminders: function secrets + the dispatch URL/secret the database cron uses. Skipped until the
+      # three GitHub secrets exist. Values never reach the logs (masked) or the client bundle.
+      - name: Configure push reminders
+        run: |
+          if [ -z "$VAPID_PRIVATE_KEY" ] || [ -z "$VAPID_PUBLIC_KEY" ] || [ -z "$PUSH_DISPATCH_SECRET" ]; then
+            echo "push reminders not configured (VAPID_* / PUSH_DISPATCH_SECRET secrets missing)"; exit 0
+          fi
+          subject="mailto:$(jq -r .legal.contactEmail src/config/brand.json)"
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            VAPID_PUBLIC_KEY="$VAPID_PUBLIC_KEY" VAPID_PRIVATE_KEY="$VAPID_PRIVATE_KEY" \
+            VAPID_SUBJECT="$subject" PUSH_DISPATCH_SECRET="$PUSH_DISPATCH_SECRET"
+          jq -n --arg url "$SUPABASE_URL/functions/v1/push-send" --arg secret "$PUSH_DISPATCH_SECRET" \
+            '{p_url: $url, p_secret: $secret}' |
+            curl -sf -X POST "$SUPABASE_URL/rest/v1/rpc/set_push_config" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" --data-binary @- > /dev/null
+          echo "push reminders configured"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_DISPATCH_SECRET: ${{ secrets.PUSH_DISPATCH_SECRET }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -98,6 +126,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
       - name: Verify the bundle contains the Supabase URL
         run: grep -rq "supabase.co" .vercel/output/static/assets/*.js || (echo "::error::VITE_SUPABASE_URL missing from build" && exit 1)
       - id: deploy
