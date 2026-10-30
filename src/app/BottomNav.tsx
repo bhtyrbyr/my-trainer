@@ -20,7 +20,7 @@ const tabs = [
 /** Extra path prefixes that belong to a tab (e.g. the exercise library lives under the Workouts tab). */
 const ALSO_ACTIVE: Partial<Record<(typeof tabs)[number]['key'], string[]>> = {
   workouts: ['/exercises'],
-  profile: ['/admin'],
+  profile: ['/admin', '/coach'],
 }
 
 export function BottomNav() {

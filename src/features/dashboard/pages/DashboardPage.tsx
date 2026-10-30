@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { BadgeCelebration, type BadgeCode } from '@/features/badges'
+import { WeeklyReviewCard } from '@/features/coach'
 import { ScoreHero } from '@/features/gamification/ScoreHero'
 import { effectiveStreak } from '@/features/gamification/streak'
 import { useConsents } from '@/features/privacy/hooks'
@@ -23,7 +24,8 @@ type Preview = {
 }
 
 /**
- * Home. Today first (score, nudges, the workout, energy, the day's list), then the week. On desktop the
+ * Home. Today first (score, nudges, the workout, energy, the day's list), then the week and the coach's
+ * weekly review (on tap only). On desktop the
  * same blocks split into two columns: today on the left, the week on the right.
  */
 export function DashboardPage({ preview }: { preview?: Preview }) {
@@ -50,6 +52,7 @@ export function DashboardPage({ preview }: { preview?: Preview }) {
           <div className="pt-2 lg:pt-0">
             <WeekSummary />
           </div>
+          <WeeklyReviewCard base={base} />
         </div>
       </div>
       <BadgeCelebration preview={preview?.celebrate} />

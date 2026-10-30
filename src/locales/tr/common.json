@@ -73,7 +73,12 @@
     "badEmail": "Bu bir e-posta adresine benzemiyor. Kontrol edip yeniden dene.",
     "badNote": "Not çok uzun. 200 karakterin altında tut.",
     "badQuery": "Arama çok uzun. En fazla 100 karakter kullan.",
-    "targetIsAdmin": "Yöneticiler engellenemez. Önce yönetici rolünü kaldır."
+    "targetIsAdmin": "Yöneticiler engellenemez. Önce yönetici rolünü kaldır.",
+    "coachConversationLimit": "En fazla 100 sohbet tutabilirsin. Yeni bir sohbet için eskilerden birini sil.",
+    "coachMessageLimit": "Bugün koça gönderebileceğin mesaj sınırına (100) ulaştın. Yarın devam edebilirsin.",
+    "coachQuota": "Bugünkü yapay zekâ hakkı doldu (koç ve yemek tahmini ortak). Yarın tekrar sorabilirsin.",
+    "coachUnavailable": "Koça şu an ulaşılamıyor. Biraz sonra tekrar dene.",
+    "coachRegion": "Yapay zekâ koçu bulunduğun bölgede kullanılamıyor."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

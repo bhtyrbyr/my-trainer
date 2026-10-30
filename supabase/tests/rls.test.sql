@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(402);
+select plan(403);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -1730,6 +1730,8 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","e
 select public.withdraw_ai_consent('test');
 select throws_like($$ select public.ai_reserve() $$, '%AI_CONSENT_REQUIRED%', 'ai: withdrawing the AI consent stops further requests');
 select throws_ok($$ select public.ai_consent_of('00000000-0000-0000-0000-00000000000a') $$, '42501', null, 'ai: the consent helper is internal');
+select public.record_consent('ai_processing', '2026-10-30');
+select throws_like($$ select public.ai_reserve() $$, '%AI_CONSENT_REQUIRED%', 'ai: a consent to an older AI text does not count');
 reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';

@@ -44,6 +44,12 @@ export function classifyError(err: unknown): AppError {
   if (/BAD_KDF/.test(message)) return { key: 'errors.vaultDamaged', code }
   if (/SLEEP_ORDER/.test(message)) return { key: 'errors.sleepOrder', code }
   if (/SLEEP_TOO_LONG/.test(message)) return { key: 'errors.sleepTooLong', code }
+  // AI coach (src/features/coach/api.ts re-tags these so the wording fits a chat, not the food estimate)
+  if (/COACH_CONVERSATION_LIMIT/.test(message)) return { key: 'errors.coachConversationLimit', code }
+  if (/COACH_MESSAGE_LIMIT/.test(message)) return { key: 'errors.coachMessageLimit', code }
+  if (/COACH_AI_(QUOTA|APP_LIMIT|GOOGLE_DAILY)/.test(message)) return { key: 'errors.coachQuota', code }
+  if (/COACH_AI_(UNAVAILABLE|NOT_CONFIGURED)/.test(message)) return { key: 'errors.coachUnavailable', code }
+  if (/COACH_AI_REGION/.test(message)) return { key: 'errors.coachRegion', code }
   // Codes returned by the ai-coach Edge Function
   if (/UNDERAGE/.test(message)) return { key: 'errors.underage', code } // UNDERAGE and AI_UNDERAGE
   if (/AI_CONSENT_REQUIRED/.test(message)) return { key: 'errors.aiConsent', code }

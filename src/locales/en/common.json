@@ -73,7 +73,12 @@
     "badEmail": "That does not look like an e-mail address. Check it and try again.",
     "badNote": "The note is too long. Keep it under 200 characters.",
     "badQuery": "The search is too long. Use at most 100 characters.",
-    "targetIsAdmin": "Admins cannot be blocked. Remove the admin role first."
+    "targetIsAdmin": "Admins cannot be blocked. Remove the admin role first.",
+    "coachConversationLimit": "You can keep at most 100 conversations. Delete an old one to start a new one.",
+    "coachMessageLimit": "You have reached today's limit of 100 messages to the coach. You can continue tomorrow.",
+    "coachQuota": "Today's AI requests are used up (shared by the coach and the food estimate). You can ask again tomorrow.",
+    "coachUnavailable": "The coach cannot be reached right now. Try again shortly.",
+    "coachRegion": "The AI coach is not available in your region."
   },
   "update": {
     "title": "New version released",

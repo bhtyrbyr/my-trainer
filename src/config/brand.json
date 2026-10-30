@@ -4,8 +4,8 @@
   "legal": {
     "controller": "My-Trainer-app dev team",
     "contactEmail": "kvkk@mytrainer-test.com",
-    "noticeVersion": "2026-10-30.4",
+    "noticeVersion": "2026-10-31",
     "healthConsentVersion": "2026-10-30",
-    "aiConsentVersion": "2026-10-30"
+    "aiConsentVersion": "2026-10-31"
   }
 }

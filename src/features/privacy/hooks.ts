@@ -14,7 +14,9 @@ export function useConsents() {
   // the newest health row decides (a withdrawal is a newer row with granted = false)
   const health = rows.find((r) => r.kind === 'health_data')?.granted ?? false
   const adult = rows.some((r) => r.kind === 'adult' && r.granted)
-  const ai = rows.find((r) => r.kind === 'ai_processing')?.granted ?? false
+  // a consent to an older AI text does not count: the newest row must grant the current version
+  const latestAi = rows.find((r) => r.kind === 'ai_processing')
+  const ai = Boolean(latestAi?.granted && latestAi.version >= LEGAL.aiConsentVersion)
   return { ...q, noticeAcked, health, adult, ai }
 }
 

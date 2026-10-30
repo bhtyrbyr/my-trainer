@@ -1,0 +1,76 @@
+{
+  "title": "Koç",
+  "eyebrow": "Yapay zekâ koçu",
+  "back": "Geri",
+  "new": "Yeni sohbet",
+  "list": {
+    "heading": "Sor, kayıtlarına bakıp cevaplasın.",
+    "lead": "Koç son 28 günün antrenman ve alışkanlık özetine, sağlık iznin varsa kilo, uyku ve beslenme özetine bakar.",
+    "ask": "Hızlı sor",
+    "conversations": "Sohbetler",
+    "empty": "Henüz sohbet yok. Yukarıdan bir soru seç ya da yeni bir sohbet aç.",
+    "delete": "Sohbeti sil",
+    "deleteConfirm": "Bu sohbet ve bütün mesajları silinsin mi?",
+    "untitled": "Adsız sohbet"
+  },
+  "chat": {
+    "heading": "Ne sormak istersin?",
+    "lead": "Antrenmanını, alışkanlıklarını ya da beslenmeni sor. Her cevap bir yapay zekâ hakkı kullanır.",
+    "placeholder": "Koçuna sor…",
+    "label": "Mesajın",
+    "send": "Gönder",
+    "typing": "Koç yazıyor",
+    "coach": "Koç",
+    "unanswered": "Bu soru henüz cevaplanmadı.",
+    "retry": "Cevap iste",
+    "notFound": "Bu sohbet bulunamadı. Silinmiş olabilir.",
+    "toList": "Sohbetlere dön",
+    "counter": "{{n}}/{{max}}"
+  },
+  "prompts": {
+    "week": "Bu hafta nasıl gittim?",
+    "tomorrow": "Yarın ne çalışayım?",
+    "protein": "Proteinimi nasıl artırırım?",
+    "weekly": "Haftamı değerlendirir misin? Neler iyi gitti, neyi geliştirebilirim? Gelecek hafta için 2-3 somut hedef öner."
+  },
+  "quota": {
+    "left_one": "Bugün {{count}} yapay zekâ hakkın kaldı",
+    "left_other": "Bugün {{count}} yapay zekâ hakkın kaldı"
+  },
+  "status": {
+    "user_daily": {
+      "title": "Bugünkü yapay zekâ hakkın doldu",
+      "body": "Koç ve yemek tahmini aynı günlük hakkı kullanır. Hakkın {{time}}’da ({{in}} sonra) yenilenir."
+    },
+    "app_daily": {
+      "title": "Uygulamanın günlük yapay zekâ sınırı doldu",
+      "body": "Bütün kullanıcılar için koyduğumuz günlük sınıra ulaşıldı. {{time}}’da ({{in}} sonra) yenilenir."
+    },
+    "google_daily": {
+      "title": "Ücretsiz yapay zekâ hakkı bugün için doldu",
+      "body": "Google’ın ücretsiz katmanı bütün kullanıcılar için günlük isteği sınırlıyor. Haklar {{time}}’da ({{in}} sonra) yenilenir."
+    },
+    "google_minute": {
+      "title": "Koç şu an yoğun",
+      "body": "Google dakikada sınırlı istek kabul ediyor. Yaklaşık bir dakika sonra tekrar dene."
+    }
+  },
+  "underage": {
+    "title": "Koç 18 yaş ve üstü için",
+    "body": "Yapay zekâ sağlayıcılarının koşulları gereği koç 18 yaşından küçüklere kapalı. Uygulamanın geri kalanı her zamanki gibi çalışır."
+  },
+  "consent": {
+    "lead": "Koç, mesajlarını ve son 28 günün özetini (antrenman, alışkanlık; sağlık iznin varsa kilo, uyku, beslenme) cevap üretmek için Google Gemini'ye gönderir. Adın, e-postan ve hesap kimliğin gönderilmez."
+  },
+  "disclaimer": "Koç genel antrenman ve alışkanlık önerisi verir, tıbbi tavsiye vermez. Ağrı ya da sakatlıkta bir doktora veya fizyoterapiste görün.",
+  "privacy": "Mesajların ve kayıt özetin yalnızca cevap için Google Gemini'ye (yedek olarak OpenRouter'a) gönderilir; adın ve e-postan gönderilmez.",
+  "home": {
+    "eyebrow": "Koç",
+    "title": "Haftalık değerlendirme",
+    "body": "Koçun bu haftanı yorumlasın. Dokununca bir yapay zekâ hakkı kullanılır."
+  },
+  "settings": {
+    "link": "Yapay zekâ koçu",
+    "hint": "Kayıtlarına bakarak sorularını cevaplar"
+  }
+}
