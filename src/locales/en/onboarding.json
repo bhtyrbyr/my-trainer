@@ -3,7 +3,9 @@
   "title": "Let's meet.",
   "subtitle": "This is exactly how you will appear on the leaderboard.",
   "ready": "All set. You can change your profile later in Settings.",
-  "preview": { "namePlaceholder": "Your name" },
+  "preview": {
+    "namePlaceholder": "Your name"
+  },
   "cancel": "Cancel and sign out",
   "optional": "Optional",
   "about": "About you",
@@ -45,9 +47,14 @@
     "display_name_required": "Display name is required.",
     "display_name_too_long": "At most 40 characters.",
     "sex_required": "Please choose a sex.",
-    "goal_required": "Pick a goal."
+    "goal_required": "Pick a goal.",
+    "too_young": "The app is for people aged 18 or older."
   },
-  "sex": { "male": "Male", "female": "Female", "other": "Other" },
+  "sex": {
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
+  },
   "goal": {
     "lose_fat": "Lose fat",
     "build_muscle": "Build muscle",
