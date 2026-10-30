@@ -13,7 +13,7 @@ import { AvatarCropper } from '../components/AvatarCropper'
 import { cn } from '@/lib/utils'
 import { onboardingSchema, suggestUsername, type OnboardingInput, type OnboardingValues } from '../schema'
 import { completeOnboarding, isUsernameAvailable, uploadAvatar } from '../api'
-import { acknowledgeNotice } from '@/features/privacy/api'
+import { acknowledgeNotice, confirmAdult } from '@/features/privacy/api'
 import { NoticeContent } from '@/features/privacy/components/NoticeContent'
 import { BottomSheet } from '@/features/nutrition/components/BottomSheet'
 
@@ -42,6 +42,7 @@ export function OnboardingPage() {
   const [submitError, setSubmitError] = useState<unknown>(null)
   // KVKK: the privacy notice is read and acknowledged before any profile data is stored
   const [noticeOk, setNoticeOk] = useState(false)
+  const [adultOk, setAdultOk] = useState(false)
   const [noticeOpen, setNoticeOpen] = useState(false)
 
   const meta = (user?.user_metadata ?? {}) as { full_name?: string; name?: string; avatar_url?: string; picture?: string }
@@ -127,6 +128,7 @@ export function OnboardingPage() {
       return
     }
     try {
+      await confirmAdult()
       await acknowledgeNotice()
       const path = await uploadAvatar(user.id, avatar.blob)
       await completeOnboarding(user.id, path, values)
@@ -147,7 +149,7 @@ export function OnboardingPage() {
     return m ? t(`onboarding:errors.${m}`) : null
   }
   const usernameError = fieldError('username') ?? (usernameStatus === 'taken' ? t('onboarding:errors.username_taken') : null)
-  const canSubmit = noticeOk && Boolean(avatar) && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !formState.isSubmitting
+  const canSubmit = noticeOk && adultOk && Boolean(avatar) && usernameStatus !== 'taken' && usernameStatus !== 'checking' && !formState.isSubmitting
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col pt-safe lg:max-w-lg">
@@ -283,6 +285,10 @@ export function OnboardingPage() {
         <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-bg from-70% to-bg/0 px-6 pt-10 pb-safe">
           <div className="mx-auto max-w-md space-y-2 pb-5 lg:max-w-lg">
             <label className="flex min-h-11 items-center gap-3 px-1 text-[13px] leading-snug text-ink-muted">
+              <input type="checkbox" checked={adultOk} onChange={(e) => setAdultOk(e.target.checked)} className="size-5 shrink-0 accent-[var(--color-volt)]" />
+              <span>{t('legal:ack.adult')}</span>
+            </label>
+            <label className="flex min-h-11 items-center gap-3 px-1 text-[13px] leading-snug text-ink-muted">
               <input type="checkbox" checked={noticeOk} onChange={(e) => setNoticeOk(e.target.checked)} className="size-5 shrink-0 accent-[var(--color-volt)]" />
               <span>
                 <Trans
@@ -305,7 +311,7 @@ export function OnboardingPage() {
               {formState.isSubmitting ? <Loader2 className="size-5 animate-spin" aria-hidden /> : t('onboarding:submit')}
             </Button>
             <p className="text-center text-[11.5px] text-ink-faint">
-              {!avatar ? t('onboarding:avatar.required') : !noticeOk ? t('legal:ack.required') : t('onboarding:ready')}
+              {!avatar ? t('onboarding:avatar.required') : !adultOk ? t('legal:ack.adultRequired') : !noticeOk ? t('legal:ack.required') : t('onboarding:ready')}
             </p>
           </div>
         </div>

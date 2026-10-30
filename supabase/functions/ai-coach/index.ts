@@ -24,6 +24,16 @@ const json = (body: unknown, status = 200) =>
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_IMAGE_B64 = 2_000_000 // ~1.5 MB; the client sends a 1024px JPEG (~150 KB)
 const MAX_TEXT = 500
+// Gemini's free tier may not be offered to users in the EEA, the UK or Switzerland (Gemini API terms).
+// Best effort from the edge's country header; users also confirm it in the AI consent.
+const FREE_TIER_BLOCKED = new Set(['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH'])
+function requestCountry(req: Request): string | null {
+  for (const h of ['cf-ipcountry', 'x-country', 'x-vercel-ip-country']) {
+    const v = req.headers.get(h)
+    if (v && /^[A-Za-z]{2}$/.test(v)) return v.toUpperCase()
+  }
+  return null
+}
 
 type FoodItem = { name: string; portion: string; kcal: number; protein_g: number; carb_g: number; fat_g: number }
 type Estimate = { items: FoodItem[] }
@@ -56,6 +66,8 @@ Deno.serve(async (req) => {
     return json({ error: 'AI_BAD_INPUT' }, 400)
   }
   if (body.action !== 'food-estimate') return json({ error: 'AI_BAD_INPUT' }, 400)
+  const country = requestCountry(req)
+  if (country && FREE_TIER_BLOCKED.has(country)) return json({ error: 'AI_REGION' }, 451)
 
   const text = typeof body.text === 'string' ? body.text.trim().slice(0, MAX_TEXT) : ''
   const locale = body.locale === 'en' ? 'en' : 'tr'
@@ -74,6 +86,7 @@ Deno.serve(async (req) => {
   // Gate: user limit, app cap and Google's shared free-tier quota (per model, per day and minute).
   const { data: gate, error: gateError } = await supabase.rpc('ai_reserve')
   if (gateError) {
+    if (/AI_CONSENT_REQUIRED/.test(gateError.message)) return json({ error: 'AI_CONSENT_REQUIRED' }, 403)
     const code = /AI_QUOTA|AI_APP_LIMIT|AI_GOOGLE_DAILY|AI_GOOGLE_MINUTE/.exec(gateError.message)?.[0]
     if (code) return json({ error: code }, 429)
     if (/FORBIDDEN/.test(gateError.message)) return json({ error: 'FORBIDDEN' }, 403)

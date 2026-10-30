@@ -83,3 +83,9 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - `dispatch_reminders()` (pg_cron, every 5 minutes, security definer, granted to nobody) queues messages with pg_net to the `push-send` Edge Function. The function has `verify_jwt = false` and instead requires the shared `PUSH_DISPATCH_SECRET` (constant-time compare); it never uses service_role and reads no data. Dead endpoints are pruned through `prune_push_subscriptions(secret, endpoints)`, the only function granted to anon: it can only delete and needs the 32+ character secret (hash compared).
 - Payloads (up to three item names) are encrypted to the device per RFC 8291; the push services (Apple, Google, Mozilla) cannot read them. The crypto was cross-checked against the reference `http_ece` decryptor and is covered by `src/lib/webpush.test.ts`.
 - Secrets: `VAPID_PRIVATE_KEY` and `PUSH_DISPATCH_SECRET` exist only in GitHub Secrets and Supabase function secrets (set by deploy.yml); the public VAPID key is built into the client.
+
+## AI safeguards (free-tier terms)
+
+- 18+: confirmed at onboarding and by existing users at the next notice gate (`user_consents.kind = 'adult'`).
+- Explicit AI consent (`ai_processing`): required by `ai_reserve()` (raises `AI_CONSENT_REQUIRED`), withdrawable via `withdraw_ai_consent()`; `ai_consent_of()` is internal.
+- The ai-coach function sends only the meal text or the EXIF-stripped photo and the UI language, never user ids, names or e-mails; requests whose edge country header is in the EEA, UK or Switzerland get `AI_REGION` (451).

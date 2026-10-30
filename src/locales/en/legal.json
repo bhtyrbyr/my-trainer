@@ -69,6 +69,13 @@
         ]
       },
       {
+        "title": "Age limit",
+        "items": [
+          "The app is for people aged 18 or older; you confirm this when signing up.",
+          "AI features also need your explicit consent and are not available in the European Economic Area, the United Kingdom or Switzerland."
+        ]
+      },
+      {
         "title": "Your rights (KVKK art. 11)",
         "items": [
           "To learn whether your data is processed, request information, and learn the purpose and recipients.",
@@ -88,7 +95,9 @@
     "required": "Confirm that you have read the privacy notice to continue.",
     "gateTitle": "The privacy notice was updated",
     "gateBody": "Before you continue, please read how your personal data is processed.",
-    "gateConfirm": "I have read it, continue"
+    "gateConfirm": "I have read it, continue",
+    "adult": "I am 18 or older.",
+    "adultRequired": "You must be 18 or older to use the app."
   },
   "health": {
     "eyebrow": "Explicit consent",
@@ -122,5 +131,20 @@
     "deleteConfirm": "Permanently delete my account",
     "deleting": "Deleting…",
     "cancel": "Cancel"
+  },
+  "ai": {
+    "eyebrow": "AI",
+    "title": "AI estimates need your consent",
+    "body": "Food estimates send the text you type or the photo you take to Google Gemini (and, for text, OpenRouter as a fallback). On the free tier Google may use this content to improve its products and humans may read it. Your identity, name or e-mail is never sent; photo location data is removed.",
+    "adult": "I am 18 or older.",
+    "region": "I am not in the European Economic Area, the United Kingdom or Switzerland.",
+    "statement": "I give my explicit consent for my meal text and photos to be sent to Google Gemini and OpenRouter for nutrition estimates and processed under those providers' terms.",
+    "hint": "Do not include personal details (names, health conditions, etc.). You can withdraw consent in Settings; AI then turns off while manual entry and search keep working.",
+    "agree": "I consent",
+    "disclaimer": "This is an estimate, not medical or dietary advice. Check the values before adding them.",
+    "setting": "AI consent",
+    "withdrawTitle": "Withdraw AI consent?",
+    "withdrawBody": "Food estimates turn off. Meals you already added are kept; content already sent to Google is subject to its terms.",
+    "withdrawConfirm": "Withdraw consent"
   }
 }

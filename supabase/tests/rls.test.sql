@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(308);
+select plan(311);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -33,7 +33,7 @@ select is(
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
         'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
-        'get_leaderboard', 'has_health_consent', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'prune_push_subscriptions', 'record_consent',
+        'get_leaderboard', 'has_health_consent', 'withdraw_ai_consent', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'prune_push_subscriptions', 'record_consent',
         'register_push', 'rls_auto_enable', 'unregister_push', 'withdraw_health_consent')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
@@ -434,6 +434,8 @@ select throws_like(
   $$ insert into public.meal_entries (user_id, eaten_on, meal_slot, name, kcal) values ('00000000-0000-0000-0000-00000000000b', current_date + 5, 'lunch', 'x', 1) $$,
   '%FUTURE_DATE%', 'meals: future days are rejected'
 );
+select throws_like($$ select public.ai_reserve() $$, '%AI_CONSENT_REQUIRED%', 'ai: no AI request before explicit consent (18+, free-tier terms)');
+select public.record_consent('ai_processing', 'test');
 select is((public.ai_reserve() ->> 'user_left')::int, 39, 'ai: a request is counted against the daily limit');
 select throws_ok(
   $$ insert into public.ai_usage (user_id, day, request_count) values ('00000000-0000-0000-0000-00000000000b', current_date, 0) $$,
@@ -494,6 +496,7 @@ reset role;
 -- AI gate: Google free-tier quota is shared by all users ------------------------------------
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select public.record_consent('ai_processing', 'test');
 select is((public.ai_availability() ->> 'available')::boolean, true, 'gate: AI available with quota left');
 reset role;
 insert into public.ai_usage_log (user_id, action, provider, model, total_tokens)
@@ -1359,5 +1362,11 @@ select is((select count(*)::int from public.water_entries where user_id = :'ub')
           + (select count(*)::int from public.photo_vault where user_id = :'ub'), 0, 'consent: withdrawal erases the health data');
 reset role;
 
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select public.withdraw_ai_consent('test');
+select throws_like($$ select public.ai_reserve() $$, '%AI_CONSENT_REQUIRED%', 'ai: withdrawing the AI consent stops further requests');
+select throws_ok($$ select public.ai_consent_of('00000000-0000-0000-0000-00000000000a') $$, '42501', null, 'ai: the consent helper is internal');
+reset role;
 select * from finish();
 rollback;

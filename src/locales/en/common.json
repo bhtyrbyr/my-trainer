@@ -64,7 +64,9 @@
     "notDue": "This to-do is not scheduled for that day.",
     "limitReached": "You reached the limit (50 active habits, 500 to-dos). Archive or delete the ones you no longer use.",
     "pushDenied": "Notification permission was not granted. You can allow it in the phone or browser settings.",
-    "pushUnsupported": "Notifications cannot be turned on here. On iPhone, add the app to the Home Screen first."
+    "pushUnsupported": "Notifications cannot be turned on here. On iPhone, add the app to the Home Screen first.",
+    "aiConsent": "AI estimates need your consent first.",
+    "aiRegion": "AI estimates are not available in your region. Use search or manual entry."
   },
   "update": {
     "title": "New version released",

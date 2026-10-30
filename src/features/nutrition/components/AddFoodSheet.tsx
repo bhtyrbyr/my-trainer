@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
 import { useAddMeals, useAiAvailability, useEstimateFood } from '../hooks'
+import { useConsents } from '@/features/privacy/hooks'
+import { AiConsentCard } from '@/features/privacy/components/AiConsent'
 import type { AiAvailability } from '../api'
 import {
   MEAL_SLOTS,
@@ -235,9 +237,10 @@ function EstimatePanel({
   onItems: (items: EstimateItem[]) => void
   onSearch: () => void
 }) {
-  const { t } = useTranslation('nutrition')
+  const { t } = useTranslation(['nutrition', 'legal'])
   const estimate = useEstimateFood()
   const availability = useAiAvailability()
+  const consents = useConsents()
   const blocked = availability.data && !availability.data.available ? availability.data : null
   const [text, setText] = useState(initialText)
   const [photo, setPhoto] = useState<File | null>(null)
@@ -264,6 +267,9 @@ function EstimatePanel({
       },
     )
   }
+
+  // explicit consent (18+, free-tier terms, region) before the first AI request
+  if (!consents.isLoading && !consents.ai) return <AiConsentCard />
 
   return (
     <div className="space-y-3">
@@ -349,6 +355,7 @@ function EstimatePanel({
           {t('aiStatus.left', { count: availability.data.user_left })}
         </p>
       )}
+      <p className="text-[11px] leading-snug text-ink-faint">{t('legal:ai.disclaimer')}</p>
       <p className="text-[11px] leading-snug text-ink-faint">{t('sheet.privacy')}</p>
     </div>
   )
