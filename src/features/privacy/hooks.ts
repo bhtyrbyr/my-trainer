@@ -33,10 +33,7 @@ function useAfterHealthChange() {
 export function useAcknowledgeNotice() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ adult }: { adult: boolean }) => {
-      if (adult) await api.confirmAdult()
-      await api.acknowledgeNotice()
-    },
+    mutationFn: api.acknowledgeNotice,
     onSuccess: () => qc.invalidateQueries({ queryKey: consentKeys.all }),
   })
 }

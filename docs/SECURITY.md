@@ -86,6 +86,6 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 
 ## AI safeguards (free-tier terms)
 
-- 18+: confirmed at onboarding and by existing users at the next notice gate (`user_consents.kind = 'adult'`).
+- Age: the app is open to all ages; AI is 18+. The AI consent includes an 18+ confirmation (`adult`); `record_consent` refuses it and `ai_reserve()` refuses every request (`AI_UNDERAGE`) when the stored birth year is under 18.
 - Explicit AI consent (`ai_processing`): required by `ai_reserve()` (raises `AI_CONSENT_REQUIRED`), withdrawable via `withdraw_ai_consent()`; `ai_consent_of()` is internal.
 - The ai-coach function sends only the meal text or the EXIF-stripped photo and the UI language, never user ids, names or e-mails; requests whose edge country header is in the EEA, UK or Switzerland get `AI_REGION` (451).

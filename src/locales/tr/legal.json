@@ -69,9 +69,10 @@
         ]
       },
       {
-        "title": "Yaş sınırı",
+        "title": "Yaş",
         "items": [
-          "Uygulama 18 yaşından büyükler içindir; kayıt sırasında bunu onaylarsın.",
+          "Uygulamayı 18 yaşından küçükler de kullanabilir; yapay zekâ özellikleri ise yalnızca 18 yaş ve üzeri içindir (sağlayıcıların koşulları). Doğum yılın 18 yaş altını gösteriyorsa yapay zekâ kapalı kalır.",
+          "18 yaşından küçüksen, özellikle sağlık verilerin için açık rızayı veli ya da vasinle birlikte vermelisin.",
           "Yapay zekâ özellikleri ayrıca açık rızana bağlıdır ve Avrupa Ekonomik Alanı, Birleşik Krallık ve İsviçre'de kullanılamaz."
         ]
       },
@@ -95,9 +96,7 @@
     "required": "Devam etmek için aydınlatma metnini okuduğunu onayla.",
     "gateTitle": "Aydınlatma metni güncellendi",
     "gateBody": "Devam etmeden önce kişisel verilerinin nasıl işlendiğini okumanı istiyoruz.",
-    "gateConfirm": "Okudum, devam et",
-    "adult": "18 yaşından büyüğüm.",
-    "adultRequired": "Uygulamayı kullanmak için 18 yaşından büyük olmalısın."
+    "gateConfirm": "Okudum, devam et"
   },
   "health": {
     "eyebrow": "Açık rıza",

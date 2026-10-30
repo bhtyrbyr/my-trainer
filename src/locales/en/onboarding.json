@@ -47,8 +47,7 @@
     "display_name_required": "Display name is required.",
     "display_name_too_long": "At most 40 characters.",
     "sex_required": "Please choose a sex.",
-    "goal_required": "Pick a goal.",
-    "too_young": "The app is for people aged 18 or older."
+    "goal_required": "Pick a goal."
   },
   "sex": {
     "male": "Male",

@@ -47,8 +47,7 @@
     "display_name_required": "Görünen ad zorunlu.",
     "display_name_too_long": "En fazla 40 karakter.",
     "sex_required": "Cinsiyet seçimi zorunlu.",
-    "goal_required": "Bir hedef seç.",
-    "too_young": "Uygulama 18 yaşından büyükler içindir."
+    "goal_required": "Bir hedef seç."
   },
   "sex": {
     "male": "Erkek",

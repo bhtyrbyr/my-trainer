@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
   // Gate: user limit, app cap and Google's shared free-tier quota (per model, per day and minute).
   const { data: gate, error: gateError } = await supabase.rpc('ai_reserve')
   if (gateError) {
+    if (/AI_UNDERAGE/.test(gateError.message)) return json({ error: 'AI_UNDERAGE' }, 403)
     if (/AI_CONSENT_REQUIRED/.test(gateError.message)) return json({ error: 'AI_CONSENT_REQUIRED' }, 403)
     const code = /AI_QUOTA|AI_APP_LIMIT|AI_GOOGLE_DAILY|AI_GOOGLE_MINUTE/.exec(gateError.message)?.[0]
     if (code) return json({ error: code }, 429)

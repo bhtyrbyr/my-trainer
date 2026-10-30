@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate } from 'react-router-dom'
 import { HeartPulse, Loader2 } from 'lucide-react'
@@ -16,7 +16,6 @@ export function NoticeGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation('legal')
   const consents = useConsents()
   const ack = useAcknowledgeNotice()
-  const [adult, setAdult] = useState(false)
   if (consents.isLoading) return <FullScreenSpinner />
   // a failed read must not lock people out of their own data; the gate shows again next time
   if (consents.noticeAcked || consents.isError) return <>{children}</>
@@ -33,14 +32,8 @@ export function NoticeGate({ children }: { children: ReactNode }) {
       </div>
       <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-bg via-bg/95 to-bg/0 px-5 pb-safe pt-8">
         <div className="mx-auto max-w-md space-y-2 pb-5">
-          {!consents.adult && (
-            <label className="flex min-h-11 items-center gap-3 px-1 text-[14px] text-ink">
-              <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="size-5 shrink-0 accent-[var(--color-volt)]" />
-              {t('ack.adult')}
-            </label>
-          )}
           <ErrorNote error={ack.error} />
-          <Button size="lg" className="w-full" disabled={ack.isPending || (!consents.adult && !adult)} onClick={() => ack.mutate({ adult: !consents.adult })}>
+          <Button size="lg" className="w-full" disabled={ack.isPending} onClick={() => ack.mutate()}>
             {ack.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
             {t('ack.gateConfirm')}
           </Button>

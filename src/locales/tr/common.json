@@ -67,7 +67,7 @@
     "pushUnsupported": "Bu cihazda bildirim açılamıyor. iPhone ise uygulamayı önce ana ekrana ekle.",
     "aiConsent": "Yapay zekâ tahmini için önce iznin gerekiyor.",
     "aiRegion": "Yapay zekâ tahmini bulunduğun bölgede kullanılamıyor. Arama ya da elle giriş kullan.",
-    "underage": "Uygulama 18 yaşından büyükler içindir."
+    "underage": "Yapay zekâ özellikleri 18 yaşından küçükler için kapalı. Arama ve elle giriş kullanılabilir."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",
