@@ -4,16 +4,19 @@ import { Dumbbell, SearchX } from 'lucide-react'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
 import { useExercise, useMediaUrl } from '../hooks'
+import { exerciseCredits, exerciseMedia, type Credit } from '../media'
 import { exerciseName, exerciseSteps } from '../name'
 import type { Exercise } from '../types'
 import { useVocab } from '../vocab'
 import { BackButton } from '../components/BackButton'
 import { MuscleMap } from '../components/MuscleMap'
+import { Flipbook } from '../components/Flipbook'
 import { ExerciseProgress } from '../components/ExerciseProgress'
 
 /**
- * Point of view: a coach's card. The movement (GIF on its white plate) and a large display name lead;
- * the body map answers "what does it work"; the user's own numbers follow. Mobile is one column;
+ * Point of view: a coach's card. The movement (illustration flipbook on a quiet plate) and a large display
+ * name lead; without an illustration the name leads and the body map right under it is the picture.
+ * The user's own numbers follow; one faint credit line closes the page. Mobile is one column;
  * desktop puts progress in a second column next to the how-to.
  */
 export function ExerciseDetailPage() {
@@ -48,7 +51,10 @@ export function ExerciseDetailPage() {
               <ExerciseProgress exerciseId={ex.id} />
             </div>
 
-            <Steps steps={exerciseSteps(ex, i18n.resolvedLanguage)} className="lg:col-start-1 lg:row-start-3" />
+            <div className="lg:col-start-1 lg:row-start-3">
+              <Steps steps={exerciseSteps(ex, i18n.resolvedLanguage)} />
+              <Credits credits={exerciseCredits(ex.attribution, i18n.resolvedLanguage)} />
+            </div>
           </div>
         ) : (
           !query.error && <NotFound />
@@ -61,26 +67,18 @@ export function ExerciseDetailPage() {
 function Hero({ ex, lang, className }: { ex: Exercise; lang: string | undefined; className?: string }) {
   const { t } = useTranslation('exercises')
   const vocab = useVocab()
-  const { data: url } = useMediaUrl(ex.gif_path)
   const name = exerciseName(ex, lang)
+  const media = exerciseMedia(ex)
   return (
     <header className={cn('rise-in', className)}>
-      <div
-        className={cn(
-          'flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)]',
-          ex.gif_path ? 'bg-white' : 'hairline bg-surface',
-        )}
-      >
-        {ex.gif_path && url ? (
-          <img src={url} alt={name} decoding="async" className="h-full w-full object-contain" />
-        ) : ex.gif_path ? (
-          <span aria-hidden className="size-full animate-pulse bg-white" />
-        ) : (
-          <Dumbbell className="size-10 text-ink-faint" aria-hidden />
-        )}
-      </div>
+      {media.kind === 'frames' && (
+        <div className="hairline mb-6 flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-surface">
+          <Flipbook paths={media.paths} label={t('detail.mediaLabel', { name })} className="aspect-square h-[88%]" />
+        </div>
+      )}
+      {media.kind === 'gif' && <LegacyGif path={media.path} name={name} />}
 
-      {ex.body_parts.length > 0 && <p className="eyebrow mt-6">{ex.body_parts.map(vocab.bodyPart).join(' · ')}</p>}
+      {ex.body_parts.length > 0 && <p className="eyebrow">{ex.body_parts.map(vocab.bodyPart).join(' · ')}</p>}
       <h1 className="display mt-2 text-[32px] lg:text-[40px]">{name}</h1>
 
       <ul className="mt-4 flex flex-wrap gap-2">
@@ -104,6 +102,59 @@ function Hero({ ex, lang, className }: { ex: Exercise; lang: string | undefined;
   )
 }
 
+/** ExerciseDB GIF on its white plate: legacy rows only, until the catalog switch removes them. */
+function LegacyGif({ path, name }: { path: string; name: string }) {
+  const { data: url } = useMediaUrl(path)
+  return (
+    <div className="mb-6 flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-white">
+      {url ? (
+        <img src={url} alt={name} decoding="async" className="h-full w-full object-contain" />
+      ) : (
+        <span aria-hidden className="size-full animate-pulse bg-white" />
+      )}
+    </div>
+  )
+}
+
+/** "Text: wger contributors, CC BY-SA 4.0 · Illustration: Bryl Lim / Everkinetic, CC BY-SA 4.0 · Turkish: machine translation" */
+function Credits({ credits }: { credits: Credit[] }) {
+  const { t } = useTranslation('exercises')
+  if (!credits.length) return null
+  return (
+    <p className="mt-8 max-w-[60ch] border-t border-line pt-4 text-[12px] leading-relaxed text-ink-faint">
+      <span className="sr-only">{t('detail.credit.label')}: </span>
+      {credits.map((c, i) => (
+        <span key={c.role}>
+          {i > 0 && <span aria-hidden> · </span>}
+          {c.role === 'translation' ? (
+            t('detail.credit.translation')
+          ) : (
+            <>
+              {t(c.role === 'text' ? 'detail.credit.text' : 'detail.credit.media')}:{' '}
+              <CreditWho credit={c} />
+            </>
+          )}
+        </span>
+      ))}
+    </p>
+  )
+}
+
+function CreditWho({ credit }: { credit: Extract<Credit, { role: 'text' | 'media' }> }) {
+  const who = [credit.author, credit.license].filter(Boolean).join(', ')
+  if (!credit.url) return <>{who}</>
+  return (
+    <a
+      href={credit.url}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="underline decoration-line-strong underline-offset-2 transition-colors hover:text-ink-muted"
+    >
+      {who}
+    </a>
+  )
+}
+
 function Tag({ kind, label, children }: { kind: 'target' | 'secondary' | 'equipment'; label: string; children: React.ReactNode }) {
   return (
     <li
@@ -122,10 +173,10 @@ function Tag({ kind, label, children }: { kind: 'target' | 'secondary' | 'equipm
   )
 }
 
-function Steps({ steps, className }: { steps: string[]; className?: string }) {
+function Steps({ steps }: { steps: string[] }) {
   const { t } = useTranslation('exercises')
   return (
-    <section aria-labelledby="steps-title" className={className}>
+    <section aria-labelledby="steps-title">
       <h2 id="steps-title" className="display mb-4 text-[22px]">
         {t('detail.steps.title')}
       </h2>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Bug, ChevronRight, LogOut, Sparkles, UserCheck } from 'lucide-react'
+import { Bug, ChevronRight, LogOut, Scale, Sparkles, UserCheck } from 'lucide-react'
 import { useAiLive, useErrorReports, usePendingCount } from '@/features/admin/hooks'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
@@ -191,7 +191,17 @@ export function SettingsPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
             {t('settings:about')}
           </h2>
-          <p className="text-sm text-ink-muted">{t('settings:attribution')}</p>
+          <Link
+            to="/settings/licenses"
+            className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+          >
+            <Scale className="size-5 text-ink-muted" aria-hidden />
+            <span className="flex-1">
+              <span className="block text-[15px]">{t('settings:licenses.link')}</span>
+              <span className="block text-[12px] leading-snug text-ink-faint">{t('settings:licenses.hint')}</span>
+            </span>
+            <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+          </Link>
           <p className="tabular text-xs text-ink-faint">
             {t('settings:version', { version: __APP_VERSION__ })}
             <span className="text-ink-faint/60"> · </span>

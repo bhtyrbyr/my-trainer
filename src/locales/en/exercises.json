@@ -50,6 +50,13 @@
     "steps": {
       "title": "How to do it",
       "empty": "No instructions for this movement."
+    },
+    "mediaLabel": "{{name}}, illustrated movement",
+    "credit": {
+      "label": "Credits",
+      "text": "Text",
+      "media": "Illustration",
+      "translation": "Turkish: machine translation"
     }
   },
   "progress": {

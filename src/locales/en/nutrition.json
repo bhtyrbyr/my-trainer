@@ -125,7 +125,7 @@
     "grams": "Amount",
     "addGrams": "Add · {{kcal}} kcal",
     "hint": "Type a food: your saved foods and the nutrition database are searched first; if it is not there, try packaged products or the AI.",
-    "offCredit": "Packaged product data: Open Food Facts (ODbL). Values are per 100 g."
+    "offCredit": "Packaged product data: <0>Open Food Facts</0> (ODbL). Values are per 100 g."
   },
   "aiStatus": {
     "user_daily": {

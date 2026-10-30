@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import { EXERCISE_COLUMNS, type Exercise, type ExerciseFilters } from './types'
+import { EXERCISE_COLUMNS, LISTED_SOURCES, type Exercise, type ExerciseFilters } from './types'
+import { createBatcher } from './batch'
 import { sanitizeSearch } from './name'
 import type { MuscleCatalog } from './muscles'
 import { toNum, type LoggedSet, type ProgressPoint } from './progress'
@@ -7,9 +8,16 @@ import { toNum, type LoggedSet, type ProgressPoint } from './progress'
 export const MEDIA_BUCKET = 'exercise-media'
 export const PAGE_SIZE = 30
 
-/** One page of the catalog (+ the caller's custom exercises; RLS scopes custom rows to the owner). */
+/**
+ * One page of the catalog (+ the caller's custom exercises; RLS scopes custom rows to the owner).
+ * Only listed sources: retired `legacy` rows stay readable by id for history but never show up here.
+ */
 export async function searchExercises(filters: ExerciseFilters, page: number): Promise<Exercise[]> {
-  let query = supabase.from('exercises').select(EXERCISE_COLUMNS).order('name_en', { ascending: true })
+  let query = supabase
+    .from('exercises')
+    .select(EXERCISE_COLUMNS)
+    .in('source', [...LISTED_SOURCES])
+    .order('name_en', { ascending: true })
   const q = sanitizeSearch(filters.q)
   if (q) query = query.or(`name_en.ilike.%${q}%,name_tr.ilike.%${q}%`)
   if (filters.bodyPart) query = query.contains('body_parts', [filters.bodyPart])
@@ -18,27 +26,31 @@ export async function searchExercises(filters: ExerciseFilters, page: number): P
   const from = page * PAGE_SIZE
   const { data, error } = await query.range(from, from + PAGE_SIZE - 1)
   if (error) throw error
-  return (data ?? []) as Exercise[]
+  return (data ?? []) as unknown as Exercise[]
 }
 
 export async function getExercise(id: string): Promise<Exercise | null> {
   const { data, error } = await supabase.from('exercises').select(EXERCISE_COLUMNS).eq('id', id).maybeSingle()
   if (error) throw error
-  return (data as Exercise | null) ?? null
+  return (data as unknown as Exercise | null) ?? null
 }
 
 export async function getExercisesByIds(ids: string[]): Promise<Exercise[]> {
   if (!ids.length) return []
   const { data, error } = await supabase.from('exercises').select(EXERCISE_COLUMNS).in('id', ids)
   if (error) throw error
-  return (data ?? []) as Exercise[]
+  return (data ?? []) as unknown as Exercise[]
 }
 
 export type Facets = { bodyParts: string[]; muscles: string[]; equipment: string[] }
 
-/** Distinct filter values present in the catalog (~1500 small rows, cached for a day by the hook). */
+/** Distinct filter values present in the listed catalog (~650 small rows, cached for a day by the hook). */
 export async function getFacets(): Promise<Facets> {
-  const { data, error } = await supabase.from('exercises').select('body_parts, target_muscles, equipment').limit(5000)
+  const { data, error } = await supabase
+    .from('exercises')
+    .select('body_parts, target_muscles, equipment')
+    .in('source', [...LISTED_SOURCES])
+    .limit(5000)
   if (error) throw error
   const bp = new Set<string>(), mu = new Set<string>(), eq = new Set<string>()
   for (const r of data ?? []) {
@@ -50,7 +62,7 @@ export async function getFacets(): Promise<Facets> {
   return { bodyParts: sort(bp), muscles: sort(mu), equipment: sort(eq) }
 }
 
-/** Signed URLs for private media (GIFs, muscle SVGs). Valid for one hour; hooks cache them for 50 min. */
+/** Signed URLs for private media (illustration frames, muscle SVGs, legacy GIFs). Valid for one hour; hooks cache them per path for 50 min. */
 export async function signMedia(paths: string[]): Promise<Record<string, string>> {
   const unique = [...new Set(paths.filter(Boolean))]
   if (!unique.length) return {}
@@ -61,7 +73,10 @@ export async function signMedia(paths: string[]): Promise<Record<string, string>
   return out
 }
 
-/** wger muscles + ExerciseDB alias table (15 + ~40 rows; cached for a day by the hook). */
+/** One path, signed together with every other path requested in the same tick (one request per screen). */
+export const signMediaPath = createBatcher(signMedia)
+
+/** wger muscles + muscle-name alias table (15 + ~40 rows; cached for a day by the hook). */
 export async function getMuscleCatalog(): Promise<MuscleCatalog> {
   const [muscles, aliases] = await Promise.all([
     supabase.from('muscles').select('wger_id, name_latin, name_en, name_tr, is_front, svg_main_path, svg_secondary_path'),

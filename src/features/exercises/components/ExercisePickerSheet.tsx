@@ -76,7 +76,7 @@ export function ExercisePickerSheet({ open, onClose, onPick, selectedIds = [], t
                   onClick={() => onPick(ex)}
                   className="flex w-full items-center gap-3 py-2.5 text-left disabled:opacity-40"
                 >
-                  <ExerciseThumb gifPath={ex.gif_path} size={48} />
+                  <ExerciseThumb exercise={ex} size={48} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{exerciseName(ex, i18n.resolvedLanguage)}</span>
                     <span className="block truncate text-xs text-ink-faint">

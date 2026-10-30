@@ -1,0 +1,48 @@
+{
+  "back": "Geri",
+  "eyebrow": "Hakkında",
+  "title": "Lisanslar",
+  "intro": "{{app}}, açık lisanslı veriler, çizimler, yazı tipleri ve yazılımlar üzerine kurulu. Aşağıda bunların arkasındaki kişi ve projeler ile eserlerini hangi koşullarla kullandığımız yer alıyor.",
+  "opens": "yeni sekmede açılır",
+  "licenseLabel": "Lisans",
+  "groups": {
+    "exercises": "Egzersizler",
+    "food": "Besin verisi",
+    "fonts": "Yazı tipleri",
+    "libraries": "Yazılım"
+  },
+  "sources": {
+    "wger": {
+      "title": "wger egzersiz veritabanı",
+      "holder": "wger katkıcıları",
+      "license": "Egzersize göre CC BY-SA 3.0 / 4.0 ya da CC0",
+      "note": "Egzersiz adları, açıklamaları, kaslar ve ekipmanlar. Uygulamanın kas ve ekipman adlarına eşlendi; bir egzersizde belirtildiğinde Türkçe metin makine çevirisidir. Her egzersiz kendi kaynağını gösterir."
+    },
+    "workoutGuide": {
+      "title": "workout-guide çizimleri",
+      "holder": "Bryl Lim; 76 çizim Everkinetic'ten aktarıldı",
+      "license": "CC BY-SA 4.0 (çizimler), MIT (üst veri)",
+      "note": "Üç kareli hareket çizimleri; uygulama temasına göre yeniden renklendirildi ve kare kare oynatılıyor."
+    },
+    "muscles": {
+      "title": "Kas diyagramları",
+      "holder": "Termininja (Wikimedia Commons), wger aracılığıyla",
+      "license": "CC BY-SA 3.0",
+      "note": "\"Muscular system\" çizimine dayanır. Yeniden renklendirildi: çalışan kaslar uygulamanın vurgu rengiyle boyanır."
+    },
+    "usda": {
+      "title": "USDA FoodData Central",
+      "holder": "ABD Tarım Bakanlığı, Tarımsal Araştırma Servisi",
+      "license": "Kamu malı (CC0 1.0)",
+      "note": "Atıf: U.S. Department of Agriculture, Agricultural Research Service. FoodData Central. fdc.nal.usda.gov. Türkçe besin adları bizim makine çevirimizdir."
+    },
+    "off": {
+      "title": "Open Food Facts",
+      "holder": "Open Food Facts katkıcıları",
+      "license": "ODbL 1.0 (veritabanı), DbCL 1.0 (içerik)",
+      "note": "Paketli ürün araması. Değerler orada yayımlandığı gibi gösterilir; tıbbi kullanım için değildir."
+    }
+  },
+  "fontsNote": "@fontsource paketlerinden, kendi sunucumuzdan yüklenir.",
+  "texts": "Lisans metinlerinin tamamı"
+}

@@ -25,7 +25,7 @@ const iso = (d: Date) => d.toISOString()
 const ex = (id: string, en: string, tr: string | null, target: string, equipment: string): Exercise => ({
   id,
   external_id: null,
-  source: 'exercisedb',
+  source: 'workout-guide',
   name_en: en,
   name_tr: tr,
   body_parts: ['chest'],
@@ -35,6 +35,8 @@ const ex = (id: string, en: string, tr: string | null, target: string, equipment
   instructions_en: [],
   instructions_tr: null,
   gif_path: null,
+  media_frames: [],
+  attribution: null,
   is_custom: false,
   user_id: null,
   created_at: iso(NOW),
@@ -195,10 +197,10 @@ function seed(todayMode: string): QueryClient {
   })
   const today = isoWeekday()
   const templates = todayMode === 'none' ? [] : buildTemplates(today, todayMode)
-  // Sample movement GIFs resolve to /dev-media.local/ (gitignored); missing files just show the white card.
+  // Sample illustration frames resolve to /dev-media.local/ (gitignored); missing files leave the plate empty.
   for (const e of Object.values(EX)) {
-    e.gif_path = 'gifs/EIeI8Vf.gif'
-    qc.setQueryData(exerciseKeys.media(e.gif_path), '/dev-media.local/' + e.gif_path)
+    e.media_frames = [1, 2, 3].map((n) => `frames/bench-press/${n}.svg`)
+    for (const p of e.media_frames) qc.setQueryData(exerciseKeys.media(p), '/dev-media.local/' + p)
   }
   qc.setQueryData(workoutKeys.templates, templates)
   qc.setQueryData(

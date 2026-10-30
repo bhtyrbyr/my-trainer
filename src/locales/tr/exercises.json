@@ -50,6 +50,13 @@
     "steps": {
       "title": "Nasıl yapılır",
       "empty": "Bu hareket için talimat yok."
+    },
+    "mediaLabel": "{{name}}, hareketin çizimi",
+    "credit": {
+      "label": "Kaynaklar",
+      "text": "Metin",
+      "media": "Çizim",
+      "translation": "Türkçe: makine çevirisi"
     }
   },
   "progress": {

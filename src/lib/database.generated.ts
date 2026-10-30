@@ -308,6 +308,7 @@ export type Database = {
       }
       exercises: {
         Row: {
+          attribution: Json | null
           body_parts: string[]
           created_at: string
           equipment: string[]
@@ -317,6 +318,7 @@ export type Database = {
           instructions_en: string[]
           instructions_tr: string[] | null
           is_custom: boolean
+          media_frames: string[]
           name_en: string
           name_tr: string | null
           search: unknown
@@ -328,6 +330,7 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          attribution?: Json | null
           body_parts?: string[]
           created_at?: string
           equipment?: string[]
@@ -337,6 +340,7 @@ export type Database = {
           instructions_en?: string[]
           instructions_tr?: string[] | null
           is_custom?: boolean
+          media_frames?: string[]
           name_en: string
           name_tr?: string | null
           search?: never
@@ -347,6 +351,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          attribution?: Json | null
           body_parts?: string[]
           created_at?: string
           equipment?: string[]
@@ -356,6 +361,7 @@ export type Database = {
           instructions_en?: string[]
           instructions_tr?: string[] | null
           is_custom?: boolean
+          media_frames?: string[]
           name_en?: string
           name_tr?: string | null
           search?: never
@@ -1724,6 +1730,8 @@ export type Database = {
         Args: { p_auth: string; p_endpoint: string; p_p256dh: string; p_user_agent?: string }
         Returns: undefined
       }
+      replace_catalog_exercise: { Args: { p_new: string; p_old: string }; Returns: Json }
+      retire_catalog_exercise: { Args: { p_id: string }; Returns: string }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
       search_food_catalog: {
         Args: { p_limit?: number; p_query: string }

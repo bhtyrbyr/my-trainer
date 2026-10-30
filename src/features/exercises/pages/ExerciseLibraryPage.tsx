@@ -19,7 +19,7 @@ type SheetKind = 'muscle' | 'equipment' | null
 /**
  * Point of view: a reference index, not a gallery. Search is the dominant control; body parts are one
  * swipeable row; muscle and equipment hide behind two quiet pickers. Results are ruled rows with the
- * GIF on its white card, so the movement is recognisable at a glance. Filters live in the URL, so
+ * first illustration frame (or the muscle figure), so the movement is recognisable at a glance. Filters live in the URL, so
  * coming back from a detail page restores the list.
  */
 export function ExerciseLibraryPage() {
@@ -229,7 +229,7 @@ function Row({ ex, lang }: { ex: Exercise; lang: string | undefined }) {
         to={`/exercises/${ex.id}`}
         className="group flex items-center gap-3.5 py-3 transition-colors active:bg-surface/60"
       >
-        <ExerciseThumb gifPath={ex.gif_path} size={56} />
+        <ExerciseThumb exercise={ex} size={56} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-medium leading-snug text-ink">{exerciseName(ex, lang)}</span>
           <span className="mt-0.5 block truncate text-[13px] text-ink-faint">{meta}</span>

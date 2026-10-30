@@ -98,6 +98,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # Exercise catalog v2 (wger + workout-guide, docs/catalog-v2-spec.md): rows and SVG frames, then at most
+      # 30 Gemini Flash Lite translation requests (the user reserve is kept). Never blocks the app deploy.
+      # --replace-legacy is never run here: it needs the product owner's review of scripts/out/legacy-map.json.
+      - name: Exercise catalog sync
+        continue-on-error: true
+        timeout-minutes: 20
+        run: node scripts/sync-catalog.mjs --translate-limit=30
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   vercel:
     name: Vercel production deploy
