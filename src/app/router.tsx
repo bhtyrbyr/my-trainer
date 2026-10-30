@@ -36,6 +36,10 @@ const photos = page(() => import('@/features/photos/pages/PhotosPage'), 'PhotosP
 const devBody = (name: 'DevBodyLayout' | 'DevTrack' | 'DevBody' | 'DevNutrition' | 'DevSleepWater') => page(() => import('@/features/body/dev/DevBodyPreview'), name)
 const onboarding = page(() => import('@/features/profile/pages/OnboardingPage'), 'OnboardingPage')
 
+const coach = {
+  list: page(() => import('@/features/coach/pages/CoachPage'), 'CoachPage'),
+  chat: page(() => import('@/features/coach/pages/ChatPage'), 'ChatPage'),
+}
 const devHome = (name: 'DevHomeLayout' | 'DevHome') => page(() => import('@/features/dashboard/dev/DevDashboardPreview'), name)
 const devProfile = (name: 'DevProfileLayout' | 'DevProfile') => page(() => import('@/features/badges/dev/DevBadgesPreview'), name)
 const admin = {
@@ -88,6 +92,16 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         path: '/__dev/home',
         lazy: devHome('DevHomeLayout'),
         children: [{ index: true, lazy: devHome('DevHome') }],
+      },
+      {
+        // AI coach with sample conversations: ?consent=0, ?blocked=user_daily|google_minute, ?empty=1,
+        // ?fail=AI_UNDERAGE|COACH_AI_UNAVAILABLE|COACH_AI_QUOTA, ?delay=ms (typing state)
+        path: '/__dev/coach',
+        lazy: page(() => import('@/features/coach/dev/DevCoachPreview'), 'DevCoachLayout'),
+        children: [
+          { index: true, lazy: coach.list },
+          { path: ':id', lazy: coach.chat },
+        ],
       },
       {
         // Profile with a sample badge shelf: ?fresh=1, ?celebrate=sets_100
@@ -190,6 +204,8 @@ export const router = createBrowserRouter([
       { path: 'track/todos', lazy: page(() => import('@/features/today/pages/TodosPage'), 'TodosPage') },
       { path: 'today', element: <Navigate to="/track" replace /> },
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
+      { path: 'coach', lazy: coach.list },
+      { path: 'coach/:id', lazy: coach.chat },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
       { path: 'settings/licenses', lazy: page(() => import('@/features/settings/pages/LicensesPage'), 'LicensesPage') },
       {

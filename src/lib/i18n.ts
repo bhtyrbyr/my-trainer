@@ -41,13 +41,15 @@ import trBadges from '@/locales/tr/badges.json'
 import enBadges from '@/locales/en/badges.json'
 import trDashboard from '@/locales/tr/dashboard.json'
 import enDashboard from '@/locales/en/dashboard.json'
+import trCoach from '@/locales/tr/coach.json'
+import enCoach from '@/locales/en/coach.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal, today: trToday, licenses: trLicenses, offline: trOffline, badges: trBadges, dashboard: trDashboard },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal, today: enToday, licenses: enLicenses, offline: enOffline, badges: enBadges, dashboard: enDashboard },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal, today: trToday, licenses: trLicenses, offline: trOffline, badges: trBadges, dashboard: trDashboard, coach: trCoach },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal, today: enToday, licenses: enLicenses, offline: enOffline, badges: enBadges, dashboard: enDashboard, coach: enCoach },
 } as const
 
 void i18n

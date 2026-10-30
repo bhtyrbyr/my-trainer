@@ -19,7 +19,7 @@
           "Profile: username, display name, profile photo; optionally height, birth year, sex and goal.",
           "Usage: workout plans, sessions, sets, cardio entries, personal records, points and streaks.",
           "Health data (only with your explicit consent): weight, body measurements and body-fat estimate, meals and nutrients, sleep and water entries, progress photos.",
-          "AI: the text you type or the meal photo you take for a nutrition estimate (not stored), plus request and token counts.",
+          "AI (with your explicit consent, 18+): the text or meal photo for a nutrition estimate (not stored); in coach chats your messages and a 4-week workout/habit summary (no health data); request and token counts. Coach chats are kept in your account until you delete them.",
           "Technical: session data, IP address (in our hosting providers' logs) and an error report only if you send one.",
           "Notifications (if you turn them on): your device's push address and encryption keys, and reminder times."
         ]
@@ -133,11 +133,11 @@
   },
   "ai": {
     "eyebrow": "AI",
-    "title": "AI estimates need your consent",
-    "body": "Food estimates send the text you type or the photo you take to Google Gemini (and, for text, OpenRouter as a fallback). On the free tier Google may use this content to improve its products and humans may read it. Your identity, name or e-mail is never sent; photo location data is removed.",
+    "title": "AI needs your consent",
+    "body": "Food estimates send the text you type or the photo you take, and the coach sends your messages plus a summary of the last 4 weeks of workouts, habits and to-dos, to Google Gemini (and, for text, OpenRouter as a fallback). Health data such as weight, sleep and nutrition is never sent to the coach. On the free tier Google may use this content to improve its products and humans may read it. Your identity, name or e-mail is never sent; photo location data is removed.",
     "adult": "I am 18 or older.",
     "region": "I am not in the European Economic Area, the United Kingdom or Switzerland.",
-    "statement": "I give my explicit consent for my meal text and photos to be sent to Google Gemini and OpenRouter for nutrition estimates and processed under those providers' terms.",
+    "statement": "I give my explicit consent for my meal text and photos (for nutrition estimates) and my coach messages and workout/habit summaries (for coaching replies) to be sent to Google Gemini and OpenRouter and processed under those providers' terms.",
     "hint": "Do not include personal details (names, health conditions, etc.). You can withdraw consent in Settings; AI then turns off while manual entry and search keep working.",
     "agree": "I consent",
     "disclaimer": "This is an estimate, not medical or dietary advice. Check the values before adding them.",

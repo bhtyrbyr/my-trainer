@@ -17,7 +17,8 @@ export function useEatenOn(day: string = toLocalDateISO(), previewValue?: { kcal
   return { ...q, data: q.data ? { kcal: totalsOf(q.data).kcal, entries: q.data.length } : undefined }
 }
 
-export { useMeals } from './hooks'
+export { useMeals, useAiAvailability } from './hooks'
+export type { AiAvailability } from './api'
 export { MEAL_SLOTS } from './types'
 export type { MealEntry, MealSlot } from './types'
 

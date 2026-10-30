@@ -1,0 +1,76 @@
+{
+  "title": "Coach",
+  "eyebrow": "AI coach",
+  "back": "Back",
+  "new": "New conversation",
+  "list": {
+    "heading": "Ask. It answers from your own logs.",
+    "lead": "The coach reads a summary of your last 28 days of training and habits, plus weight, sleep and nutrition if you allowed health data.",
+    "ask": "Quick questions",
+    "conversations": "Conversations",
+    "empty": "No conversations yet. Pick a question above or start a new conversation.",
+    "delete": "Delete conversation",
+    "deleteConfirm": "Delete this conversation and all of its messages?",
+    "untitled": "Untitled conversation"
+  },
+  "chat": {
+    "heading": "What would you like to ask?",
+    "lead": "Ask about your training, habits or nutrition. Each answer uses one AI request.",
+    "placeholder": "Ask your coach…",
+    "label": "Your message",
+    "send": "Send",
+    "typing": "Coach is typing",
+    "coach": "Coach",
+    "unanswered": "This question has not been answered yet.",
+    "retry": "Get an answer",
+    "notFound": "This conversation was not found. It may have been deleted.",
+    "toList": "Back to conversations",
+    "counter": "{{n}}/{{max}}"
+  },
+  "prompts": {
+    "week": "How did my week go?",
+    "tomorrow": "What should I train tomorrow?",
+    "protein": "How can I get more protein?",
+    "weekly": "Can you review my week? What went well, what could I improve? Suggest 2-3 concrete goals for next week."
+  },
+  "quota": {
+    "left_one": "{{count}} AI request left today",
+    "left_other": "{{count}} AI requests left today"
+  },
+  "status": {
+    "user_daily": {
+      "title": "You have used today's AI requests",
+      "body": "The coach and the food estimate share one daily allowance. It renews at {{time}} (in {{in}})."
+    },
+    "app_daily": {
+      "title": "The app's daily AI limit is reached",
+      "body": "The daily cap we set for all users has been reached. It renews at {{time}} (in {{in}})."
+    },
+    "google_daily": {
+      "title": "Free AI requests are used up for today",
+      "body": "Google's free tier limits daily requests for all users. They renew at {{time}} (in {{in}})."
+    },
+    "google_minute": {
+      "title": "The coach is busy right now",
+      "body": "Google accepts a limited number of requests per minute. Try again in about a minute."
+    }
+  },
+  "underage": {
+    "title": "The coach is for ages 18 and over",
+    "body": "Under the AI providers' terms the coach is closed to people under 18. The rest of the app works as usual."
+  },
+  "consent": {
+    "lead": "To answer, the coach sends your messages and a summary of your last 28 days (training, habits; weight, sleep and nutrition if you allowed health data) to Google Gemini. Your name, e-mail and account id are never sent."
+  },
+  "disclaimer": "The coach gives general training and habit guidance, not medical advice. For pain or injury, see a doctor or physiotherapist.",
+  "privacy": "Your messages and log summary are sent to Google Gemini (OpenRouter as a fallback) only to answer; your name and e-mail are never sent.",
+  "home": {
+    "eyebrow": "Coach",
+    "title": "Weekly review",
+    "body": "Let your coach review your week. One tap uses one AI request."
+  },
+  "settings": {
+    "link": "AI coach",
+    "hint": "Answers your questions from your logs"
+  }
+}

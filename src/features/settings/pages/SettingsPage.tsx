@@ -21,7 +21,7 @@ import { NotificationsSection } from '@/features/notifications/NotificationsSect
 import { cn } from '@/lib/utils'
 
 export function SettingsPage() {
-  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'admin'])
+  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'admin', 'coach'])
   const { user, profile, signOut } = useAuth()
   const sync = useSyncState()
   const { settings, updateSettings } = useUserSettings()
@@ -72,6 +72,18 @@ export function SettingsPage() {
         </section>
 
         <BadgeShelf />
+
+        <Link
+          to="/coach"
+          className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+        >
+          <Sparkles className="size-5 text-volt" aria-hidden />
+          <span className="flex-1">
+            <span className="block text-[15px]">{t('coach:settings.link')}</span>
+            <span className="block text-[12px] leading-snug text-ink-faint">{t('coach:settings.hint')}</span>
+          </span>
+          <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+        </Link>
 
         {profile?.role === 'admin' && (
           <section className="space-y-2">
