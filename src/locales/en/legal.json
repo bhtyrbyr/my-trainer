@@ -69,9 +69,10 @@
         ]
       },
       {
-        "title": "Age limit",
+        "title": "Age",
         "items": [
-          "The app is for people aged 18 or older; you confirm this when signing up.",
+          "People under 18 may use the app; the AI features are for 18 and older only (the providers' terms). If your birth year shows you are under 18, AI stays off.",
+          "If you are under 18, give explicit consent, especially for health data, together with a parent or guardian.",
           "AI features also need your explicit consent and are not available in the European Economic Area, the United Kingdom or Switzerland."
         ]
       },
@@ -95,9 +96,7 @@
     "required": "Confirm that you have read the privacy notice to continue.",
     "gateTitle": "The privacy notice was updated",
     "gateBody": "Before you continue, please read how your personal data is processed.",
-    "gateConfirm": "I have read it, continue",
-    "adult": "I am 18 or older.",
-    "adultRequired": "You must be 18 or older to use the app."
+    "gateConfirm": "I have read it, continue"
   },
   "health": {
     "eyebrow": "Explicit consent",

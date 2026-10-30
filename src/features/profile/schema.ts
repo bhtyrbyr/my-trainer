@@ -2,13 +2,6 @@ import { z } from 'zod'
 
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
-/** The app is 18+. With only a birth year, anyone born after this year is certainly under 18. */
-export const MAX_BIRTH_YEAR = new Date().getFullYear() - 18
-
-export function isUnderage(birthYear: unknown): boolean {
-  const y = Number(birthYear)
-  return birthYear !== '' && birthYear != null && Number.isInteger(y) && y > MAX_BIRTH_YEAR && y <= new Date().getFullYear()
-}
 
 export const onboardingSchema = z.object({
   username: z
@@ -19,7 +12,7 @@ export const onboardingSchema = z.object({
   displayName: z.string().trim().min(1, 'display_name_required').max(40, 'display_name_too_long'),
   showOnLeaderboard: z.boolean(),
   birthYear: z
-    .union([z.literal(''), z.coerce.number().int().min(1900).max(MAX_BIRTH_YEAR, 'too_young')])
+    .union([z.literal(''), z.coerce.number().int().min(1900).max(new Date().getFullYear())])
     .optional(),
   heightCm: z.union([z.literal(''), z.coerce.number().min(50).max(300)]).optional(),
   weightKg: z.union([z.literal(''), z.coerce.number().min(20).max(400)]).optional(),

@@ -39,3 +39,7 @@ Vercel: https://vercel.com/docs/limits/fair-use-guidelines ·
 Supabase: https://supabase.com/docs/guides/platform/free-project-pausing ·
 Google OAuth: https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification, https://developers.google.com/terms/api-services-user-data-policy ·
 Fonts: https://openfontlicense.org/open-font-license-official-text/
+
+## Open questions for the lawyer (added 2026-10-30)
+
+- Users under 18 may use the app (AI is 18+). Is a minor's own explicit consent valid under KVKK for health data, or is a parent's/guardian's consent required? The notice currently asks minors to consent together with a parent or guardian.
