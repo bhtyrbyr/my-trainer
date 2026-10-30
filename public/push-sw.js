@@ -1,5 +1,11 @@
-/* Reminder notifications, imported by the generated service worker (vite.config.ts workbox.importScripts).
+/* Imported by the generated service worker (vite.config.ts workbox.importScripts).
+ * 1) Housekeeping: drop the old exercise-media cache (it held ExerciseDB GIFs, removed 2026-10-30).
+ * 2) Reminder notifications.
  * The title is the app's manifest name, so a product rename needs no change here. */
+self.addEventListener('activate', (event) => {
+  event.waitUntil(caches.delete('exercise-media').catch(() => false))
+})
+
 self.addEventListener('push', (event) => {
   let data = {}
   try {

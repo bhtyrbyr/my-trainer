@@ -1,3 +1,5 @@
+> Note (2026-10-30): the ExerciseDB parts of this spec are superseded by docs/catalog-v2-spec.md; ExerciseDB was removed.
+
 # Faz 1 technical spec: workouts + exercise catalog + leaderboard UI
 
 Source of truth for all Faz 1 agents. Keep column names exactly as written; the frontend types are derived from this.

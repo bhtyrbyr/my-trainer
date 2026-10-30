@@ -17,7 +17,7 @@ React 19 + Vite 7 + TypeScript + Tailwind v4 + shadcn-style UI, TanStack Query, 
 1. **Every** user table: RLS on, policies `user_id = auth.uid() and public.can_access()`. Cross-user data only via `profiles` public columns or security-definer RPCs (`get_leaderboard`). No exceptions.
 2. Points are written only by DB triggers via `award_points()` / `revoke_points()`. Clients never insert `point_events`. Rules: `docs/PRD.md` section 1.4 and table `point_rules`.
 3. The `service_role` key never appears in `src/`, `vite.config.ts` or committed env files. Only GitHub Secrets / Supabase Secrets.
-4. Third-party APIs (Gemini, OpenRouter, ExerciseDB, wger) are called only from `supabase/functions/*` or `scripts/*`, never from the browser.
+4. Third-party APIs (Gemini, OpenRouter, wger, Open Food Facts, GitHub raw for workout-guide) are called only from `supabase/functions/*` or `scripts/*`, never from the browser.
 5. Progress photos are encrypted client-side (`src/lib/crypto/`) before any upload; the service worker never caches the `progress-photos` bucket; plaintext never touches IndexedDB/localStorage.
 6. All UI text through `t()`; add TR **and** EN keys together; register new namespaces in `src/lib/i18n.ts`.
 7. Mobile first for **iPhone 16** (393x852, safe-area insets); desktop is a wider layout of the same screens. Five bottom tabs (Home, Track, Workouts in the centre as a raised volt disc, Ranking, Profile); Track is the day logbook (calendar) and absorbs habits/to-dos in Faz 3; no avatar/gear in page headers.
@@ -35,7 +35,7 @@ src/lib        supabase.ts, i18n.ts, image.ts, crypto/, units.ts, dates.ts, data
 src/components ui/ (primitives), layout/ (PageShell, HeaderActions, ...)
 src/locales    tr/*.json, en/*.json (one namespace per feature)
 supabase       migrations/, functions/ai-coach, seed.sql, tests/rls.test.sql
-scripts        sync-exercises.ts, check-i18n.mjs, gen-icons.mjs
+scripts        sync-catalog.mjs (exercises), sync-muscles.mjs, sync-foods.mjs, check-i18n.mjs, gen-icons.mjs
 .github        ci.yml (checks + PR preview), deploy.yml (Supabase + Vercel prod), keepalive.yml
 ```
 
@@ -46,7 +46,7 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 
 ## Phase status
 - [x] Faz 0: skeleton, Google auth, onboarding (mandatory avatar), access mode, points engine, CI/CD. Live: https://my-trainer-nine.vercel.app (Supabase ref tnamatnobmtxvdtovkzp, GitHub bhtyrbyr/my-trainer).
-- [x] Faz 1: workouts (ExerciseDB + wger sync, guided session flow) + leaderboard UI (v0.2.0)
+- [x] Faz 1: workouts (guided session flow) + leaderboard UI (v0.2.0); exercise catalog since 2026-10-30: wger + workout-guide (docs/catalog-v2-spec.md), ExerciseDB removed
 - [x] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos, KVKK (v0.3.0)
 - [x] Faz 3: habits + todos (shared recurrence engine), push reminders (v0.4.0)
 - [ ] Faz 4: dashboard, AI coach (Edge Function), badges, admin panel, offline queue, export

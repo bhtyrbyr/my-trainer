@@ -1,4 +1,5 @@
-# Monthly refresh of the exercise catalog (ExerciseDB exercises + GIFs, wger muscles + SVGs)
+# Monthly refresh of the exercise catalog (wger exercises + workout-guide frames, Turkish names) and the
+# wger muscle diagrams
 # into Supabase. Idempotent: existing media is skipped, rows are upserted, user edits kept.
 # The service_role key lives only in GitHub Secrets (never in the repo or the browser bundle).
 name: Sync exercise catalog
@@ -7,13 +8,8 @@ on:
     - cron: '0 3 1 * *'   # 1st of every month, 03:00 UTC
   workflow_dispatch:
     inputs:
-      only:
-        description: 'Limit to one source'
-        type: choice
-        options: ['', 'exercisedb', 'wger']
-        default: ''
       skip_media:
-        description: 'Skip GIF/SVG download and upload'
+        description: 'Skip media download and upload'
         type: boolean
         default: false
       dry_run:
@@ -25,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sync-exercises
+  group: sync-catalog
   cancel-in-progress: false
 
 jobs:
@@ -43,13 +39,13 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # Inputs go through env, never interpolated into the script (no shell injection).
-          IN_ONLY: ${{ inputs.only }}
           IN_SKIP_MEDIA: ${{ inputs.skip_media }}
           IN_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           flags=""
-          case "$IN_ONLY" in exercisedb|wger) flags="$flags --only=$IN_ONLY" ;; esac
           [ "$IN_SKIP_MEDIA" = "true" ] && flags="$flags --skip-media"
           [ "$IN_DRY_RUN" = "true" ] && flags="$flags --dry-run"
-          node scripts/sync-exercises.mjs $flags
+          node scripts/sync-muscles.mjs $flags
+          node scripts/sync-catalog.mjs $flags --translate-limit=30

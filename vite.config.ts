@@ -86,14 +86,15 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
-            // Exercise media (GIF/SVG) from the exercise-media bucket: cache first.
+            // Exercise media (illustration frames, muscle SVGs) from the exercise-media bucket: cache first.
+            // v2: the old cache held ExerciseDB GIFs; public/push-sw.js deletes it on activate.
             urlPattern: ({ url }) =>
               url.hostname.endsWith('.supabase.co') &&
               url.pathname.includes('/storage/v1/object/') &&
               url.pathname.includes('/exercise-media/'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'exercise-media',
+              cacheName: 'exercise-media-v2',
               expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
               // Signed URLs carry a rotating ?token=; key the cache by path so a GIF is stored once
               // and the short-lived token is never persisted.

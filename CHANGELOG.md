@@ -3,6 +3,10 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+### Changed
+- **Exercise catalog**: replaced with openly licensed sources: 888 exercises from wger (texts, CC BY-SA) with workout-guide / Everkinetic illustrations (CC BY-SA 4.0) played as a short animation, and the muscle map where there is no illustration. A credit line on every exercise and a Licences page (Profile > About). Turkish names are filled gradually by a quota-safe translation.
+### Removed
+- **ExerciseDB**: its exercises, GIFs and sync code are removed (its terms forbid storing and redistributing the content). Workout history moves to the matching new exercise where one exists; other exercises you used stay in your history by name only. Cached GIFs are cleared from devices on the next update.
 
 ## [0.4.0] - 2026-10-30
 ### Added
