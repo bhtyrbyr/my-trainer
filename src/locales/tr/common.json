@@ -94,5 +94,12 @@
   },
   "points": "{{n}} puan",
   "level": "Seviye {{n}}",
-  "streakDays": "{{n}} gün seri"
+  "streakDays": "{{n}} gün seri",
+  "units": {
+    "kg": "kg",
+    "lb": "lb",
+    "cm": "cm",
+    "in": "inç",
+    "feetInches": "{{ft}}′ {{inch}}″"
+  }
 }

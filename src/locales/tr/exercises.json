@@ -75,7 +75,6 @@
     "changeHint": "İlk ve son seansın ortalama ağırlığı",
     "sessions_one": "{{count}} seans",
     "sessions_other": "{{count}} seans",
-    "kg": "kg",
     "legend": {
       "avg": "Ortalama ağırlık",
       "best": "En yüksek",

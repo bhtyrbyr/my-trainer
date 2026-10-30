@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(314);
+select plan(402);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -34,7 +34,11 @@ select is(
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
         'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
         'get_leaderboard', 'has_health_consent', 'withdraw_ai_consent', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'prune_push_subscriptions', 'record_consent',
-        'register_push', 'rls_auto_enable', 'unregister_push', 'withdraw_health_consent')),
+        'register_push', 'rls_auto_enable', 'unregister_push', 'withdraw_health_consent',
+        -- Faz 4
+        'get_user_badges', 'admin_set_config', 'admin_list_allowed_emails', 'admin_add_allowed_email',
+        'admin_remove_allowed_email', 'admin_list_users', 'admin_set_blocked', 'admin_set_ai_limit',
+        'ai_add_assistant_message')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -1318,6 +1322,365 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","e
 select is((select name_en from public.exercises where id = :'cv_ret'), 'Retired Curl', 'retire: the legacy row stays readable for history');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 select is((select count(*)::int from public.template_exercises where template_id in (:'cv_t1', :'cv_t2')), 0, 'catalog v2: alice sees none of bob''s repointed template entries');
+reset role;
+set local request.jwt.claims = '';
+
+-- =============================================================================
+-- Faz 4: badges, admin panel, week summary, AI coach
+-- =============================================================================
+\set uc '00000000-0000-0000-0000-00000000000c'
+\set ud '00000000-0000-0000-0000-00000000000d'
+\set jwt_a '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}'
+\set jwt_b '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}'
+\set jwt_c '{"sub":"00000000-0000-0000-0000-00000000000c","email":"carol@example.com","role":"authenticated"}'
+\set jwt_d '{"sub":"00000000-0000-0000-0000-00000000000d","email":"dave@example.com","role":"authenticated"}'
+\set cs1  '00000000-0000-0000-0000-000000000501'
+\set cs2  '00000000-0000-0000-0000-000000000502'
+\set cs3  '00000000-0000-0000-0000-000000000503'
+\set cse1 '00000000-0000-0000-0000-000000000511'
+\set cse2 '00000000-0000-0000-0000-000000000512'
+\set cse3 '00000000-0000-0000-0000-000000000513'
+\set hc1  '00000000-0000-0000-0000-000000000521'
+\set hc2  '00000000-0000-0000-0000-000000000522'
+\set hw1  '00000000-0000-0000-0000-000000000531'
+\set hw2  '00000000-0000-0000-0000-000000000532'
+\set hw3  '00000000-0000-0000-0000-000000000533'
+\set hw4  '00000000-0000-0000-0000-000000000534'
+\set hw5  '00000000-0000-0000-0000-000000000535'
+\set tw1  '00000000-0000-0000-0000-000000000536'
+\set tw2  '00000000-0000-0000-0000-000000000537'
+\set tw3  '00000000-0000-0000-0000-000000000538'
+\set conv1 '00000000-0000-0000-0000-000000000541'
+\set conv2 '00000000-0000-0000-0000-000000000542'
+
+-- Carol (approved, clean slate) and Dave (stays pending)
+reset role;
+set local request.jwt.claims = '';
+insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) values
+  (:'uc', 'carol@example.com', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now()),
+  (:'ud', 'dave@example.com',  '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now());
+set local role authenticated;
+set local request.jwt.claims = :'jwt_c';
+insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
+values (:'uc', 'carol', 'Carol', '00000000-0000-0000-0000-00000000000c/avatar.jpg', now());
+set local request.jwt.claims = :'jwt_d';
+insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
+values (:'ud', 'dave', 'Dave', '00000000-0000-0000-0000-00000000000d/avatar.jpg', now());
+set local request.jwt.claims = :'jwt_a';
+select public.admin_set_registration_status(:'uc', 'approved');
+
+reset role;
+select ok(
+  not has_function_privilege('authenticated', 'public.check_badges(uuid, text[])', 'execute')
+  and not has_function_privilege('anon', 'public.check_badges(uuid, text[])', 'execute')
+  and not has_function_privilege('authenticated', 'public.badges_after_activity()', 'execute')
+  and not has_function_privilege('authenticated', 'public.ai_conversations_guard()', 'execute')
+  and not has_function_privilege('authenticated', 'public.ai_messages_guard()', 'execute')
+  and not has_function_privilege('authenticated', 'public.ai_messages_touch()', 'execute'),
+  'faz4: badge awarding and the AI coach trigger functions are internal'
+);
+select ok(
+  not has_function_privilege('anon', 'public.get_week_summary(date)', 'execute')
+  and not has_function_privilege('anon', 'public.get_coach_context()', 'execute')
+  and not has_function_privilege('anon', 'public.habit_due_done(date, date)', 'execute')
+  and (select bool_and(not p.prosecdef and 'TimeZone=Europe/Istanbul' = any (p.proconfig)) from pg_proc p
+        where p.pronamespace = 'public'::regnamespace and p.proname in ('get_week_summary', 'get_coach_context', 'habit_due_done')),
+  'faz4: week summary and coach context run as the caller on Istanbul time, never for anon'
+);
+select is(
+  (select array_agg(code order by sort) from public.badges),
+  array['first_workout', 'streak_7', 'streak_30', 'sets_100', 'photos_10', 'habit_30', 'todo_50'],
+  'badges: the seven badges are seeded in display order'
+);
+
+-- badges: workouts ---------------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'jwt_c';
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'cs1', :'uc', 'strength', greatest(now() - interval '40 minutes', date_trunc('day', now())));
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'cse1', :'cs1', :'uc', :'ex1', 1);
+insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps)
+  select :'cse1', :'cs1', :'uc', g, 50, 5 from generate_series(1, 3) g;
+select is((select count(*)::int from public.user_badges), 0, 'badges: nothing is earned before a session is finished');
+select public.finish_workout_session(:'cs1');
+select is((select array_agg(badge_code) from public.user_badges), array['first_workout'], 'badges: the first finished session earns first_workout');
+-- bulk: 96 working sets + 10 warm-ups -> 99 working sets so far
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'cs2', :'uc', 'strength', greatest(now() - interval '30 minutes', date_trunc('day', now())));
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'cse2', :'cs2', :'uc', :'ex1', 1);
+insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps, is_warmup)
+  select :'cse2', :'cs2', :'uc', g, 40, 8, g > 96 from generate_series(1, 106) g;
+select public.finish_workout_session(:'cs2');
+select ok(not exists (select 1 from public.user_badges where badge_code = 'sets_100'), 'badges: 99 working sets (warm-ups excluded) are not yet sets_100');
+insert into public.workout_sessions (id, user_id, kind, started_at) values (:'cs3', :'uc', 'strength', greatest(now() - interval '20 minutes', date_trunc('day', now())));
+insert into public.session_exercises (id, session_id, user_id, exercise_id, position) values (:'cse3', :'cs3', :'uc', :'ex1', 1);
+insert into public.session_sets (session_exercise_id, session_id, user_id, set_no, weight_kg, reps) values (:'cse3', :'cs3', :'uc', 1, 60, 5);
+select public.finish_workout_session(:'cs3');
+select ok(exists (select 1 from public.user_badges where badge_code = 'sets_100'), 'badges: the 100th working set earns sets_100');
+select throws_ok(
+  $$ insert into public.user_badges (user_id, badge_code) values ('00000000-0000-0000-0000-00000000000c', 'todo_50') $$,
+  '42501', null, 'badges: clients cannot award themselves a badge'
+);
+update public.user_badges set earned_at = now() - interval '1 year';
+delete from public.user_badges;
+select is((select count(*)::int from public.user_badges where earned_at = now()), 2, 'badges: clients cannot edit or delete their badges');
+delete from public.workout_sessions where id = :'cs2';
+select is((select count(*)::int from public.user_badges), 2, 'badges: deleting the source session does not revoke a milestone');
+select is((select count(*)::int from public.point_events where ref_table = 'user_badges' or kind like 'badge%'), 0, 'badges: badges give no points');
+
+-- badges: streak, photos, habits, to-dos (direct fixtures as the owner role) ----------------------
+reset role;
+set local request.jwt.claims = '';
+select set_config('app.internal', 'on', true);
+update public.profiles set current_streak = 6, longest_streak = 6 where user_id = :'uc';
+select ok(not exists (select 1 from public.user_badges where user_id = :'uc' and badge_code like 'streak%'), 'badges: a 6-day streak earns no streak badge');
+update public.profiles set current_streak = 7, longest_streak = 7 where user_id = :'uc';
+select is((select array_agg(badge_code) from public.user_badges where user_id = :'uc' and badge_code like 'streak%'), array['streak_7'], 'badges: reaching a 7-day streak earns streak_7');
+update public.profiles set current_streak = 30, longest_streak = 30 where user_id = :'uc';
+select is((select array_agg(badge_code order by badge_code) from public.user_badges where user_id = :'uc' and badge_code like 'streak%'), array['streak_30', 'streak_7'], 'badges: reaching 30 days earns streak_30');
+update public.profiles set current_streak = 1 where user_id = :'uc';
+select set_config('app.internal', 'off', true);
+
+create temp table t_ph as select g as n, gen_random_uuid() as id from generate_series(1, 10) g;
+insert into storage.objects (bucket_id, name)
+  select 'progress-photos', :'uc' || '/' || p.id || v.suffix from t_ph p, (values ('.img.bin'), ('.thumb.bin')) v(suffix);
+insert into public.progress_photos (id, user_id, taken_on, pose, image_path, thumb_path, image_iv, thumb_iv)
+  select p.id, :'uc', current_date - p.n, 'front', :'uc' || '/' || p.id || '.img.bin', :'uc' || '/' || p.id || '.thumb.bin', repeat('i', 16), repeat('t', 16)
+  from t_ph p where p.n <= 9;
+select ok(not exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'photos_10'), 'badges: 9 progress photos are not yet photos_10');
+insert into public.progress_photos (id, user_id, taken_on, pose, image_path, thumb_path, image_iv, thumb_iv)
+  select p.id, :'uc', current_date - p.n, 'side', :'uc' || '/' || p.id || '.img.bin', :'uc' || '/' || p.id || '.thumb.bin', repeat('i', 16), repeat('t', 16)
+  from t_ph p where p.n = 10;
+select ok(exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'photos_10'), 'badges: the 10th progress photo earns photos_10');
+
+insert into public.habits (id, user_id, name, starts_on) values (:'hc1', :'uc', 'Esneme', current_date - 40);
+insert into public.habits (id, user_id, name, target_count, starts_on) values (:'hc2', :'uc', 'Sayfa', 3, current_date - 40);
+insert into public.habit_logs (user_id, habit_id, day, count) select :'uc', :'hc2', current_date - g, 1 from generate_series(1, 10) g;
+insert into public.habit_logs (user_id, habit_id, day) select :'uc', :'hc1', current_date - g from generate_series(1, 29) g;
+select ok(not exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'habit_30'), 'badges: 29 completed habit-days (and 10 below target) are not yet habit_30');
+insert into public.habit_logs (user_id, habit_id, day) values (:'uc', :'hc1', current_date);
+select ok(exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'habit_30'), 'badges: the 30th completed habit-day earns habit_30');
+
+insert into public.todos (user_id, title) select :'uc', 'is ' || g from generate_series(1, 50) g;
+insert into public.todo_completions (user_id, todo_id, day) select :'uc', t.id, current_date from public.todos t where t.user_id = :'uc' and t.title like 'is %' and t.title <> 'is 50';
+select ok(not exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'todo_50'), 'badges: 49 completed to-dos are not yet todo_50');
+insert into public.todo_completions (user_id, todo_id, day) select :'uc', t.id, current_date from public.todos t where t.user_id = :'uc' and t.title = 'is 50';
+select ok(exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'todo_50'), 'badges: the 50th completed to-do earns todo_50');
+
+select is(public.check_badges(:'uc'), '{}'::text[], 'badges: check_badges is idempotent (a full re-check earns nothing new)');
+select is((select count(*)::int from public.user_badges where user_id = :'uc'), 7, 'badges: and adds no duplicate rows');
+
+-- get_user_badges privacy
+insert into public.user_badges (user_id, badge_code) values (:'ud', 'first_workout');
+set local role authenticated;
+set local request.jwt.claims = :'jwt_b';
+select is((select count(*)::int from public.user_badges where user_id = :'uc'), 0, 'badges IDOR: bob reads none of carol''s badge rows');
+select is((select count(*)::int from public.get_user_badges(:'uc')), 7, 'badges: get_user_badges shows a leaderboard user''s badges');
+select is((select count(*)::int from public.get_user_badges(:'ud')), 0, 'badges privacy: nothing for a user who is not approved');
+set local request.jwt.claims = :'jwt_c';
+update public.profiles set show_on_leaderboard = false where user_id = :'uc';
+select is((select array_agg(badge_code) from public.get_user_badges(:'uc'))::text[],
+  array['first_workout', 'streak_7', 'streak_30', 'sets_100', 'photos_10', 'habit_30', 'todo_50'],
+  'badges: a hidden user still gets her own badges (in display order)');
+set local request.jwt.claims = :'jwt_b';
+select is((select count(*)::int from public.get_user_badges(:'uc')), 0, 'badges privacy: nothing for a user hidden from the leaderboard');
+set local request.jwt.claims = :'jwt_c';
+update public.profiles set show_on_leaderboard = true where user_id = :'uc';
+
+-- admin panel ---------------------------------------------------------------------------------
+set local request.jwt.claims = :'jwt_b';
+select throws_ok($$ select public.admin_set_config('access_mode', '"invite"') $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot change the config');
+select throws_ok($$ select * from public.admin_list_allowed_emails() $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot list the invite list');
+select throws_ok($$ select public.admin_add_allowed_email('x@example.com', null) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot invite');
+select throws_ok($$ select public.admin_remove_allowed_email('x@example.com') $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot remove invites');
+select throws_ok($$ select * from public.admin_list_users(null, 10) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot list users');
+select throws_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-00000000000c', true) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot block');
+select throws_ok($$ select public.admin_set_ai_limit('00000000-0000-0000-0000-00000000000b', 1000) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot set AI limits (not even their own)');
+
+set local request.jwt.claims = :'jwt_a';
+select lives_ok($$ select public.admin_set_config('access_mode', '"invite"') $$, 'admin: switch to invite mode');
+select lives_ok($$ select public.admin_set_config('require_approval', 'false') $$, 'admin: turn approval off');
+select lives_ok($$ select public.admin_set_config('ai_global_daily_limit', '150') $$, 'admin: set the app''s daily AI budget');
+select is(
+  (select jsonb_object_agg(key, value) from public.app_config where key in ('access_mode', 'require_approval', 'ai_global_daily_limit')),
+  '{"access_mode": "invite", "require_approval": false, "ai_global_daily_limit": 150}'::jsonb,
+  'admin: the config values are stored'
+);
+select throws_ok($$ select public.admin_set_config('access_mode', '"closed"') $$, '22023', 'BAD_VALUE', 'admin: access_mode is open or invite');
+select throws_ok($$ select public.admin_set_config('require_approval', '"yes"') $$, '22023', 'BAD_VALUE', 'admin: require_approval is a boolean');
+select throws_ok($$ select public.admin_set_config('ai_global_daily_limit', '10001') $$, '22023', 'BAD_VALUE', 'admin: the AI budget is at most 10000');
+select throws_ok($$ select public.admin_set_config('ai_global_daily_limit', '2.5') $$, '22023', 'BAD_VALUE', 'admin: the AI budget is an integer');
+select throws_ok($$ select public.admin_set_config('admin_bootstrap_email', '"evil@example.com"') $$, '22023', 'BAD_KEY', 'admin: other keys cannot be set');
+select public.admin_set_config('access_mode', '"open"');
+select public.admin_set_config('require_approval', 'true');
+select public.admin_set_config('ai_global_daily_limit', '200');
+
+select lives_ok($$ select public.admin_add_allowed_email('  New.Friend@Example.COM ', 'gym') $$, 'admin: invite an e-mail');
+select is(
+  (select email || ':' || note || ':' || added_by_username from public.admin_list_allowed_emails() where email = 'new.friend@example.com'),
+  'new.friend@example.com:gym:alice_01', 'admin: invites are stored trimmed and lower-cased, with who added them'
+);
+select throws_ok($$ select public.admin_add_allowed_email('not-an-email', null) $$, '22023', 'BAD_EMAIL', 'admin: malformed e-mails are rejected');
+select is(public.admin_remove_allowed_email('NEW.FRIEND@example.com'), true, 'admin: remove an invite (any case)');
+select is(public.admin_remove_allowed_email('new.friend@example.com'), false, 'admin: removing a missing invite reports false');
+
+select is((select email from public.admin_list_users('caro', 10)), 'carol@example.com', 'admin: users are searchable by username and show their e-mail');
+select is((select count(*)::int from public.admin_list_users('example.com', 2)), 2, 'admin: search by e-mail, the limit applies');
+select is((select count(*)::int from public.admin_list_users('%', 50)), 0, 'admin: LIKE wildcards in the query are literal');
+select is((select count(*)::int from public.admin_list_users(null, 50)), 4, 'admin: an empty query lists every user');
+
+select throws_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-00000000000a', true) $$, 'P0001', 'CANNOT_CHANGE_SELF', 'admin: an admin cannot block themself');
+update public.profiles set role = 'admin' where user_id = :'ud';
+select throws_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-00000000000d', true) $$, 'P0001', 'TARGET_IS_ADMIN', 'admin: an admin cannot block another admin');
+update public.profiles set role = 'user' where user_id = :'ud';
+select throws_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-0000000000ff', true) $$, 'P0002', 'NOT_FOUND', 'admin: blocking an unknown user fails');
+select lives_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-00000000000c', true) $$, 'admin: block carol');
+select is((select is_blocked from public.admin_list_users('carol', 1)), true, 'admin: the block is visible in the user list');
+set local request.jwt.claims = :'jwt_c';
+select ok(not public.can_access(), 'admin: a blocked user loses access');
+set local request.jwt.claims = :'jwt_b';
+select is((select count(*)::int from public.get_user_badges(:'uc')), 0, 'badges privacy: nothing for a blocked user');
+set local request.jwt.claims = :'jwt_a';
+select lives_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-00000000000c', false) $$, 'admin: unblock carol');
+select lives_ok($$ select public.admin_set_ai_limit('00000000-0000-0000-0000-00000000000c', 5) $$, 'admin: set carol''s AI limit');
+select is((select ai_daily_limit from public.admin_list_users('carol', 1)), 5, 'admin: the per-user AI limit is stored');
+select throws_ok($$ select public.admin_set_ai_limit('00000000-0000-0000-0000-00000000000c', 1001) $$, '22023', 'BAD_VALUE', 'admin: the AI limit is 0..1000');
+
+-- week summary (fixed past week: Monday nine weeks ago, Istanbul) ----------------------------------
+reset role;
+set local request.jwt.claims = '';
+select (date_trunc('week', current_date)::date - 63)::text as wk \gset
+select set_config('app.internal', 'on', true);
+insert into public.workout_sessions (user_id, kind, started_at, ended_at, duration_sec, total_sets, total_volume_kg) values
+  (:'uc', 'strength', (:'wk'::date + time '10:00')::timestamptz, (:'wk'::date + time '11:00')::timestamptz, 3600, 10, 1000.5),
+  (:'uc', 'strength', (:'wk'::date + 2 + time '18:00')::timestamptz, (:'wk'::date + 2 + time '18:45')::timestamptz, 2700, 5, 500),
+  (:'uc', 'cardio', (:'wk'::date + 3 + time '07:00')::timestamptz, (:'wk'::date + 3 + time '07:31')::timestamptz, 1830, 0, 0),
+  (:'uc', 'strength', (:'wk'::date + 4 + time '07:00')::timestamptz, null, null, 0, 0),                                              -- unfinished
+  (:'uc', 'strength', (:'wk'::date - 1 + time '23:30')::timestamptz, (:'wk'::date + time '00:30')::timestamptz, 3600, 20, 2000),   -- Sunday before
+  (:'uc', 'strength', (:'wk'::date + 7 + time '00:10')::timestamptz, (:'wk'::date + 7 + time '01:00')::timestamptz, 3000, 20, 2000); -- next Monday
+select set_config('app.internal', 'off', true);
+insert into public.habits (id, user_id, name, rule, target_count, starts_on, archived_at) values
+  (:'hw1', :'uc', 'W daily', '{"type":"daily"}', 1, :'wk'::date - 10, null),                                -- 7 due, 3 done
+  (:'hw2', :'uc', 'W mon-wed', '{"type":"weekly","days":[1,3]}', 2, :'wk'::date - 10, null),                -- 2 due, 1 done
+  (:'hw3', :'uc', 'W 3x', '{"type":"weekly_count","n":3}', 1, :'wk'::date - 10, null),                      -- 3 due, 2 done
+  (:'hw4', :'uc', 'W archived', '{"type":"daily"}', 1, :'wk'::date - 10, (:'wk'::date - 1)::timestamptz),   -- not due
+  (:'hw5', :'uc', 'W late start', '{"type":"daily"}', 1, :'wk'::date + 5, null);                            -- 2 due, 0 done
+insert into public.habit_logs (user_id, habit_id, day, count) values
+  (:'uc', :'hw1', :'wk'::date, 1), (:'uc', :'hw1', :'wk'::date + 1, 1), (:'uc', :'hw1', :'wk'::date + 2, 1),
+  (:'uc', :'hw2', :'wk'::date, 2), (:'uc', :'hw2', :'wk'::date + 2, 1),
+  (:'uc', :'hw3', :'wk'::date + 4, 1), (:'uc', :'hw3', :'wk'::date + 5, 1),
+  (:'uc', :'hw4', :'wk'::date + 1, 1);
+insert into public.todos (id, user_id, title) values (:'tw1', :'uc', 'W one'), (:'tw2', :'uc', 'W two'), (:'tw3', :'uc', 'W before');
+insert into public.todo_completions (user_id, todo_id, day, completed_on) values
+  (:'uc', :'tw1', :'wk'::date + 1, :'wk'::date + 1), (:'uc', :'tw2', :'wk'::date + 3, :'wk'::date + 3),
+  (:'uc', :'tw3', :'wk'::date - 1, :'wk'::date - 1);
+insert into public.sleep_entries (user_id, sleep_on, bed_at, wake_at) values
+  (:'uc', :'wk'::date, (:'wk'::date - 1 + time '23:00')::timestamptz, (:'wk'::date + time '07:00')::timestamptz),       -- 480 min
+  (:'uc', :'wk'::date + 2, (:'wk'::date + 2 + time '00:00')::timestamptz, (:'wk'::date + 2 + time '06:30')::timestamptz), -- 390 min
+  (:'uc', :'wk'::date - 1, (:'wk'::date - 1 + time '00:00')::timestamptz, (:'wk'::date - 1 + time '05:00')::timestamptz); -- week before
+insert into public.body_metrics (user_id, measured_on, weight_kg, waist_cm) values
+  (:'uc', :'wk'::date - 3, 80.0, null), (:'uc', :'wk'::date + 1, 79.4, null), (:'uc', :'wk'::date + 5, 79.0, null), (:'uc', :'wk'::date + 6, null, 85);
+update public.user_settings set daily_water_ml = 2000 where user_id = :'uc';
+insert into public.water_entries (user_id, drunk_on, amount_ml) values
+  (:'uc', :'wk'::date, 1500), (:'uc', :'wk'::date, 600), (:'uc', :'wk'::date + 1, 1999), (:'uc', :'wk'::date + 2, 2000), (:'uc', :'wk'::date - 1, 3000);
+
+set local role authenticated;
+set local request.jwt.claims = :'jwt_c';
+select public.record_consent('health_data', 'test');
+select is(
+  public.get_week_summary(:'wk'::date + 3),
+  jsonb_build_object('week_start', :'wk'::date, 'workouts', 3, 'sets', 15, 'volume_kg', 1500.5, 'cardio_minutes', 31,
+                     'habit_rate', 0.429, 'todos_done', 2, 'avg_sleep_minutes', 435, 'weight_change_kg', -1.0, 'water_goal_days', 2),
+  'week summary: Monday-start Istanbul week totals on a small fixture (any day of the week selects it)'
+);
+set local request.jwt.claims = :'jwt_b';
+select ok(
+  (select (s ->> 'workouts')::int = 0 and (s ->> 'sets')::int = 0 and (s ->> 'todos_done')::int = 0
+          and s -> 'habit_rate' = 'null'::jsonb and s -> 'avg_sleep_minutes' = 'null'::jsonb
+   from (select public.get_week_summary(:'wk'::date) s) x),
+  'week summary IDOR: another user gets none of carol''s numbers'
+);
+set local request.jwt.claims = :'jwt_c';
+select public.withdraw_health_consent('test');
+select is(
+  public.get_week_summary(:'wk'::date) - 'week_start',
+  jsonb_build_object('workouts', 3, 'sets', 15, 'volume_kg', 1500.5, 'cardio_minutes', 31, 'habit_rate', 0.429, 'todos_done', 2,
+                     'avg_sleep_minutes', null, 'weight_change_kg', null, 'water_goal_days', null),
+  'week summary: health parts are null without health consent'
+);
+select is((select count(*)::int from public.user_badges where badge_code = 'photos_10'), 1, 'badges: erasing the photos (consent withdrawal) keeps photos_10');
+
+-- AI coach ------------------------------------------------------------------------------------
+insert into public.ai_conversations (id, user_id, title) values (:'conv1', :'uc', 'Haftam');
+insert into public.ai_messages (conversation_id, user_id, role, content) values (:'conv1', :'uc', 'user', 'Bu hafta nasil gittim?');
+select is((select count(*)::int from public.ai_messages), 1, 'coach: the owner writes a user message');
+select throws_ok(
+  $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000541', '00000000-0000-0000-0000-00000000000c', 'assistant', 'fake') $$,
+  '42501', null, 'coach: clients cannot insert assistant messages'
+);
+select throws_ok(
+  $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000541', '00000000-0000-0000-0000-00000000000c', 'user', repeat('x', 4001)) $$,
+  '23514', null, 'coach: messages are at most 4000 characters'
+);
+select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'Harika') $$, '%NO_RESERVATION%', 'coach: no assistant reply without a reserved AI request');
+reset role;
+insert into public.ai_usage (user_id, day, request_count) values (:'uc', current_date, 1)
+  on conflict (user_id, day) do update set request_count = 1;
+set local role authenticated;
+set local request.jwt.claims = :'jwt_c';
+select ok(public.ai_add_assistant_message(:'conv1', 'Harika gidiyorsun') is not null, 'coach: one assistant reply per reserved request is stored');
+select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'ikinci') $$, '%NO_RESERVATION%', 'coach: a second reply needs a second reservation');
+select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', repeat('x', 4001)) $$, '22023', 'BAD_CONTENT', 'coach: assistant replies are length-checked');
+select is((select string_agg(role, ',' order by role) from public.ai_messages where conversation_id = :'conv1'), 'assistant,user', 'coach: the conversation holds the question and the reply');
+update public.ai_messages set content = 'edited';
+select is((select count(*)::int from public.ai_messages where content = 'edited'), 0, 'coach: messages are immutable');
+update public.ai_conversations set user_id = :'ub' where id = :'conv1';
+select is((select user_id from public.ai_conversations where id = :'conv1'), :'uc'::uuid, 'coach: a conversation cannot be handed to another user');
+
+set local request.jwt.claims = :'jwt_b';
+select is((select count(*)::int from public.ai_conversations) + (select count(*)::int from public.ai_messages), 0, 'coach IDOR: bob reads none of carol''s conversations or messages');
+select throws_ok(
+  $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000541', '00000000-0000-0000-0000-00000000000b', 'user', 'hi') $$,
+  '42501', 'FORBIDDEN', 'coach IDOR: bob cannot post into carol''s conversation'
+);
+select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'x') $$, '42501', 'FORBIDDEN', 'coach IDOR: bob cannot add a reply to carol''s conversation');
+delete from public.ai_messages where conversation_id = :'conv1';
+delete from public.ai_conversations where id = :'conv1';
+select is(
+  (select count(*)::int from public.workout_sessions where ended_at is not null and started_at >= (current_date - 27)::timestamptz),
+  (public.get_coach_context() #>> '{workouts,sessions}')::int,
+  'coach context IDOR: bob''s context counts only his own sessions'
+);
+set local request.jwt.claims = :'jwt_c';
+select is((select count(*)::int from public.ai_messages where conversation_id = :'conv1'), 2, 'coach IDOR: bob''s deletes left carol''s conversation untouched');
+
+select ok(
+  (select (c #>> '{workouts,sessions}')::int = 2 and (c #>> '{workouts,sets}')::int = 4
+          and c #>> '{body_parts,0,body_part}' = 'chest' and (c #>> '{body_parts,0,sets}')::int = 4
+          and (c #>> '{habits,due}')::int > 0 and (c ->> 'todos_done')::int = 50
+          and c -> 'weight' = 'null'::jsonb and c -> 'sleep' = 'null'::jsonb and c -> 'nutrition' = 'null'::jsonb
+          and (c ->> 'health_consent')::boolean = false
+   from (select public.get_coach_context() c) x),
+  'coach context: 28-day aggregates (sessions, sets by body part, habits, to-dos); no health parts without consent'
+);
+select ok(
+  (select position('@' in c::text) = 0 and position('arol' in c::text) = 0 and position('avatar' in c::text) = 0 and position('.bin' in c::text) = 0
+   from (select public.get_coach_context() c) x),
+  'coach context: no e-mail, name, username, avatar or photo reference'
+);
+select public.record_consent('health_data', 'test');
+insert into public.body_metrics (user_id, measured_on, weight_kg) values (:'uc', current_date, 78.5);
+select is(public.get_coach_context() #>> '{weight,latest_kg}', '78.5', 'coach context: weight is included with health consent');
+
+delete from public.ai_conversations where id = :'conv1';
+select is((select count(*)::int from public.ai_messages), 0, 'coach: deleting a conversation deletes its messages');
+insert into public.ai_conversations (user_id) select :'uc' from generate_series(1, 100);
+select throws_like($$ insert into public.ai_conversations (user_id) values ('00000000-0000-0000-0000-00000000000c') $$, '%LIMIT_REACHED%', 'coach: at most 100 conversations per user');
+delete from public.ai_conversations;
+insert into public.ai_conversations (id, user_id) values (:'conv2', :'uc');
+insert into public.ai_messages (conversation_id, user_id, role, content) select :'conv2', :'uc', 'user', 'soru ' || g from generate_series(1, 100) g;
+select throws_like(
+  $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000542', '00000000-0000-0000-0000-00000000000c', 'user', 'one more') $$,
+  '%LIMIT_REACHED%', 'coach: at most 100 user messages per day'
+);
 reset role;
 set local request.jwt.claims = '';
 

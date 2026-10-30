@@ -1,24 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { useUnits } from '@/features/settings/useUnits'
 import { Stepper } from '@/features/workouts'
-import { useBodyFormat } from '../format'
+import { roundToStep } from '@/lib/units'
 import { useSetTargetWeight } from '../hooks'
 
 type Props = { open: boolean; current: number | null; suggestion: number | null; onClose: () => void }
 
-/** Bottom sheet for the private goal weight. */
+/** Bottom sheet for the private goal weight. `current` / `suggestion` are kg; the stepper is in the user's unit. */
 export function TargetSheet({ open, current, suggestion, onClose }: Props) {
   const { t } = useTranslation('body')
-  const f = useBodyFormat()
+  const u = useUnits()
   const setTarget = useSetTargetWeight()
-  const [value, setValue] = useState<number | null>(current ?? suggestion ?? 70)
+  const step = u.steps.target
+  const [min, max] = u.weightRange(20, 400, step)
+  // a goal sits on the target grid (0.5 kg / 1 lb), even when suggested from an exact reading
+  const shown = useCallback((kg: number | null) => (kg == null ? null : roundToStep(u.kg(kg, 'body'), step)), [u, step])
+  const [value, setValue] = useState<number | null>(shown(current ?? suggestion ?? 70))
 
+  // re-seed on open and when the unit arrives or changes
   useEffect(() => {
-    if (open) setValue(current ?? suggestion ?? 70)
-  }, [open, current, suggestion])
+    if (open) setValue(shown(current ?? suggestion ?? 70))
+  }, [open, current, suggestion, shown])
 
   useEffect(() => {
     if (!open) return
@@ -28,7 +34,7 @@ export function TargetSheet({ open, current, suggestion, onClose }: Props) {
   }, [open, onClose])
 
   if (!open) return null
-  const save = (kg: number | null) => setTarget.mutate(kg, { onSuccess: onClose })
+  const save = (v: number | null) => setTarget.mutate(v == null ? null : u.toKg(v, 'body'), { onSuccess: onClose })
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center lg:items-center" role="presentation">
@@ -45,14 +51,14 @@ export function TargetSheet({ open, current, suggestion, onClose }: Props) {
           label={t('sheet.weight')}
           value={value}
           onChange={setValue}
-          step={0.5}
-          min={20}
-          max={400}
+          step={step}
+          min={min}
+          max={max}
           decimal
-          unit={t('units.kg')}
-          format={f.num}
-          decLabel={t('quick.weightDec')}
-          incLabel={t('quick.weightInc')}
+          unit={u.weightLabel}
+          format={u.bodyValue}
+          decLabel={t('quick.weightDec', { step: u.estimateValue(step), unit: u.weightLabel })}
+          incLabel={t('quick.weightInc', { step: u.estimateValue(step), unit: u.weightLabel })}
           className="mt-6 [&>label]:sr-only"
         />
         <ErrorNote error={setTarget.error} className="mt-4" />

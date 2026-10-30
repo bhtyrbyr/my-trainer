@@ -40,7 +40,7 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
         <dl className="rise-in mt-10 grid grid-cols-3 border-y border-line" style={stagger(3)}>
           <Stat label={t('summary.duration')} value={formatClock(summary.duration_sec)} />
           <Stat label={t('summary.sets')} value={String(summary.total_sets)} border />
-          <Stat label={t('summary.volume', { unit: w.unit })} value={w.formatTotal(summary.total_volume_kg)} border />
+          <Stat label={t('summary.volume', { unit: w.label })} value={w.formatTotal(summary.total_volume_kg)} border />
         </dl>
         <EnergyLine kcal={summary.kcal_estimate} weightKg={summary.kcal_weight_kg} className="rise-in" />
 
@@ -61,10 +61,10 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
                   <span className="tabular shrink-0 text-right text-[13px] text-ink-muted">
                     {pr.weight_kg != null && pr.reps != null && (
                       <span className="font-semibold text-ink">
-                        {w.format(pr.weight_kg)} {w.unit} × {pr.reps}
+                        {w.format(pr.weight_kg)} {w.label} × {pr.reps}
                       </span>
                     )}
-                    <span className="block text-[11px] text-ink-faint">{t('summary.e1rm', { value: w.formatEstimate(pr.e1rm), unit: w.unit })}</span>
+                    <span className="block text-[11px] text-ink-faint">{t('summary.e1rm', { value: w.formatEstimate(pr.e1rm), unit: w.label })}</span>
                   </span>
                 </li>
               ))}

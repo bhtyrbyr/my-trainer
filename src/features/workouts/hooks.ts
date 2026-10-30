@@ -3,19 +3,10 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { useTranslation } from 'react-i18next'
 import { enUS, tr as trLocale } from 'date-fns/locale'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { useUserSettings } from '@/features/settings/hooks'
 import { toLocalDateISO } from '@/lib/dates'
 import * as api from './api'
-import {
-  isoWeekday,
-  kgToUnit,
-  roundWeight,
-  sessionVolumeKg,
-  unitToKg,
-  weightStep,
-  workingSetCount,
-  type WeightUnit,
-} from './logic'
+import { useUnits } from '@/features/settings/useUnits'
+import { isoWeekday, sessionVolumeKg, workingSetCount } from './logic'
 import { useIsPreview } from './previewContext'
 import type { BundleExercise, CardioInput, FinishSummary, SessionBundle, SessionSet, TemplateInput, TemplateWithExercises } from './schema'
 
@@ -108,31 +99,39 @@ export function useHistory(month: string, from: Date, to: Date) {
 // -----------------------------------------------------------------------------
 // View helpers
 // -----------------------------------------------------------------------------
-/** Weight unit from settings (kg default). Values are stored in kg; convert only for display/input. */
+/**
+ * Workouts view of the user's weight unit (settings, kg default): set weights, totals, estimates.
+ * Values are stored in kg; convert only for display/input. Rounding rules: src/lib/units.ts.
+ */
 export function useWeightUnit() {
-  const { settings } = useUserSettings()
+  const u = useUnits()
   const { i18n } = useTranslation()
-  const unit: WeightUnit = settings?.unit_weight === 'lb' ? 'lb' : 'kg'
   const lang = i18n.resolvedLanguage === 'en' ? 'en' : 'tr'
   return useMemo(() => {
     const nf = new Intl.NumberFormat(lang, { maximumFractionDigits: 2 })
-    const nf0 = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 })
-    const nf1 = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 })
-    const toDisplay = (kg: number) => roundWeight(kgToUnit(kg, unit), unit)
     return {
-      unit,
-      step: weightStep(unit),
-      toDisplay,
-      toKg: (value: number) => unitToKg(value, unit),
+      /** 'kg' | 'lb' (code, for logic) */
+      unit: u.weight,
+      /** translated unit label for the UI */
+      label: u.weightLabel,
+      /** stepper increment: 2.5 kg / 5 lb */
+      step: u.steps.load,
+      /** stored kg -> number in the user's unit, rounded like it is shown */
+      toDisplay: (kg: number) => u.kg(kg, 'load'),
+      /** number in the user's unit -> kg (0.01 kg) */
+      toKg: (value: number) => u.toKg(value, 'load'),
       /** 82.5 -> "82,5" (tr) / "82.5" (en), in the user's unit, no unit suffix */
-      format: (kg: number) => nf.format(toDisplay(kg)),
+      format: u.load,
+      /** a stepper value that is already in the user's unit */
+      formatValue: u.loadValue,
       /** large totals (volume): no decimals, grouped */
-      formatTotal: (kg: number) => nf0.format(kgToUnit(kg, unit)),
+      formatTotal: u.volume,
       /** computed estimates (e1RM): not snapped to plate steps, one decimal */
-      formatEstimate: (kg: number) => nf1.format(kgToUnit(kg, unit)),
+      formatEstimate: u.estimate,
+      /** plain numbers (RPE, km) */
       formatNumber: (n: number) => nf.format(n),
     }
-  }, [unit, lang])
+  }, [u, lang])
 }
 
 export function useDateLocale() {

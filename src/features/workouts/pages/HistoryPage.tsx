@@ -82,7 +82,7 @@ export function HistoryPage() {
           <dl className="mt-5 grid grid-cols-3 border-y border-line">
             <MonthStat label={t('history.sessions')} value={String(items.length)} />
             <MonthStat label={t('history.days')} value={String(marked.size)} border />
-            <MonthStat label={t('history.volume', { unit: w.unit })} value={w.formatTotal(volume)} border />
+            <MonthStat label={t('history.volume', { unit: w.label })} value={w.formatTotal(volume)} border />
           </dl>
         </section>
 
@@ -130,7 +130,7 @@ function HistoryRow({ item, href }: { item: HistoryItem; href: string }) {
   const meta =
     item.kind === 'cardio'
       ? [t('units.minN', { n: minutes }), distance > 0 ? `${w.formatNumber(Math.round(distance / 100) / 10)} ${t('units.km')}` : null, kcal]
-      : [t('units.minN', { n: minutes }), kcal, t('history.setsN', { count: item.total_sets }), `${w.formatTotal(Number(item.total_volume_kg))} ${w.unit}`]
+      : [t('units.minN', { n: minutes }), kcal, t('history.setsN', { count: item.total_sets }), `${w.formatTotal(Number(item.total_volume_kg))} ${w.label}`]
   return (
     <li>
       <Link to={href} className="flex items-center gap-4 px-4 py-3.5 hover:bg-raised/50">

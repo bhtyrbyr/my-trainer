@@ -94,5 +94,12 @@
   },
   "points": "{{n}} pts",
   "level": "Level {{n}}",
-  "streakDays": "{{n}} day streak"
+  "streakDays": "{{n}} day streak",
+  "units": {
+    "kg": "kg",
+    "lb": "lb",
+    "cm": "cm",
+    "in": "in",
+    "feetInches": "{{ft}}′ {{inch}}″"
+  }
 }

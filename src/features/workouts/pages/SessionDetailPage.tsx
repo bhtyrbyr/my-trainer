@@ -102,7 +102,7 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
               <Stat label={t('summary.duration')} value={formatClock(durationSec)} />
               <Stat label={t('summary.sets')} value={String(s.ended_at ? s.total_sets : allSets.filter(isWorkingSet).length)} border />
               <Stat
-                label={t('summary.volume', { unit: w.unit })}
+                label={t('summary.volume', { unit: w.label })}
                 value={w.formatTotal(s.ended_at ? Number(s.total_volume_kg) : sessionVolumeKg(allSets))}
                 border
               />
@@ -133,7 +133,7 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
                     )}
                     {vol > 0 && (
                       <span className="tabular shrink-0 text-[13px] text-ink-faint">
-                        {w.formatTotal(vol)} {w.unit}
+                        {w.formatTotal(vol)} {w.label}
                       </span>
                     )}
                   </div>
@@ -146,7 +146,7 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
                             {set.is_warmup ? <Thermometer className="size-3.5" aria-label={t('session.warmup')} /> : n}
                           </span>
                           <span className="flex-1 font-medium">
-                            {set.weight_kg != null ? `${w.format(set.weight_kg)} ${w.unit} × ${set.reps ?? 0}` : `${set.reps ?? 0} ${t('units.reps')}`}
+                            {set.weight_kg != null ? `${w.format(set.weight_kg)} ${w.label} × ${set.reps ?? 0}` : `${set.reps ?? 0} ${t('units.reps')}`}
                           </span>
                           {set.rpe != null && <span className="text-[13px] text-ink-faint">RPE {w.formatNumber(set.rpe)}</span>}
                         </li>

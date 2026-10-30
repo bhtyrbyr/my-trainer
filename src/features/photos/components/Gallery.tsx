@@ -5,7 +5,9 @@ import { enUS, tr } from 'date-fns/locale'
 import { Camera, ImageOff, Loader2, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { useUnits } from '@/features/settings/useUnits'
 import { toLocalDateISO } from '@/lib/dates'
+import { parseWeightInput } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { useAddPhoto, useDecryptedMeta, useDecryptedUrl, useDeletePhoto } from '../hooks'
 import { POSES, type PhotoRow, type Pose } from '../types'
@@ -110,6 +112,7 @@ function PoseChips({ value, onChange }: { value: Pose; onChange: (p: Pose) => vo
 /** Pick or shoot, choose pose/date, optional weight and note; encrypted on the device before upload. */
 export function AddPhotoSheet({ cryptoKey, onClose }: { cryptoKey: CryptoKey; onClose: () => void }) {
   const { t } = useTranslation('photos')
+  const u = useUnits()
   const add = useAddPhoto(cryptoKey)
   const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -120,7 +123,9 @@ export function AddPhotoSheet({ cryptoKey, onClose }: { cryptoKey: CryptoKey; on
   // in-memory preview of the original, revoked when replaced or closed
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
   useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview])
-  const kg = weight.trim() ? Number(weight.replace(',', '.')) : null
+  // typed in the user's unit, kept in kg inside the encrypted meta
+  const kg = weight.trim() ? parseWeightInput(weight, u.weight, 'body') : null
+  const weightInvalid = weight.trim() !== '' && (kg == null || !(kg > 20 && kg < 400))
 
   return (
     <Sheet title={t('add.title')} onClose={onClose}>
@@ -171,7 +176,7 @@ export function AddPhotoSheet({ cryptoKey, onClose }: { cryptoKey: CryptoKey; on
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-ink-faint">{t('add.weight')}</span>
+            <span className="mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-ink-faint">{t('add.weight', { unit: u.weightLabel })}</span>
             <input
               inputMode="decimal"
               value={weight}
@@ -195,7 +200,7 @@ export function AddPhotoSheet({ cryptoKey, onClose }: { cryptoKey: CryptoKey; on
         <Button
           size="lg"
           className="w-full"
-          disabled={!file || add.isPending || (kg != null && !(kg > 20 && kg < 400))}
+          disabled={!file || add.isPending || weightInvalid}
           onClick={() => file && add.mutate({ file, takenOn: day, pose, meta: { note: note.trim() || undefined, weight: kg } }, { onSuccess: onClose })}
         >
           {add.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
@@ -209,6 +214,7 @@ export function AddPhotoSheet({ cryptoKey, onClose }: { cryptoKey: CryptoKey; on
 /** Full-size photo, decrypted only while open. */
 export function PhotoViewer({ photo, cryptoKey, onClose }: { photo: PhotoRow; cryptoKey: CryptoKey; onClose: () => void }) {
   const { t } = useTranslation('photos')
+  const u = useUnits()
   const locale = useLocale()
   const { url, error } = useDecryptedUrl(photo, 'image', cryptoKey)
   const meta = useDecryptedMeta(photo, cryptoKey)
@@ -233,7 +239,7 @@ export function PhotoViewer({ photo, cryptoKey, onClose }: { photo: PhotoRow; cr
           <p className="display text-[22px]">{format(parseISO(photo.taken_on), 'd MMMM yyyy', { locale })}</p>
           <p className="mt-1 text-[14px] text-ink-muted">
             {t(`poses.${photo.pose}`)}
-            {meta.data?.weight != null && <> · {t('viewer.weight', { kg: meta.data.weight })}</>}
+            {meta.data?.weight != null && <> · {t('viewer.weight', { weight: `${u.body(meta.data.weight)} ${u.weightLabel}` })}</>}
           </p>
           {meta.data?.note && <p className="mt-2 text-[14px]">{meta.data.note}</p>}
         </div>

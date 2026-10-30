@@ -8,7 +8,10 @@ import { addDays, addMonths, format, startOfMonth, subMinutes } from 'date-fns'
 import { AppShell } from '@/app/AppShell'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { exerciseKeys, type Exercise } from '@/features/exercises'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { settingsKeys } from '@/features/settings/hooks'
 import { toLocalDateISO } from '@/lib/dates'
+import type { UserSettings } from '@/lib/database.types'
 import { workoutKeys } from '../hooks'
 import { draftKey, isoWeekday, type IsoWeekday } from '../logic'
 import { WorkoutsPreviewContext } from '../previewContext'
@@ -232,10 +235,21 @@ function seed(todayMode: string): QueryClient {
   return qc
 }
 
-/** Layout route: sample cache + preview flag + the normal app frame (tab bar). ?today=plan|rest|none|active */
+/** ?units=imperial: show the preview in lb / in (seeds the settings cache the units hook reads). */
+function seedUnits(qc: QueryClient, userId: string, units: string | null) {
+  if (units !== 'imperial') return
+  qc.setQueryData(settingsKeys.me(userId), { user_id: userId, locale: 'tr', theme: 'system', unit_weight: 'lb', unit_length: 'in' } as UserSettings)
+}
+
+/** Layout route: sample cache + preview flag + the normal app frame (tab bar). ?today=plan|rest|none|active, ?units=imperial */
 export function DevWorkoutsLayout() {
   const [params] = useSearchParams()
-  const [client] = useState(() => seed(params.get('today') ?? 'plan'))
+  const { user } = useAuth()
+  const [client] = useState(() => {
+    const qc = seed(params.get('today') ?? 'plan')
+    seedUnits(qc, user?.id ?? '', params.get('units'))
+    return qc
+  })
   return (
     <QueryClientProvider client={client}>
       <WorkoutsPreviewContext.Provider value={true}>

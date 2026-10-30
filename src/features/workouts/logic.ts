@@ -202,32 +202,8 @@ export function formatClock(totalSec: number): string {
 // -----------------------------------------------------------------------------
 // Numbers and units
 // -----------------------------------------------------------------------------
-export type WeightUnit = 'kg' | 'lb'
-export const LB_PER_KG = 2.2046226218
-
-export function kgToUnit(kg: number, unit: WeightUnit): number {
-  return unit === 'kg' ? kg : kg * LB_PER_KG
-}
-export function unitToKg(value: number, unit: WeightUnit): number {
-  return unit === 'kg' ? value : value / LB_PER_KG
-}
-/** Stepper increment: 2.5 kg plates or 5 lb. */
-export function weightStep(unit: WeightUnit): number {
-  return unit === 'kg' ? 2.5 : 5
-}
-/** Round to the nearest step fraction we display (0.25 kg / 0.5 lb) to hide float noise. */
-export function roundWeight(value: number, unit: WeightUnit): number {
-  const q = unit === 'kg' ? 4 : 2
-  return Math.round(value * q) / q
-}
-
-/** Accepts "82,5", "82.5", " 80 " -> number; empty or garbage -> null. */
-export function parseDecimal(input: string): number | null {
-  const s = input.trim().replace(',', '.')
-  if (!/^\d*\.?\d+$|^\d+\.$/.test(s)) return null
-  const n = Number(s)
-  return Number.isFinite(n) ? n : null
-}
+// Weight units, conversions and display rounding live in src/lib/units.ts (useUnits / useWeightUnit).
+export { parseDecimal } from '@/lib/units'
 
 export function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))

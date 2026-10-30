@@ -23,5 +23,15 @@
     "light": "Light",
     "system": "System",
     "hint": "System follows your device setting. Your choice is saved to your account."
+  },
+  "units": {
+    "title": "Units",
+    "weight": "Weight",
+    "length": "Body measurements",
+    "kg": "Kilograms",
+    "lb": "Pounds",
+    "cm": "Centimetres",
+    "in": "Inches",
+    "hint": "Values are always stored in kg and cm; this only changes how they are shown and entered."
   }
 }

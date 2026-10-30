@@ -12,6 +12,7 @@ import { StreakAvatar } from '@/features/gamification/StreakAvatar'
 import { effectiveStreak } from '@/features/gamification/streak'
 import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
 import { THEMES, applyTheme, readTheme, type ThemePref } from '@/lib/theme'
+import { LENGTH_UNITS, WEIGHT_UNITS, asLengthUnit, asWeightUnit, type LengthUnit, type WeightUnit } from '@/lib/units'
 import { useUserSettings } from '../hooks'
 import { PrivacySection } from '@/features/privacy/components/PrivacySection'
 import { NotificationsSection } from '@/features/notifications/NotificationsSection'
@@ -169,6 +170,25 @@ export function SettingsPage() {
           <p className="text-[12px] text-ink-faint">{t('settings:theme.hint')}</p>
         </section>
 
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            {t('settings:units.title')}
+          </h2>
+          <UnitChoice
+            label={t('settings:units.weight')}
+            options={WEIGHT_UNITS}
+            value={asWeightUnit(settings?.unit_weight)}
+            onChange={(unit_weight: WeightUnit) => updateSettings.mutate({ unit_weight })}
+          />
+          <UnitChoice
+            label={t('settings:units.length')}
+            options={LENGTH_UNITS}
+            value={asLengthUnit(settings?.unit_length)}
+            onChange={(unit_length: LengthUnit) => updateSettings.mutate({ unit_length })}
+          />
+          <p className="text-[12px] text-ink-faint">{t('settings:units.hint')}</p>
+        </section>
+
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
             {t('settings:account')}
@@ -218,6 +238,49 @@ export function SettingsPage() {
         </section>
       </div>
     </PageShell>
+  )
+}
+
+/** Two-way unit picker: the symbol carries the choice, the full name sits under it. */
+function UnitChoice<U extends WeightUnit | LengthUnit>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: readonly U[]
+  value: U
+  onChange: (unit: U) => void
+}) {
+  const { t } = useTranslation(['settings', 'common'])
+  return (
+    <div>
+      <p className="eyebrow mb-1.5">{label}</p>
+      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={label}>
+        {options.map((unit) => {
+          const active = value === unit
+          return (
+            <button
+              key={unit}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => !active && onChange(unit)}
+              className={cn(
+                'touch-target flex items-baseline justify-between gap-2 rounded-xl border px-4 py-3 text-left transition-colors',
+                active ? 'border-volt bg-volt/10 text-volt' : 'border-line bg-surface text-ink',
+              )}
+            >
+              <span className="font-medium">{t(`settings:units.${unit}`)}</span>
+              <span className={cn('tabular text-[13px]', active ? 'text-volt/80' : 'text-ink-faint')}>
+                {t(`common:units.${unit}`)}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

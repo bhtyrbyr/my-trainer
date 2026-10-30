@@ -23,5 +23,15 @@
     "light": "Aydınlık",
     "system": "Sistem",
     "hint": "Sistem seçilirse telefonunun koyu/açık ayarını izler. Seçimin hesabına kaydedilir."
+  },
+  "units": {
+    "title": "Birimler",
+    "weight": "Ağırlık",
+    "length": "Vücut ölçüleri",
+    "kg": "Kilogram",
+    "lb": "Libre",
+    "cm": "Santimetre",
+    "in": "İnç",
+    "hint": "Değerler her zaman kg ve cm olarak saklanır; bu seçim yalnızca gösterimi ve girişi değiştirir."
   }
 }

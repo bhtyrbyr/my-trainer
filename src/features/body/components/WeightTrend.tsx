@@ -2,32 +2,38 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseISO } from 'date-fns'
 import { CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from 'recharts'
+import { useUnits } from '@/features/settings/useUnits'
+import { kgToDisplay, roundTo } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { useBodyFormat } from '../format'
 import { filterPeriod, type WeightPoint } from '../logic'
 import { WEIGHT_PERIODS, type WeightPeriod } from '../types'
 
-type ChartPoint = { t: number; kg: number; avg7: number }
+/** values in the user's unit (kg or lb) */
+type ChartPoint = { t: number; w: number; avg7: number }
 
 /**
  * Trend. The 7-day average is the line that matters (volt); single weigh-ins are quiet dots because
  * day-to-day weight is mostly water. The target, if set, is a dashed rule.
  */
-export function WeightTrend({ points, target }: { points: WeightPoint[]; target: number | null }) {
+export function WeightTrend({ points, target: targetKg }: { points: WeightPoint[]; target: number | null }) {
   const { t } = useTranslation('body')
   const f = useBodyFormat()
+  const u = useUnits()
+  const toUnit = (kg: number) => kgToDisplay(kg, u.weight)
+  const target = targetKg == null ? null : toUnit(targetKg)
   const [period, setPeriod] = useState<WeightPeriod>('3m')
   const [now] = useState(() => new Date())
   const [animate] = useState(() => !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
   const rows = useMemo(() => filterPeriod(points, period, now), [points, period, now])
-  const data: ChartPoint[] = rows.map((p) => ({ t: parseISO(p.day).getTime(), kg: p.kg, avg7: p.avg7 }))
+  const data: ChartPoint[] = rows.map((p) => ({ t: parseISO(p.day).getTime(), w: toUnit(p.kg), avg7: toUnit(p.avg7) }))
 
-  const values = data.flatMap((d) => [d.kg, d.avg7])
+  const values = data.flatMap((d) => [d.w, d.avg7])
   if (target != null) values.push(target)
   const lo = values.length ? Math.min(...values) : 0
   const hi = values.length ? Math.max(...values) : 1
   const span = Math.max(hi - lo, 2)
-  const step = span > 12 ? 5 : span > 5 ? 2 : 1
+  const step = span > 30 ? 10 : span > 12 ? 5 : span > 5 ? 2 : 1
   const yDomain: [number, number] = [Math.floor((lo - step * 0.5) / step) * step, Math.ceil((hi + step * 0.5) / step) * step]
   const first = data[0]?.t ?? 0
   const last = data[data.length - 1]?.t ?? 0
@@ -92,10 +98,10 @@ export function WeightTrend({ points, target }: { points: WeightPoint[]; target:
                       <div className="hairline rounded-[var(--radius-input)] bg-raised px-3 py-2 text-xs">
                         <p className="mb-1 font-semibold text-ink">{f.time(p.t, 'd MMM yyyy')}</p>
                         <p className="tabular text-ink-muted">
-                          {t('trend.legendDaily')}: <span className="text-ink">{f.num(p.kg)} kg</span>
+                          {t('trend.legendDaily')}: <span className="text-ink">{u.bodyValue(p.w)} {u.weightLabel}</span>
                         </p>
                         <p className="tabular text-ink-muted">
-                          <span className="text-volt">●</span> {t('trend.legendAvg')}: {f.num(p.avg7)} kg
+                          <span className="text-volt">●</span> {t('trend.legendAvg')}: {u.oneDecimal(roundTo(p.avg7, 1))} {u.weightLabel}
                         </p>
                       </div>
                     )
@@ -103,7 +109,7 @@ export function WeightTrend({ points, target }: { points: WeightPoint[]; target:
                 />
                 {target != null && <ReferenceLine y={target} stroke="var(--color-ink-faint)" strokeDasharray="4 4" ifOverflow="extendDomain" />}
                 <Scatter
-                  dataKey="kg"
+                  dataKey="w"
                   isAnimationActive={false}
                   legendType="none"
                   shape={(props: { cx?: number; cy?: number }) => <circle cx={props.cx} cy={props.cy} r={2} fill="var(--color-ink-faint)" />}
@@ -126,7 +132,7 @@ export function WeightTrend({ points, target }: { points: WeightPoint[]; target:
           <Key className="h-[3px] w-3.5 rounded-full bg-volt">{t('trend.legendAvg')}</Key>
           {target != null && (
             <Key className="w-3.5 border-t border-dashed border-ink-faint">
-              {t('trend.legendTarget')} <span className="tabular text-ink">{f.num(target)}</span>
+              {t('trend.legendTarget')} <span className="tabular text-ink">{u.bodyValue(target)}</span>
             </Key>
           )}
         </figcaption>

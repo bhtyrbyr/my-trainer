@@ -23,6 +23,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'ai_messages_conversation_id_fkey'
+            columns: ['conversation_id']
+            isOneToOne: false
+            referencedRelation: 'ai_conversations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       ai_usage: {
         Row: {
           day: string
@@ -126,6 +187,25 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: NonNullable<Json>
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          code: string
+          sort: number
+          threshold: number
+        }
+        ComputedFields: never
+        Insert: {
+          code: string
+          sort?: number
+          threshold: number
+        }
+        Update: {
+          code?: string
+          sort?: number
+          threshold?: number
         }
         Relationships: []
       }
@@ -1331,6 +1411,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_code: string
+          earned_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          badge_code: string
+          earned_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_code?: string
+          earned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_badges_badge_code_fkey'
+            columns: ['badge_code']
+            isOneToOne: false
+            referencedRelation: 'badges'
+            referencedColumns: ['code']
+          },
+        ]
+      }
       user_consents: {
         Row: {
           created_at: string
@@ -1544,6 +1651,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_add_allowed_email: { Args: { p_email: string; p_note?: string }; Returns: undefined }
       admin_ai_app_today: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1598,6 +1706,16 @@ export type Database = {
           username: string
         }[]
       }
+      admin_list_allowed_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          added_by: string
+          added_by_username: string
+          created_at: string
+          email: string
+          note: string
+        }[]
+      }
       admin_list_registrations: {
         Args: { p_limit?: number; p_status?: string }
         Returns: {
@@ -1611,8 +1729,29 @@ export type Database = {
           username: string
         }[]
       }
+      admin_list_users: {
+        Args: { p_limit?: number; p_query?: string }
+        Returns: {
+          ai_daily_limit: number
+          avatar_path: string
+          created_at: string
+          display_name: string
+          email: string
+          is_blocked: boolean
+          last_active_on: string
+          role: string
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
+      admin_remove_allowed_email: { Args: { p_email: string }; Returns: boolean }
+      admin_set_ai_limit: { Args: { p_limit: number; p_user: string }; Returns: undefined }
+      admin_set_blocked: { Args: { p_blocked: boolean; p_user: string }; Returns: undefined }
+      admin_set_config: { Args: { p_key: string; p_value: Json }; Returns: undefined }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
+      ai_add_assistant_message: { Args: { p_content: string; p_conversation: string }; Returns: string }
       ai_availability: { Args: Record<PropertyKey, never>; Returns: Json }
       ai_consent_of: { Args: { p_user: string }; Returns: boolean }
       ai_decide: { Args: { p_user: string }; Returns: Json }
@@ -1657,6 +1796,7 @@ export type Database = {
       body_weight_for: { Args: { p_on: string; p_user: string }; Returns: number }
       can_access: { Args: Record<PropertyKey, never>; Returns: boolean }
       cardio_met: { Args: { p_activity: string; p_speed_kmh: number }; Returns: number }
+      check_badges: { Args: { p_codes?: string[]; p_user: string }; Returns: string[] }
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined }
       dispatch_reminders: { Args: Record<PropertyKey, never>; Returns: number }
       e1rm: { Args: { p_reps: number; p_weight: number }; Returns: number }
@@ -1683,6 +1823,7 @@ export type Database = {
       }
       finish_workout_session: { Args: { p_session: string }; Returns: Json }
       fold_tr: { Args: { p: string }; Returns: string }
+      get_coach_context: { Args: Record<PropertyKey, never>; Returns: Json }
       get_leaderboard: {
         Args: { p_limit?: number; p_period?: string }
         Returns: {
@@ -1696,6 +1837,21 @@ export type Database = {
           streak: number
           user_id: string
           username: string
+        }[]
+      }
+      get_user_badges: {
+        Args: { p_user: string }
+        Returns: {
+          badge_code: string
+          earned_at: string
+        }[]
+      }
+      get_week_summary: { Args: { p_week_start?: string }; Returns: Json }
+      habit_due_done: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          done: number
+          due: number
         }[]
       }
       has_health_consent: { Args: Record<PropertyKey, never>; Returns: boolean }
