@@ -47,7 +47,7 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 ## Phase status
 - [x] Faz 0: skeleton, Google auth, onboarding (mandatory avatar), access mode, points engine, CI/CD. Live: https://my-trainer-nine.vercel.app (Supabase ref tnamatnobmtxvdtovkzp, GitHub bhtyrbyr/my-trainer).
 - [x] Faz 1: workouts (ExerciseDB + wger sync, guided session flow) + leaderboard UI (v0.2.0)
-- [ ] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos
+- [x] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos, KVKK (v0.3.0)
 - [ ] Faz 3: habits + todos (shared recurrence engine)
 - [ ] Faz 4: dashboard, AI coach (Edge Function), badges, admin panel, offline queue, export
 - [ ] Faz 5: hardening + publish
