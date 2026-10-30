@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(183);
+select plan(190);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -31,7 +31,7 @@ select is(
       and p.proname not in (
         'admin_delete_rejected_user', 'admin_list_registrations', 'admin_pending_count',
         'admin_ai_app_today', 'admin_ai_live', 'admin_ai_usage', 'admin_error_reports', 'admin_set_registration_status', 'ai_availability', 'ai_log_usage', 'ai_reserve', 'can_access', 'delete_my_account', 'finish_workout_session',
-        'get_leaderboard', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'rls_auto_enable')),
+        'get_leaderboard', 'has_health_consent', 'has_onboarded', 'is_admin', 'progress_photo_object_count', 'record_consent', 'rls_auto_enable', 'withdraw_health_consent')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -363,6 +363,16 @@ select ok(not has_function_privilege('authenticated', 'public.estimate_session_k
 -- body metrics (Faz 2) ------------------------------------------------------------------
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+-- KVKK: health tables need explicit consent first
+select throws_ok(
+  $$ insert into public.body_metrics (user_id, measured_on, weight_kg) values ('00000000-0000-0000-0000-00000000000b', current_date, 80) $$,
+  '42501', null, 'consent: health data cannot be written without explicit consent'
+);
+select public.record_consent('health_data', 'test');
+select ok(public.has_health_consent(), 'consent: granting health consent is recorded');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select public.record_consent('health_data', 'test');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
 insert into public.body_metrics (user_id, measured_on, weight_kg) values (:'ub', ((now() at time zone 'Europe/Istanbul')::date - 1), 82.4);
 select is((select points from public.point_events where user_id = :'ub' and kind = 'weight_log' and ref_id like '%:w'), 10, 'body: a weight row awards 10 by trigger');
 update public.body_metrics set weight_kg = 82.0 where user_id = :'ub';
@@ -628,6 +638,17 @@ select is((select count(*)::int from public.app_config), 0, 'privacy: non-admins
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 select ok((select count(*) from public.app_config) > 0, 'privacy: the admin still reads app_config');
 select is((select count(*)::int from storage.objects where bucket_id = 'avatars'), 2, 'privacy: the admin can list avatars (rejected-user cleanup)');
+select throws_like($$ select public.delete_my_account() $$, '%LAST_ADMIN%', 'account: the last admin cannot delete their account');
+select throws_ok($$ insert into public.user_consents (user_id, kind, version, granted) values ('00000000-0000-0000-0000-00000000000a', 'health_data', 'x', true) $$, '42501', null, 'consent: the log is written only by the consent functions');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select public.record_consent('privacy_notice', 'test');
+select is((select count(*)::int from public.user_consents where kind = 'privacy_notice'), 1, 'consent: the privacy-notice acknowledgement is logged');
+insert into public.water_entries (user_id, drunk_on, amount_ml) values (:'ub', current_date, 250);
+select public.withdraw_health_consent('test');
+select ok(not public.has_health_consent(), 'consent: withdrawal is recorded');
+reset role;
+select is((select count(*)::int from public.water_entries where user_id = :'ub') + (select count(*)::int from public.body_metrics where user_id = :'ub')
+          + (select count(*)::int from public.photo_vault where user_id = :'ub'), 0, 'consent: withdrawal erases the health data');
 reset role;
 
 select * from finish();

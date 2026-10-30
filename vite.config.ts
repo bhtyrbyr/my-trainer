@@ -7,6 +7,8 @@ import { readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+// product name: src/config/brand.json is the single source (UI, index.html, manifest)
+const brand = JSON.parse(readFileSync(new URL('./src/config/brand.json', import.meta.url), 'utf8')) as { appName: string; shortName: string }
 
 /** Short commit of the build: CI env first (GitHub Actions / Vercel), then local git, else 'dev'. */
 function buildCommit(): string {
@@ -39,6 +41,7 @@ export default defineConfig(({ mode }) => ({
     __APP_COMMIT__: JSON.stringify(buildCommit()),
   },
   plugins: [
+    { name: 'brand-html', transformIndexHtml: (html: string) => html.replaceAll('%APP_NAME%', brand.appName) },
     react(),
     tailwindcss(),
     VitePWA({
@@ -46,8 +49,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'My Trainer',
-        short_name: 'My Trainer',
+        name: brand.appName,
+        short_name: brand.shortName,
         description: 'Personal fitness & habit tracker',
         theme_color: '#111309',
         background_color: '#111309',

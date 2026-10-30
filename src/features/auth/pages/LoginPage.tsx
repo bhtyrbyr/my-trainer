@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthProvider'
 import { Button } from '@/components/ui/button'
 import { FullScreenSpinner } from '@/components/layout/FullScreenSpinner'
@@ -20,7 +20,7 @@ function GoogleGlyph() {
  * numbers as imagery for the proof points, one volt accent, CTA anchored in the thumb zone.
  */
 export function LoginPage() {
-  const { t } = useTranslation('auth')
+  const { t } = useTranslation(['auth', 'legal'])
   const { status, error, signInWithGoogle } = useAuth()
 
   if (status === 'loading' || status === 'checking') return <FullScreenSpinner />
@@ -82,7 +82,12 @@ export function LoginPage() {
             <GoogleGlyph />
           </span>
         </Button>
-        <p className="px-1 text-center text-[11.5px] leading-snug text-ink-faint">{t('privacyNote')}</p>
+        <p className="px-1 text-center text-[11.5px] leading-snug text-ink-faint">
+          {t('privacyNote')}{' '}
+          <Link to="/privacy" className="font-medium text-ink-muted underline underline-offset-2 hover:text-ink">
+            {t('legal:notice.openFull')}
+          </Link>
+        </p>
       </div>
     </div>
   )

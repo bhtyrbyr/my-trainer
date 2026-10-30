@@ -1121,6 +1121,34 @@ export type Database = {
           },
         ]
       }
+      user_consents: {
+        Row: {
+          created_at: string
+          granted: boolean
+          id: number
+          kind: string
+          user_id: string
+          version: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          granted: boolean
+          id?: never
+          kind: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          id?: never
+          kind?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           ai_daily_limit: number
@@ -1458,6 +1486,7 @@ export type Database = {
           username: string
         }[]
       }
+      has_health_consent: { Args: Record<PropertyKey, never>; Returns: boolean }
       has_onboarded: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_internal: { Args: Record<PropertyKey, never>; Returns: boolean }
@@ -1477,7 +1506,9 @@ export type Database = {
           weight_kg: number
         }[]
       }
+      progress_photo_object_count: { Args: Record<PropertyKey, never>; Returns: number }
       recompute_streak: { Args: { p_user: string }; Returns: undefined }
+      record_consent: { Args: { p_kind: string; p_version: string }; Returns: undefined }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
       search_food_catalog: {
         Args: { p_limit?: number; p_query: string }
@@ -1529,6 +1560,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      withdraw_health_consent: { Args: { p_version: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

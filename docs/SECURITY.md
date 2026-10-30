@@ -67,3 +67,12 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - `user_settings.ai_daily_limit` can only be changed by admins, internal code or server roles (trigger); a client update keeps the old value, a client insert gets the default.
 - `ai_log_usage()` accepts at most three rows (Flash, Lite, OpenRouter attempts) per request counted by `ai_reserve()` today, so nobody can inflate the shared Google quota counter and block AI for everyone.
 - The old `ai_consume()` was dropped; `ai_reserve()` is the only gate.
+
+## KVKK (Turkish data-protection law)
+
+- **Names in one place**: `src/config/brand.json` holds the product name and the data controller / contact e-mail; the UI, the notice, `index.html` and the PWA manifest read it. Technical identifiers (photo AAD prefix, `mt-vault`, `mt.*` keys) never follow the name.
+- **Privacy notice** (`/privacy`, public; text in `locales/<lng>/legal.json`): acknowledged during onboarding before any profile data is stored, and again by everyone after `legal.noticeVersion` changes (`NoticeGate`). Acknowledgements are logged in `user_consents` (append-only, written only by `record_consent()`).
+- **Health data** (body metrics, meals, sleep, water, progress photos; KVKK art. 6) needs explicit consent: the RLS policies of those tables (and the photo upload policy) require `has_health_consent()`. The rest of the app works without it. Withdrawing (`withdraw_health_consent()`) logs it and erases those rows; the client then deletes the encrypted photo files through the Storage API.
+- **Rights (art. 11)**: Settings > Privacy & data offers the notice, the consent switch, a JSON export of every own row, and account deletion (files through the Storage API first, then `delete_my_account()`, which refuses to remove the last admin).
+- **Pre-publication audit (2026-10-30)**: all public tables have RLS; anon holds no table privilege; nobody can TRUNCATE; avatars cannot be listed anonymously; `app_config` (admin e-mail) is admin-only. Only Google sign-in is enabled (e-mail/phone/anonymous off), the app sends no e-mail, fonts are self-hosted.
+- The notice text is a draft written without legal review; have it checked (and VERBIS obligations clarified) before a public launch.

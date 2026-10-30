@@ -1,5 +1,5 @@
 {
-  "appName": "My Trainer",
+  "appName": "{{app}}",
   "nav": {
     "label": "Ana gezinme",
     "home": "Özet",
@@ -58,7 +58,8 @@
     "sleepTooLong": "20 saatten uzun bir uyku kaydedilemez. Saatleri kontrol et.",
     "badPath": "Fotoğraf yüklenemedi: dosya konumu geçersiz. Sayfayı yenileyip tekrar dene.",
     "missingUpload": "Fotoğraf tam yüklenemedi. Bağlantını kontrol edip tekrar dene.",
-    "vaultDamaged": "Albümün anahtar bilgileri beklenmedik biçimde. Güvenliğin için açılmadı; yöneticiye bildir."
+    "vaultDamaged": "Albümün anahtar bilgileri beklenmedik biçimde. Güvenliğin için açılmadı; yöneticiye bildir.",
+    "lastAdmin": "Tek yönetici sensin. Hesabını silmeden önce başka birini yönetici yap."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

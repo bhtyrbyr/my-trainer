@@ -1,0 +1,119 @@
+{
+  "notice": {
+    "eyebrow": "KVKK",
+    "title": "Privacy notice",
+    "version": "Version {{version}}",
+    "intro": "This notice explains how {{app}} processes your personal data under the Turkish Personal Data Protection Law No. 6698 (KVKK).",
+    "sections": [
+      {
+        "title": "Data controller",
+        "items": ["{{controller}}", "Contact and data-protection requests: {{email}}"]
+      },
+      {
+        "title": "Data we process",
+        "items": [
+          "Identity and contact: name, e-mail address and (if you choose) profile photo from your Google account.",
+          "Profile: username, display name, profile photo; optionally height, birth year, sex and goal.",
+          "Usage: workout plans, sessions, sets, cardio entries, personal records, points and streaks.",
+          "Health data (only with your explicit consent): weight, body measurements and body-fat estimate, meals and nutrients, sleep and water entries, progress photos.",
+          "AI: the text you type or the meal photo you take for a nutrition estimate (not stored), plus request and token counts.",
+          "Technical: session data, IP address (in our hosting providers' logs) and an error report only if you send one."
+        ]
+      },
+      {
+        "title": "Purposes",
+        "items": [
+          "Creating your account, verifying your sign-in and keeping it secure.",
+          "Providing tracking, workouts, points and the leaderboard.",
+          "Running AI features such as nutrition estimates and sharing the free quota fairly.",
+          "Fixing errors and preventing abuse.",
+          "Meeting legal obligations."
+        ]
+      },
+      {
+        "title": "Legal grounds",
+        "items": [
+          "Necessary to provide the service (KVKK art. 5/2-c).",
+          "Legitimate interest in security and abuse prevention (art. 5/2-f).",
+          "Legal obligation (art. 5/2-ç).",
+          "Explicit consent for health data (art. 6). Without it you can keep using the rest of the app."
+        ]
+      },
+      {
+        "title": "Who sees it, where it goes",
+        "items": [
+          "Other users only see your username, display name, profile photo, points, level and streak; you can hide yourself from the leaderboard.",
+          "Your data is never sold or used for advertising.",
+          "The service uses providers abroad: Supabase (database, files, sign-in; servers in London, United Kingdom), Vercel (hosting; US-based), Google (Google sign-in and Gemini nutrition estimates; US), OpenRouter (fallback nutrition estimates, text only; US).",
+          "These transfers are made under KVKK art. 9; processing health data on these servers is covered by your separate explicit consent.",
+          "Progress photos are encrypted on your device; the server and providers only hold unreadable ciphertext."
+        ]
+      },
+      {
+        "title": "How we collect it",
+        "items": ["Electronically, through Google sign-in and what you enter in the app."]
+      },
+      {
+        "title": "Retention",
+        "items": [
+          "Kept while your account exists.",
+          "Withdrawing the health-data consent deletes those entries.",
+          "Deleting your account permanently deletes all your data and files; provider backups are cleared within their own cycles."
+        ]
+      },
+      {
+        "title": "Your rights (KVKK art. 11)",
+        "items": [
+          "To learn whether your data is processed, request information, and learn the purpose and recipients.",
+          "To have incomplete or wrong data corrected, deleted or destroyed.",
+          "To object to an adverse result of automated analysis and to claim compensation.",
+          "In the app: Settings > Privacy & data lets you download your data, withdraw the health-data consent and delete your account.",
+          "For anything else, write to {{email}}."
+        ]
+      }
+    ],
+    "back": "Back",
+    "close": "Close",
+    "openFull": "Privacy notice"
+  },
+  "ack": {
+    "label": "I have read the <0>privacy notice</0>.",
+    "required": "Confirm that you have read the privacy notice to continue.",
+    "gateTitle": "The privacy notice was updated",
+    "gateBody": "Before you continue, please read how your personal data is processed.",
+    "gateConfirm": "I have read it, continue"
+  },
+  "health": {
+    "eyebrow": "Explicit consent",
+    "title": "Your consent is needed for health data",
+    "body": "Weight, body measurements, meals, sleep, water and progress photos are health data under KVKK. Using these sections needs your explicit consent.",
+    "statement": "I give my explicit consent for {{app}} to process my weight, body measurements and body-fat estimate, meals and nutrients, sleep and water entries and progress photos in order to provide these tracking features, and to store them on the servers of the providers abroad listed in the privacy notice.",
+    "withdrawNote": "You can withdraw it at any time in Settings; those entries are then deleted. Without consent, workouts, the leaderboard and the other sections keep working.",
+    "agree": "I consent",
+    "later": "Not now",
+    "locked": "Health data is off",
+    "lockedHint": "Allow it for body, nutrition, sleep and water, and photo entries.",
+    "enable": "Allow"
+  },
+  "settings": {
+    "section": "Privacy & data",
+    "notice": "Privacy notice",
+    "health": "Health-data consent",
+    "healthOn": "On",
+    "healthOff": "Off",
+    "withdrawTitle": "Withdraw consent?",
+    "withdrawBody": "Your weight, measurement, meal, sleep and water entries and your progress photos are permanently deleted, and the points earned from them are revoked. This cannot be undone.",
+    "withdrawConfirm": "Withdraw and delete",
+    "withdrawing": "Deleting…",
+    "export": "Download my data",
+    "exportHint": "All your entries as one JSON file. Photos stay encrypted and are not included.",
+    "exporting": "Preparing…",
+    "delete": "Delete my account",
+    "deleteTitle": "Permanently delete your account?",
+    "deleteBody": "Your profile, all entries, points, profile and progress photos are deleted. This cannot be undone.",
+    "deleteType": "Type your username to confirm: {{username}}",
+    "deleteConfirm": "Permanently delete my account",
+    "deleting": "Deleting…",
+    "cancel": "Cancel"
+  }
+}
