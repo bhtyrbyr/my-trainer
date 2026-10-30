@@ -125,7 +125,12 @@
     "save": "Save",
     "create": "Add",
     "cancel": "Cancel",
-    "close": "Close"
+    "close": "Close",
+    "reminder": "Reminder",
+    "reminderNone": "None",
+    "reminderHint": "Turn on notifications for this device in Settings > Notifications.",
+    "reminderNeedsDay": "Pick a day or a repeat to set a reminder.",
+    "reminderClear": "Remove reminder"
   },
   "schedule": {
     "daily": "Every day",
@@ -135,5 +140,14 @@
     "weekly_count": "{{n}} days a week",
     "monthly": "Day {{day}} of every month",
     "every": "Every {{n}} days"
+  },
+  "notify": {
+    "section": "Notifications",
+    "device": "Reminders on this device",
+    "onHint": "You get a notification for habits and to-dos that have a reminder time.",
+    "offHint": "Turn on to get a notification for habits and to-dos that have a reminder time.",
+    "needsInstall": "On iPhone, first use Share > Add to Home Screen in Safari, open the app from the Home Screen and turn this on there.",
+    "unsupported": "This browser does not support notifications.",
+    "denied": "Notifications are blocked. Allow them for this app in the phone or browser settings."
   }
 }

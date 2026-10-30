@@ -62,7 +62,9 @@
     "lastAdmin": "Tek yönetici sensin. Hesabını silmeden önce başka birini yönetici yap.",
     "alreadyDone": "Bu görev zaten tamamlanmış. Sayfayı yenile.",
     "notDue": "Bu görev o gün için planlı değil.",
-    "limitReached": "Üst sınıra ulaştın (en fazla 50 aktif alışkanlık, 500 görev). Kullanmadıklarını arşivle ya da sil."
+    "limitReached": "Üst sınıra ulaştın (en fazla 50 aktif alışkanlık, 500 görev). Kullanmadıklarını arşivle ya da sil.",
+    "pushDenied": "Bildirim izni verilmedi. İzni telefon ya da tarayıcı ayarlarından açabilirsin.",
+    "pushUnsupported": "Bu cihazda bildirim açılamıyor. iPhone ise uygulamayı önce ana ekrana ekle."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

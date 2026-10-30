@@ -96,8 +96,23 @@ Guards (triggers, `set timezone = 'Europe/Istanbul'`):
 
 ## 5. Reminders (step 4)
 
-- `push_subscriptions (id, user_id, endpoint unique, p256dh, auth, user_agent, created_at, last_used_at)`, RLS owner.
-- VAPID keys: public key in `VITE_VAPID_PUBLIC_KEY`, private key only in Supabase Secrets (`VAPID_PRIVATE_KEY`).
-- `pg_cron` every 5 minutes runs `public.dispatch_reminders()` (security definer, not granted to clients): it finds habits/todos whose `remind_at` falls in the last 5-minute window today (Istanbul) and are due and not yet done, and POSTs batches (subscription + short payload) to Edge Function `push-send` via `pg_net`, authenticated with a shared secret (`PUSH_DISPATCH_SECRET`). The function has no database access and no service_role; it only signs and sends Web Push.
-- Payload: up to three habit/to-do names plus a count ("Kitap oku, Su iç +1"). Web Push payloads are end-to-end encrypted to the device (RFC 8291); the push service cannot read them.
-- Notice update: device push endpoints and the browser push services (Apple, Google, Mozilla) are added to the KVKK notice; `legal.noticeVersion` is bumped.
+Free-tier Web Push. Works on Android/desktop browsers and on iPhone only when the app is added to the Home Screen (iOS 16.4+).
+
+**Database** (migration `20261102010000_push_reminders.sql`):
+- Extensions: `pg_net` (schema `extensions`) and `pg_cron`.
+- `push_subscriptions (id uuid pk, user_id uuid not null -> auth.users on delete cascade, endpoint text unique not null (https, <= 1000 chars), p256dh text not null (<= 200), auth text not null (<= 100), user_agent text (<= 300), created_at, last_used_at)`. RLS owner select/delete only; writes through RPCs.
+- `register_push(p_endpoint text, p_p256dh text, p_auth text, p_user_agent text)` (definer, granted to authenticated): removes any row with that endpoint (a device that switched accounts) and inserts it for the caller; at most 10 subscriptions per user (oldest dropped).
+- `unregister_push(p_endpoint text)` (definer, authenticated): deletes the caller's row for that endpoint.
+- Private schema `private` (no grants to anon/authenticated): `private.push_config (id boolean pk default true check (id), function_url text, secret text)`, `private.reminder_log (user_id uuid, ref text, day date, sent_at timestamptz default now(), primary key (user_id, ref, day))`.
+- `set_push_config(p_url text, p_secret text)` (definer) granted to `service_role` only (deploy workflow calls it).
+- `prune_push_subscriptions(p_secret text, p_endpoints text[])` (definer, granted to anon and authenticated, because the Edge Function calls it with the anon key): if `p_secret` equals the stored secret, deletes those endpoints (410/404 from the push service); otherwise raises FORBIDDEN. Add it to the pgTAP allow-list with this reason.
+- `dispatch_reminders()` (definer, never granted to clients): runs as cron every 5 minutes. Local time = `now() at time zone 'Europe/Istanbul'`. Due reminders = rows whose `remind_at` is in `[local_time - 5 min, local_time]` today (no wrap across midnight), that are due today (`recurrence_matches`; habits active, weekly_count week quota still open; recurring todos not archived; one-off todos with `due_on = today`) and not done today (habit count < target; no todo completion for today's occurrence / for the one-off). Each (user, 'habit:<id>' | 'todo:<id>', day) is sent once (insert into reminder_log on conflict do nothing). Group per user: payload `{"body": "<up to 3 names joined by ', '>[ +N]", "url": "/track", "tag": "reminders-<day>"}`; one `net.http_post` per batch of up to 100 messages to `push_config.function_url` with header `x-dispatch-secret`, body `{"messages": [{"endpoint", "p256dh", "auth", "payload"}...]}`. Does nothing when push_config is missing.
+- `select cron.schedule('push-reminders', '*/5 * * * *', 'select public.dispatch_reminders()')` (idempotent: unschedule first if it exists).
+
+**Edge Function** `supabase/functions/push-send` (`verify_jwt = false` in config.toml; auth = constant-time compare of `x-dispatch-secret` with `PUSH_DISPATCH_SECRET`). No service_role, no database reads: it encrypts each payload (RFC 8291 aes128gcm, WebCrypto) and signs a VAPID JWT (ES256, `VAPID_SUBJECT`), POSTs to the endpoint with TTL 3600 and Urgency normal, then reports 404/410 endpoints back through `prune_push_subscriptions` using the anon key.
+
+**Secrets** (the user only creates three GitHub secrets; deploy.yml does the rest): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (from `npx web-push generate-vapid-keys`), `PUSH_DISPATCH_SECRET` (random). deploy.yml sets them as Supabase function secrets, calls `set_push_config` with the service role, and builds the app with `VITE_VAPID_PUBLIC_KEY`. Without them the feature stays hidden.
+
+**Client**: the service worker imports `/push-sw.js` (push + notificationclick; title = the manifest name, so a rename needs no change). Settings > Notifications turns reminders on for this device (permission on a user gesture, subscribe, `register_push`); on iPhone outside the Home Screen it explains how to install first. Habit and to-do sheets get an optional reminder time.
+
+**KVKK**: the notice adds the device push address and the browser push services (Apple, Google, Mozilla); `legal.noticeVersion` is bumped.

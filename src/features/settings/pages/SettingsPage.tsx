@@ -14,6 +14,7 @@ import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
 import { THEMES, applyTheme, readTheme, type ThemePref } from '@/lib/theme'
 import { useUserSettings } from '../hooks'
 import { PrivacySection } from '@/features/privacy/components/PrivacySection'
+import { NotificationsSection } from '@/features/notifications/NotificationsSection'
 import { cn } from '@/lib/utils'
 
 export function SettingsPage() {
@@ -181,6 +182,8 @@ export function SettingsPage() {
             {t('auth:signOut')}
           </Button>
         </section>
+
+        <NotificationsSection />
 
         <PrivacySection />
 
