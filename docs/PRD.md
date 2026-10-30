@@ -70,11 +70,11 @@ Soru-cevap turlarında netleşen isterler:
 - Uyku: yatış/kalkış saati, süre otomatik, 1–5 kalite puanı.
 - Su: hızlı "+250 ml" butonları, günlük hedef, ilerleme halkası.
 
-**M5 — Alışkanlıklar**
+**M5 — Alışkanlıklar** (2026-10-30 uygulandı: Takip > gün listesi ve Alışkanlıklar; evet/hayır veya günlük hedefli sayaç, haftada N gün, 5 haftalık ısı haritası)
 - Kullanıcı tanımlı alışkanlıklar (okuma, meditasyon…), sıklık (günlük / haftada N gün / belirli günler).
 - Günlük işaretleme, streak sayacı, aylık ısı haritası.
 
-**M6 — To-do**
+**M6 — To-do** (2026-10-30 uygulandı: Takip > gün listesi ve Görevler; geciken tek seferlik görevler bugüne taşınır; teknik şartname docs/faz3-spec.md)
 - Tek seferlik görevler: başlık, not, son tarih, öncelik.
 - Tekrarlı görevler: günlük / haftalık / aylık / özel kural (ör. her Pzt-Çar-Cum). Her tekrar ayrı tamamlanma kaydı tutar.
 - "Bugün" görünümü: bugünkü to-do'lar + bugünkü alışkanlıklar tek listede.

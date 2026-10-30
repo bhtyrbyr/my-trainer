@@ -468,6 +468,94 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_logs: {
+        Row: {
+          count: number
+          created_at: string
+          day: string
+          habit_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          count?: number
+          created_at?: string
+          day: string
+          habit_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          day?: string
+          habit_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'habit_logs_habit_id_fkey'
+            columns: ['habit_id']
+            isOneToOne: false
+            referencedRelation: 'habits'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          name: string
+          remind_at: string | null
+          rule: NonNullable<Json>
+          sort_order: number
+          starts_on: string
+          target_count: number
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name: string
+          remind_at?: string | null
+          rule?: NonNullable<Json>
+          sort_order?: number
+          starts_on?: string
+          target_count?: number
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name?: string
+          remind_at?: string | null
+          rule?: NonNullable<Json>
+          sort_order?: number
+          starts_on?: string
+          target_count?: number
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meal_entries: {
         Row: {
           carb_g: number
@@ -1121,6 +1209,88 @@ export type Database = {
           },
         ]
       }
+      todo_completions: {
+        Row: {
+          completed_on: string
+          created_at: string
+          day: string
+          id: string
+          todo_id: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          completed_on?: string
+          created_at?: string
+          day: string
+          id?: string
+          todo_id: string
+          user_id: string
+        }
+        Update: {
+          completed_on?: string
+          created_at?: string
+          day?: string
+          id?: string
+          todo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'todo_completions_todo_id_fkey'
+            columns: ['todo_id']
+            isOneToOne: false
+            referencedRelation: 'todos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      todos: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          due_on: string | null
+          id: string
+          note: string | null
+          priority: number
+          remind_at: string | null
+          rule: Json | null
+          starts_on: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          note?: string | null
+          priority?: number
+          remind_at?: string | null
+          rule?: Json | null
+          starts_on?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          note?: string | null
+          priority?: number
+          remind_at?: string | null
+          rule?: Json | null
+          starts_on?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_consents: {
         Row: {
           created_at: string
@@ -1509,6 +1679,8 @@ export type Database = {
       progress_photo_object_count: { Args: Record<PropertyKey, never>; Returns: number }
       recompute_streak: { Args: { p_user: string }; Returns: undefined }
       record_consent: { Args: { p_kind: string; p_version: string }; Returns: undefined }
+      recurrence_matches: { Args: { p_day: string; p_rule: Json; p_starts_on: string }; Returns: boolean }
+      recurrence_valid: { Args: { p_allow_weekly_count: boolean; p_rule: Json }; Returns: boolean }
       revoke_points: { Args: { p_ref_id: string; p_ref_table: string; p_user: string }; Returns: number }
       search_food_catalog: {
         Args: { p_limit?: number; p_query: string }

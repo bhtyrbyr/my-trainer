@@ -42,10 +42,6 @@
     "items_other": "{{count}} yemek",
     "open": "Beslenme gününü aç"
   },
-  "soon": {
-    "title": "Yakında burada",
-    "list": "Alışkanlıklar ve görevler"
-  },
   "nutrition": {
     "name": "Beslenme",
     "hint": "Öğünler, kalori, makrolar",

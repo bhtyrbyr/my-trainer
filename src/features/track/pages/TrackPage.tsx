@@ -21,6 +21,7 @@ import { useUserSettings } from '@/features/settings/hooks'
 import { usePhotoList } from '@/features/photos'
 import { useConsents } from '@/features/privacy/hooks'
 import { HealthLockedCard } from '@/features/privacy/components/HealthLockedCard'
+import { DayAgenda } from '@/features/today'
 import {
   DEFAULT_WATER_GOAL,
   splitDuration,
@@ -36,7 +37,7 @@ import { DayPickerSheet } from '../components/DayPickerSheet'
 /**
  * Track. Point of view: one day's logbook. Pick any day (arrows or the calendar) and see everything
  * logged on it: eaten vs burned, the weigh-in, workouts and meals; each block opens its module.
- * Habits, to-dos, sleep/water and photos join this page as they ship.
+ * Habits and to-dos (Faz 3) lead the day; body, nutrition, sleep/water and photos follow.
  */
 export function TrackPage({ preview = false }: { preview?: boolean }) {
   const { t, i18n } = useTranslation(['track', 'workouts', 'nutrition'])
@@ -163,6 +164,9 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
             sleep.error
           }
         />
+
+        {/* Faz 3: the day's habits and to-dos come first; they are what you act on */}
+        {!preview && <DayAgenda day={day} />}
 
         {healthOff ? (
           <HealthLockedCard />
@@ -434,10 +438,6 @@ export function TrackPage({ preview = false }: { preview?: boolean }) {
           </Link>
         )}
 
-        <p className="px-1 text-[12px] leading-snug text-ink-faint">
-          <span className="font-semibold text-ink-muted">{t('track:soon.title')}:</span>{' '}
-          {t('track:soon.list')}
-        </p>
       </div>
 
       <DayPickerSheet

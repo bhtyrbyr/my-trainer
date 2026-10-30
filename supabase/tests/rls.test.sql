@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(190);
+select plan(232);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -609,6 +609,273 @@ select is((select coalesce(sum(points), 0)::int from public.point_events where u
 reset role;
 select is((select public from storage.buckets where id = 'progress-photos'), false, 'photos: the bucket is private');
 select is((select allowed_mime_types from storage.buckets where id = 'progress-photos'), array['application/octet-stream'], 'photos: the bucket only accepts ciphertext');
+
+-- habits + to-dos (Faz 3) ---------------------------------------------------------------------
+\set h1 '00000000-0000-0000-0000-000000000301'
+\set h2 '00000000-0000-0000-0000-000000000302'
+\set hb '00000000-0000-0000-0000-0000000003b1'
+\set t1 '00000000-0000-0000-0000-000000000311'
+\set t2 '00000000-0000-0000-0000-000000000312'
+\set t3 '00000000-0000-0000-0000-000000000313'
+\set tb '00000000-0000-0000-0000-0000000003b2'
+reset role;
+-- The SQL rule matcher and src/lib/recurrence.ts agree on the shared vectors (generated from
+-- src/lib/recurrence.vectors.json; regenerate this list when the file changes).
+select is(
+  (select coalesce(array_agg('#' || v.n || ' ' || v.rule || ' ' || v.starts_on || ' ' || v.day order by v.n), '{}')
+     from (values
+     (1, '{"type":"daily"}', '2026-11-02', '2026-11-01', false),
+     (2, '{"type":"daily"}', '2026-11-02', '2026-11-02', true),
+     (3, '{"type":"daily"}', '2026-11-02', '2027-03-28', true),
+     (4, '{"type":"weekly","days":[1,3,5]}', '2026-11-01', '2026-11-02', true),
+     (5, '{"type":"weekly","days":[1,3,5]}', '2026-11-01', '2026-11-03', false),
+     (6, '{"type":"weekly","days":[1,3,5]}', '2026-11-01', '2026-11-06', true),
+     (7, '{"type":"weekly","days":[7]}', '2026-11-01', '2026-11-08', true),
+     (8, '{"type":"weekly","days":[7]}', '2026-11-01', '2026-11-07', false),
+     (9, '{"type":"weekly_count","n":3}', '2026-11-01', '2026-11-04', true),
+     (10, '{"type":"monthly","day":15}', '2026-01-01', '2026-11-15', true),
+     (11, '{"type":"monthly","day":15}', '2026-01-01', '2026-11-16', false),
+     (12, '{"type":"monthly","day":31}', '2026-01-01', '2026-02-28', true),
+     (13, '{"type":"monthly","day":31}', '2026-01-01', '2028-02-29', true),
+     (14, '{"type":"monthly","day":31}', '2026-01-01', '2028-02-28', false),
+     (15, '{"type":"monthly","day":31}', '2026-01-01', '2026-04-30', true),
+     (16, '{"type":"monthly","day":30}', '2026-01-01', '2026-05-30', true),
+     (17, '{"type":"every","n":2}', '2026-10-30', '2026-10-30', true),
+     (18, '{"type":"every","n":2}', '2026-10-30', '2026-10-31', false),
+     (19, '{"type":"every","n":2}', '2026-10-30', '2026-11-01', true),
+     (20, '{"type":"every","n":3}', '2026-03-27', '2026-04-02', true),
+     (21, '{"type":"every","n":3}', '2026-03-27', '2026-03-24', false)
+     ) as v(n, rule, starts_on, day, expect)
+    where public.recurrence_matches(v.rule::jsonb, v.starts_on::date, v.day::date) is distinct from v.expect),
+  '{}'::text[], 'recurrence_matches agrees with every vector in recurrence.vectors.json (21)'
+);
+select ok(
+  public.recurrence_valid('{"type":"daily"}', false) and public.recurrence_valid('{"type":"weekly","days":[1,3,5]}', false)
+  and public.recurrence_valid('{"type":"weekly_count","n":7}', true) and public.recurrence_valid('{"type":"monthly","day":31}', false)
+  and public.recurrence_valid('{"type":"every","n":365}', false),
+  'recurrence_valid accepts every rule type'
+);
+select is(
+  (select array_agg(v.r || ' allow=' || v.a order by v.r)
+     from (values
+       ('{"type":"weekly","days":[0]}', true), ('{"type":"weekly","days":[8]}', true), ('{"type":"weekly","days":[]}', true),
+       ('{"type":"weekly","days":[1,1]}', true), ('{"type":"weekly","days":["1"]}', true), ('{"type":"weekly"}', true),
+       ('{"type":"weekly_count","n":3}', false), ('{"type":"weekly_count","n":8}', true), ('{"type":"monthly","day":0}', true),
+       ('{"type":"monthly","day":32}', true), ('{"type":"monthly","day":1.5}', true), ('{"type":"every","n":1}', true),
+       ('{"type":"every","n":366}', true), ('{"type":"yearly"}', true), ('{}', true), ('[]', true), ('"daily"', true)
+     ) as v(r, a)
+    where public.recurrence_valid(v.r::jsonb, v.a)),
+  null, 'recurrence_valid rejects malformed rules (and weekly_count where not allowed)'
+);
+select ok(
+  (select bool_and(not p.prosecdef and p.provolatile = 'i') from pg_proc p
+    where p.pronamespace = 'public'::regnamespace and p.proname in ('recurrence_valid', 'recurrence_matches')),
+  'recurrence helpers are immutable and not security definer'
+);
+select ok(
+  not has_function_privilege('anon', 'public.recurrence_valid(jsonb, boolean)', 'execute')
+  and not has_function_privilege('anon', 'public.recurrence_matches(jsonb, date, date)', 'execute'),
+  'recurrence helpers: anon cannot execute them'
+);
+select is(
+  (select count(*)::int from pg_proc p
+    where p.pronamespace = 'public'::regnamespace
+      and p.proname in ('habits_guard', 'todos_guard', 'habit_logs_guard', 'todo_completions_guard', 'habit_logs_points', 'todo_completions_points')
+      and (has_function_privilege('authenticated', p.oid, 'execute') or has_function_privilege('anon', p.oid, 'execute'))),
+  0, 'habits/todos: guard and points trigger functions are not executable by clients'
+);
+
+-- Bob's rows (the IDOR targets)
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+insert into public.habits (id, user_id, name) values (:'hb', :'ub', 'Bob kitap');
+insert into public.habit_logs (user_id, habit_id, day) values (:'ub', :'hb', current_date);
+insert into public.todos (id, user_id, title) values (:'tb', :'ub', 'Bob gorev');
+insert into public.todo_completions (user_id, todo_id, day) values (:'ub', :'tb', current_date);
+select is(
+  (select count(*)::int from public.habits) + (select count(*)::int from public.habit_logs)
+  + (select count(*)::int from public.todos) + (select count(*)::int from public.todo_completions),
+  4, 'habits/todos: the owner writes and reads his habit, log, to-do and completion'
+);
+
+-- Alice: a yes/no habit and a counter habit (3 pages a day)
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+insert into public.habits (id, user_id, name) values (:'h1', :'ua', 'Su ic');
+insert into public.habits (id, user_id, name, target_count, unit) values (:'h2', :'ua', 'Kitap oku', 3, 'sayfa');
+select is((select starts_on from public.habits where id = :'h1'), (now() at time zone 'Europe/Istanbul')::date, 'habits: starts_on defaults to the Istanbul day');
+select is(
+  (select count(*)::int from public.habits where user_id = :'ub') + (select count(*)::int from public.habit_logs where user_id = :'ub')
+  + (select count(*)::int from public.todos where user_id = :'ub') + (select count(*)::int from public.todo_completions where user_id = :'ub'),
+  0, 'habits/todos IDOR: alice reads none of bob''s habits, logs, to-dos or completions'
+);
+select throws_ok(
+  $$ insert into public.habit_logs (user_id, habit_id, day) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000003b1', current_date - 1) $$,
+  '42501', 'FORBIDDEN', 'habits IDOR: alice cannot log against bob''s habit id, even with her own user_id'
+);
+select throws_ok(
+  $$ insert into public.todo_completions (user_id, todo_id, day) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000003b2', current_date) $$,
+  '42501', 'FORBIDDEN', 'todos IDOR: alice cannot complete bob''s to-do, even with her own user_id'
+);
+select throws_ok(
+  $$ insert into public.habits (user_id, name) values ('00000000-0000-0000-0000-00000000000b', 'x') $$,
+  '42501', null, 'habits IDOR: alice cannot create a habit owned by bob'
+);
+update public.habits set name = 'HACKED' where id = :'hb';
+update public.todos set title = 'HACKED' where id = :'tb';
+delete from public.habit_logs where habit_id = :'hb';
+delete from public.todo_completions where todo_id = :'tb';
+
+-- habit_done
+insert into public.habit_logs (user_id, habit_id, day) values (:'ua', :'h1', current_date);
+select is(
+  (select points from public.point_events where user_id = :'ua' and kind = 'habit_done' and ref_table = 'habit_logs' and ref_id = :'h1' || ':' || current_date::text),
+  10, 'habits: a yes/no habit done today earns 10'
+);
+select throws_like(
+  $$ insert into public.habit_logs (user_id, habit_id, day) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000301', current_date + 1) $$,
+  '%FUTURE_DATE%', 'habits: a future day cannot be logged'
+);
+update public.habit_logs set day = current_date - 3, habit_id = :'h2', user_id = :'ub' where habit_id = :'h1';
+select ok(
+  (select day = current_date and user_id = :'ua'::uuid from public.habit_logs where habit_id = :'h1'),
+  'habits: owner, habit and day of a log are frozen'
+);
+insert into public.habit_logs (user_id, habit_id, day, count) values (:'ua', :'h2', current_date, 2);
+select is(
+  (select count(*)::int from public.point_events where user_id = :'ua' and ref_table = 'habit_logs' and ref_id = :'h2' || ':' || current_date::text),
+  0, 'habits: a counter habit below its target (2 of 3) earns nothing'
+);
+update public.habit_logs set count = 3 where habit_id = :'h2';
+select is(
+  (select points from public.point_events where user_id = :'ua' and ref_table = 'habit_logs' and ref_id = :'h2' || ':' || current_date::text),
+  10, 'habits: reaching the target (3 of 3) earns 10'
+);
+update public.habit_logs set count = 5 where habit_id = :'h2';
+select is(
+  (select count(*)::int from public.point_events where user_id = :'ua' and ref_table = 'habit_logs' and ref_id = :'h2' || ':' || current_date::text),
+  1, 'habits: going past the target does not award twice'
+);
+update public.habit_logs set count = 1 where habit_id = :'h2';
+select is(
+  (select count(*)::int from public.point_events where user_id = :'ua' and ref_table = 'habit_logs' and ref_id = :'h2' || ':' || current_date::text),
+  0, 'habits: dropping below the target revokes the points'
+);
+update public.habit_logs set count = 3 where habit_id = :'h2';
+delete from public.habit_logs where habit_id = :'h2';
+select is(
+  (select count(*)::int from public.point_events where user_id = :'ua' and ref_table = 'habit_logs' and ref_id = :'h2' || ':' || current_date::text),
+  0, 'habits: deleting a completed log revokes the points'
+);
+select throws_ok(
+  $$ insert into public.habits (user_id, name, rule) values ('00000000-0000-0000-0000-00000000000a', 'x', '{"type":"weekly","days":[0]}') $$,
+  '23514', null, 'habits: an invalid rule (weekday 0) is rejected'
+);
+select lives_ok(
+  $$ insert into public.habits (user_id, name, rule) values ('00000000-0000-0000-0000-00000000000a', 'Spor', '{"type":"weekly_count","n":3}') $$,
+  'habits: weekly_count is allowed for habits'
+);
+insert into public.habits (user_id, name) select :'ua', 'cap ' || g from generate_series(1, 5) g;
+insert into public.habit_logs (user_id, habit_id, day) select :'ua', id, current_date from public.habits where name like 'cap %';
+select is(
+  (select sum(points)::int from public.point_events where user_id = :'ua' and kind = 'habit_done' and occurred_on = current_date),
+  50, 'habits: habit_done is capped at 50 a day (6 habits done)'
+);
+insert into public.habits (user_id, name) select :'ua', 'fill ' || g from generate_series(1, 42) g;
+select is((select count(*)::int from public.habits where archived_at is null), 50, 'habits: 50 active habits are allowed');
+select throws_like(
+  $$ insert into public.habits (user_id, name) values ('00000000-0000-0000-0000-00000000000a', 'one too many') $$,
+  '%LIMIT_REACHED%', 'habits: the 51st active habit is rejected'
+);
+update public.habits set archived_at = now() where name = 'fill 1';
+select lives_ok(
+  $$ insert into public.habits (user_id, name) values ('00000000-0000-0000-0000-00000000000a', 'after archive') $$,
+  'habits: archiving a habit frees a slot'
+);
+select throws_like(
+  $$ update public.habits set archived_at = null where name = 'fill 1' $$,
+  '%LIMIT_REACHED%', 'habits: un-archiving past the limit is rejected'
+);
+
+-- todo_done: one-off t1 (someday), one-off t2 (due tomorrow, reminder), recurring t3 (today's weekday)
+insert into public.todos (id, user_id, title) values (:'t1', :'ua', 'Fatura ode');
+insert into public.todos (id, user_id, title, due_on, remind_at) values (:'t2', :'ua', 'Randevu', current_date + 1, '09:00');
+insert into public.todos (id, user_id, title, rule, starts_on)
+  values (:'t3', :'ua', 'Haftalik rapor', jsonb_build_object('type', 'weekly', 'days', jsonb_build_array(extract(isodow from current_date)::int)), current_date - 14);
+insert into public.todo_completions (user_id, todo_id, day) values (:'ua', :'t1', current_date);
+select is(
+  (select points from public.point_events where user_id = :'ua' and kind = 'todo_done' and ref_table = 'todo_completions' and ref_id = :'t1' || ':' || current_date::text),
+  5, 'todos: ticking a to-do earns 5'
+);
+select throws_like(
+  $$ insert into public.todo_completions (user_id, todo_id, day, completed_on) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000311', current_date - 1, current_date - 1) $$,
+  '%ALREADY_DONE%', 'todos: a one-off to-do is completed at most once'
+);
+delete from public.todo_completions where todo_id = :'t1';
+select is(
+  (select count(*)::int from public.point_events where user_id = :'ua' and ref_table = 'todo_completions' and ref_id like :'t1' || ':%'),
+  0, 'todos: un-ticking revokes the points'
+);
+insert into public.todo_completions (user_id, todo_id, day) values (:'ua', :'t2', current_date);
+select ok(
+  (select day = current_date + 1 and completed_on = current_date from public.todo_completions where todo_id = :'t2'),
+  'todos: a one-off due later can be ticked early (day = due_on, points on the tick day)'
+);
+select throws_like(
+  $$ insert into public.todo_completions (user_id, todo_id, day, completed_on) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000311', current_date + 1, current_date + 1) $$,
+  '%FUTURE_DATE%', 'todos: a tick cannot be dated in the future'
+);
+insert into public.todo_completions (user_id, todo_id, day) values (:'ua', :'t3', current_date);
+select is(
+  (select points from public.point_events where user_id = :'ua' and ref_table = 'todo_completions' and ref_id = :'t3' || ':' || current_date::text),
+  5, 'todos: a recurring occurrence earns 5'
+);
+select throws_like(
+  $$ insert into public.todo_completions (user_id, todo_id, day) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000313', current_date - 1) $$,
+  '%NOT_DUE%', 'todos: a recurring to-do cannot be ticked on a non-occurrence day'
+);
+select throws_like(
+  $$ insert into public.todo_completions (user_id, todo_id, day) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-000000000313', current_date + 7) $$,
+  '%FUTURE_DATE%', 'todos: a future occurrence cannot be ticked'
+);
+select throws_ok(
+  $$ insert into public.todos (user_id, title, rule) values ('00000000-0000-0000-0000-00000000000a', 'x', '{"type":"weekly_count","n":3}') $$,
+  '23514', null, 'todos: weekly_count is for habits only'
+);
+select throws_ok(
+  $$ insert into public.todos (user_id, title, remind_at) values ('00000000-0000-0000-0000-00000000000a', 'x', '08:00') $$,
+  '23514', null, 'todos: a reminder needs a due day or a rule'
+);
+insert into public.todos (user_id, title) select :'ua', 'cap ' || g from generate_series(1, 5) g;
+insert into public.todo_completions (user_id, todo_id, day) select :'ua', id, current_date from public.todos where title like 'cap %';
+select is(
+  (select sum(points)::int from public.point_events where user_id = :'ua' and kind = 'todo_done' and occurred_on = current_date),
+  30, 'todos: todo_done is capped at 30 a day (7 ticks)'
+);
+delete from public.todos where id = :'t3';
+select is(
+  (select count(*)::int from public.point_events where user_id = :'ua' and ref_table = 'todo_completions' and ref_id like :'t3' || ':%'),
+  0, 'todos: deleting a to-do cascades to its completions and revokes their points'
+);
+insert into public.todos (user_id, title) select :'ua', 'fill ' || g from generate_series(1, 500 - (select count(*)::int from public.todos)) g;
+select throws_like(
+  $$ insert into public.todos (user_id, title) values ('00000000-0000-0000-0000-00000000000a', 'one too many') $$,
+  '%LIMIT_REACHED%', 'todos: the 501st to-do is rejected'
+);
+select throws_ok(
+  $$ insert into public.point_events (user_id, kind, points, occurred_on, ref_table, ref_id)
+     values ('00000000-0000-0000-0000-00000000000a', 'habit_done', 10, current_date, 'habit_logs', 'x') $$,
+  '42501', null, 'habits/todos: clients cannot write habit or to-do points'
+);
+
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+select ok(
+  (select name = 'Bob kitap' from public.habits where id = :'hb')
+  and (select title = 'Bob gorev' from public.todos where id = :'tb')
+  and (select count(*) = 1 from public.habit_logs where habit_id = :'hb')
+  and (select count(*) = 1 from public.todo_completions where todo_id = :'tb'),
+  'habits/todos IDOR: alice''s updates and deletes left bob''s rows untouched'
+);
+reset role;
 
 -- pre-publication privacy audit ---------------------------------------------------------------
 reset role;
