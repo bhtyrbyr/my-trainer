@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Maximize2, Minimize2 } from 'lucide-react'
-import { exerciseMedia, Flipbook, MuscleGlyph, useMediaUrl, type Exercise } from '@/features/exercises'
+import { exerciseMedia, Flipbook, MuscleGlyph, type Exercise } from '@/features/exercises'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -30,14 +30,12 @@ export function ExerciseDemo({ exercise, name, expanded, onToggle }: Props) {
       className={cn(
         'group relative flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)]',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt',
-        media.kind === 'gif' ? 'bg-white' : 'hairline bg-surface',
+        'hairline bg-surface',
         expanded ? 'h-[min(58vw,240px)] w-full' : 'size-32',
       )}
     >
       {media.kind === 'frames' ? (
         <Flipbook paths={media.paths} label={label} className={expanded ? 'aspect-square h-[92%]' : 'size-[88%]'} />
-      ) : media.kind === 'gif' ? (
-        <LegacyGif path={media.path} label={label} expanded={expanded} />
       ) : exercise ? (
         <MuscleGlyph target={exercise.target_muscles} secondary={exercise.secondary_muscles} sides="both" className="h-[84%]" />
       ) : null}
@@ -51,19 +49,3 @@ export function ExerciseDemo({ exercise, name, expanded, onToggle }: Props) {
   )
 }
 
-/** ExerciseDB GIFs (legacy rows during the catalog switch) are 180px squares on white. */
-function LegacyGif({ path, label, expanded }: { path: string; label: string; expanded: boolean }) {
-  const { data: url } = useMediaUrl(path)
-  return url ? (
-    <img
-      src={url}
-      alt={label}
-      loading="eager"
-      decoding="async"
-      fetchPriority="high"
-      className={cn('object-contain', expanded ? 'h-full max-w-full' : 'size-full')}
-    />
-  ) : (
-    <span className="size-full animate-pulse bg-black/5" aria-hidden />
-  )
-}

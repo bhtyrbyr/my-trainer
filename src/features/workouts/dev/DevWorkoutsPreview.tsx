@@ -34,7 +34,6 @@ const ex = (id: string, en: string, tr: string | null, target: string, equipment
   equipment: [equipment],
   instructions_en: [],
   instructions_tr: null,
-  gif_path: null,
   media_frames: [],
   attribution: null,
   is_custom: false,

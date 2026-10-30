@@ -5,7 +5,7 @@ export type Muscle = Pick<
   'wger_id' | 'name_latin' | 'name_en' | 'name_tr' | 'is_front' | 'svg_main_path' | 'svg_secondary_path'
 >
 
-/** wger muscles plus the ExerciseDB-name -> wger id alias table (null = no counterpart on the diagram). */
+/** wger muscles plus the app-term -> wger id alias table (null = no counterpart on the diagram). */
 export type MuscleCatalog = { muscles: Muscle[]; aliases: Record<string, number | null> }
 
 export type MuscleMapData = {
@@ -13,12 +13,12 @@ export type MuscleMapData = {
   main: Muscle[]
   /** wger muscles painted lighter (secondary muscles not already a target) */
   secondary: Muscle[]
-  /** ExerciseDB names that have no wger overlay; shown as text */
+  /** muscle terms that have no wger overlay; shown as text */
   unmapped: string[]
 }
 
 /**
- * Maps an exercise's ExerciseDB muscle names onto wger overlays. A wger muscle used by a target is
+ * Maps an exercise's muscle terms onto wger overlays. A wger muscle used by a target is
  * never repeated as secondary; unmapped names keep their first-seen order and are de-duplicated.
  */
 export function resolveMuscleMap(target: string[], secondary: string[], catalog: MuscleCatalog | undefined): MuscleMapData {

@@ -1,5 +1,5 @@
 {
-  "_note": "ExerciseDB muscle name -> wger muscle id (https://wger.de/api/v2/muscle/). null = no sensible wger counterpart; shown as text only in the diagram. Applied to public.muscle_aliases by scripts/sync-exercises.mjs.",
+  "_note": "App muscle term -> wger muscle id (https://wger.de/api/v2/muscle/). null = no sensible wger counterpart; shown as text only in the diagram. Applied to public.muscle_aliases by scripts/sync-muscles.mjs.",
   "_wger": {
     "1": "Biceps brachii", "2": "Anterior deltoid (Shoulders)", "3": "Serratus anterior", "4": "Pectoralis major",
     "5": "Triceps brachii", "6": "Rectus abdominis", "7": "Gastrocnemius", "8": "Gluteus maximus", "9": "Trapezius",

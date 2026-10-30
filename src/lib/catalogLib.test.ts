@@ -11,7 +11,6 @@ import {
   WG_EQUIPMENT,
   WG_MUSCLE,
   buildCatalog,
-  buildLegacyMap,
   checkCoreLifts,
   classifyWgerImage,
   cleanName,
@@ -260,35 +259,6 @@ describe('media allow-list', () => {
     expect(isSafeSvg('<svg><rect onload="x()"/></svg>')).toBe(false)
     expect(isSafeSvg('<svg><a href="javascript:x"/></svg>')).toBe(false)
     expect(isSafeSvg('<html></html>')).toBe(false)
-  })
-})
-
-describe('legacy map', () => {
-  const rows = [
-    { external_id: 'wger:1', name_en: 'Bench Press', equipment: ['barbell'] },
-    { external_id: 'wger:2', name_en: 'Front Raises', equipment: ['barbell', 'dumbbell'] },
-    { external_id: 'wger:3', name_en: 'Plank', equipment: ['bodyweight'] },
-    { external_id: 'wg:plank', name_en: 'Plank', equipment: ['bodyweight'] },
-  ]
-  const legacy = [
-    { external_id: 'A', name_en: 'barbell bench press', equipment: ['barbell'] },
-    { external_id: 'B', name_en: 'dumbbell bench press', equipment: ['dumbbell'] },
-    { external_id: 'C', name_en: 'dumbbell front raise', equipment: ['dumbbell'] },
-    { external_id: 'D', name_en: 'plank', equipment: ['bodyweight'] },
-    { external_id: 'E', name_en: 'archer push up', equipment: ['bodyweight'] },
-  ]
-  const map = Object.fromEntries(buildLegacyMap(legacy, rows).map((e: { old: string }) => [e.old, e])) as Record<string, { new: string | null; reason: string }>
-  it('matches only on the same name and equipment', () => {
-    expect(map.A.new).toBe('wger:1')
-    expect(map.C.new).toBe('wger:2')
-    expect(map.B.new).toBeNull()
-    expect(map.B.reason).toMatch(/different equipment/)
-  })
-  it('prefers null over a guess', () => {
-    expect(map.D.new).toBeNull()
-    expect(map.D.reason).toMatch(/ambiguous/)
-    expect(map.E.new).toBeNull()
-    expect(map.E.reason).toBe('no candidate with the same name and equipment')
   })
 })
 
