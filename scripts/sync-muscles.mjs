@@ -1,43 +1,17 @@
 #!/usr/bin/env node
-// Exercise catalog sync: ExerciseDB (exercises + GIFs) and wger (muscles + SVG layers)
-// into the Supabase `exercises` / `muscles` / `muscle_aliases` / `exercise_catalog_meta`
-// tables and the private `exercise-media` storage bucket.
-//
-// Contract: docs/faz1-spec.md section 5. Product rules: docs/PRD.md section 2.2.
+// Muscle diagram sync: wger muscles (names + SVG layers, CC BY-SA 3.0 Termininja / wger) into
+// `muscles`, `muscle_aliases`, `exercise_catalog_meta` and the private `exercise-media` bucket.
+// The exercise catalog itself is synced by scripts/sync-catalog.mjs (wger + workout-guide).
 //
 // Usage
-//   node scripts/sync-exercises.mjs                 full sync (needs credentials)
-//   node scripts/sync-exercises.mjs --dry-run       fetch + report counts, writes nothing,
-//                                                   no credentials required
-//   node scripts/sync-exercises.mjs --skip-media    rows only, no GIF/SVG download/upload
-//   node scripts/sync-exercises.mjs --only=exercisedb | --only=wger
-//   node scripts/sync-exercises.mjs --concurrency=4 media worker count (default 4)
+//   node scripts/sync-muscles.mjs                 full sync (needs credentials)
+//   node scripts/sync-muscles.mjs --dry-run       fetch + report counts, writes nothing, no credentials
+//   node scripts/sync-muscles.mjs --skip-media    rows only, no SVG download/upload
+//   node scripts/sync-muscles.mjs --concurrency=4 media worker count (default 4)
 //
-// Credentials (never committed; `*.local` is gitignored)
-//   SUPABASE_URL                 https://<ref>.supabase.co
-//   SUPABASE_SERVICE_ROLE_KEY    privileged key; GitHub Secret in CI, or locally in
-//                                ./.env.sync.local as plain KEY=VALUE lines:
-//                                  SUPABASE_URL=https://xxxx.supabase.co
-//                                  SUPABASE_SERVICE_ROLE_KEY=eyJ...
-//   Variables already present in the environment win over the file.
-//
-// Behaviour
-//   - Idempotent and resumable: exercises are upserted by `external_id`, muscles by
-//     `wger_id`, media already present in the bucket is skipped (one listing up front).
-//   - User-editable columns (`name_tr`, `instructions_tr`) are never overwritten; the
-//     Turkish seed in scripts/exercise-names-tr.json fills `name_tr` only where it is null.
-//   - Custom exercises (`is_custom = true`) are never touched.
-//   - Rate-friendly: ExerciseDB sits behind Cloudflare with roughly 10 requests per 10 s;
-//     page requests are paced at ~1/s, 429 responses honour Retry-After, every HTTP call
-//     retries 3 times with exponential backoff, media uploads run with concurrency 4.
-//   - Exit code 1 if any hard failure happened (the run still completes so progress is kept).
-//
-// Known API quirks (verified 2026-10-25)
-//   - ExerciseDB caps page size at 25 regardless of `limit` (1500 exercises = 60 pages).
-//   - The cursor is passed as `?after=<meta.nextCursor>`; a `cursor=` parameter is silently
-//     ignored and returns the first page forever.
-//   - The last page has `hasNextPage: false` and no `nextCursor`.
-//   - Some wger muscles have an empty `name_en`; the Latin name is used as fallback.
+// Credentials (never committed; `*.local` is gitignored): SUPABASE_URL and
+// SUPABASE_SERVICE_ROLE_KEY from the environment or ./.env.sync.local (KEY=VALUE lines).
+// Idempotent: muscles are upserted by `wger_id`, media already in the bucket is skipped.
 
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -48,7 +22,6 @@ import { createClient } from '@supabase/supabase-js'
 // Configuration
 // ---------------------------------------------------------------------------
 
-const EXERCISEDB_API = 'https://oss.exercisedb.dev/api/v1/exercises'
 const WGER_MUSCLES_API = 'https://wger.de/api/v2/muscle/?limit=50'
 const WGER_SILHOUETTES = {
   'muscles/front.svg': 'https://wger.de/static/images/muscles/muscular_system_front.svg',
@@ -56,13 +29,12 @@ const WGER_SILHOUETTES = {
 }
 const BUCKET = 'exercise-media'
 const LICENSE = {
-  exercisedb: 'Exercise data and GIFs: ExerciseDB (open source), https://exercisedb.dev',
   wger: 'Muscle diagrams: wger, CC-BY-SA 4.0, https://wger.de',
 }
 const RETRIES = 3
 const BACKOFF_BASE_MS = 1000
 const API_MIN_INTERVAL_MS = 1100 // ExerciseDB JSON pages (Cloudflare limit ~10 req / 10 s)
-const MEDIA_MIN_INTERVAL_MS = 150 // static.exercisedb.dev / wger.de downloads
+const MEDIA_MIN_INTERVAL_MS = 150 // wger.de downloads
 const DB_CHUNK = 200
 const STORAGE_PAGE = 1000
 
@@ -79,11 +51,7 @@ if (args.help) {
 }
 const DRY_RUN = Boolean(args['dry-run'])
 const SKIP_MEDIA = Boolean(args['skip-media'])
-const ONLY = args.only ?? null
 const CONCURRENCY = Math.max(1, Number(args.concurrency ?? 4) || 4)
-if (ONLY && !['exercisedb', 'wger'].includes(ONLY)) fail(`--only must be "exercisedb" or "wger", got "${ONLY}"`)
-const RUN_EXERCISEDB = !ONLY || ONLY === 'exercisedb'
-const RUN_WGER = !ONLY || ONLY === 'wger'
 
 loadEnvFile(resolve(root, '.env.sync.local'))
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -103,7 +71,6 @@ const supabase = HAS_CREDS
 
 const startedAt = Date.now()
 const stats = {
-  exercisedb: { pages: 0, fetched: 0, unique: 0, upserted: 0, gifsExisting: 0, gifsUploaded: 0, gifsFailed: 0, gifsSkipped: 0, gifsMissingUpstream: 0, nameTrApplied: 0, nameTrAlreadySet: 0, nameTrMissingIds: 0 },
   wger: { muscles: 0, upserted: 0, svgsExisting: 0, svgsUploaded: 0, svgsFailed: 0, svgsSkipped: 0, silhouettesOk: 0, silhouettesMissing: 0, aliasesApplied: 0, aliasesUnmapped: 0 },
   meta: 0,
 }
@@ -122,12 +89,11 @@ const mediaGate = makeGate(MEDIA_MIN_INTERVAL_MS)
 // ---------------------------------------------------------------------------
 
 try {
-  log(`sync-exercises  mode=${DRY_RUN ? 'DRY RUN' : 'write'}${SKIP_MEDIA ? ' (skip media)' : ''}${ONLY ? ` only=${ONLY}` : ''}  concurrency=${CONCURRENCY}  credentials=${HAS_CREDS ? 'yes' : 'no'}`)
+  log(`sync-muscles  mode=${DRY_RUN ? 'DRY RUN' : 'write'}${SKIP_MEDIA ? ' (skip media)' : ''}  concurrency=${CONCURRENCY}  credentials=${HAS_CREDS ? 'yes' : 'no'}`)
 
   const existing = await listExistingMedia()
 
-  if (RUN_EXERCISEDB) await syncExerciseDb(existing)
-  if (RUN_WGER) await syncWger(existing)
+  await syncWger(existing)
 
   printSummary()
   // Set the exit code and let the event loop drain: an abrupt process.exit() right after
@@ -137,156 +103,6 @@ try {
   hardError(err?.stack || String(err))
   printSummary()
   process.exitCode = 1
-}
-
-// ---------------------------------------------------------------------------
-// ExerciseDB
-// ---------------------------------------------------------------------------
-
-async function syncExerciseDb(existing) {
-  log('\n[exercisedb] fetching catalog')
-  const exercises = await fetchAllExercises()
-  const s = stats.exercisedb
-  s.unique = exercises.length
-
-  // Vocabulary report: muscle names that the alias file does not know about.
-  const aliases = loadAliases()
-  const catalogMuscles = new Set(exercises.flatMap((e) => [...e.targetMuscles, ...e.secondaryMuscles]))
-  const unmapped = [...catalogMuscles].filter((m) => !(m in aliases)).sort()
-  stats.wger.aliasesUnmapped = unmapped.length
-  if (unmapped.length) warn(`${unmapped.length} ExerciseDB muscle name(s) missing from scripts/muscle-aliases.json: ${unmapped.join(', ')}`)
-
-  // Media: GIFs.
-  const gifPath = new Map() // exerciseId -> storage path when known to exist
-  for (const e of exercises) if (existing.has(`gifs/${e.exerciseId}.gif`)) gifPath.set(e.exerciseId, `gifs/${e.exerciseId}.gif`)
-  s.gifsExisting = gifPath.size
-  const todo = exercises.filter((e) => !gifPath.has(e.exerciseId))
-  if (SKIP_MEDIA) {
-    s.gifsSkipped = todo.length
-    log(`[exercisedb] media skipped (--skip-media): ${s.gifsExisting} GIF(s) already in bucket, ${todo.length} not present`)
-  } else if (DRY_RUN) {
-    s.gifsSkipped = todo.length
-    log(`[exercisedb] dry run: would download ${todo.length} GIF(s) (${s.gifsExisting} already in bucket${HAS_CREDS ? '' : ', bucket not listed: no credentials'})`)
-  } else {
-    log(`[exercisedb] uploading ${todo.length} GIF(s), ${s.gifsExisting} already present`)
-    let done = 0
-    const missingUpstream = []
-    await pMap(todo, CONCURRENCY, async (e) => {
-      const path = `gifs/${e.exerciseId}.gif`
-      try {
-        // ExerciseDB has no file for ~12% of its catalog (permanent 404). That is a data gap, not a sync
-        // failure: the exercise row is kept without gif_path and the app falls back to diagram + steps.
-        const buf = await downloadBinary(e.gifUrl, mediaGate, { allow404: true })
-        if (buf === null) {
-          s.gifsMissingUpstream++
-          missingUpstream.push(e.exerciseId)
-          return
-        }
-        if (buf.subarray(0, 4).toString('latin1') !== 'GIF8') throw new Error('response is not a GIF')
-        await uploadToBucket(path, buf, 'image/gif')
-        gifPath.set(e.exerciseId, path)
-        s.gifsUploaded++
-      } catch (err) {
-        s.gifsFailed++
-        hardError(`GIF ${e.exerciseId} (${e.name}): ${err.message}`)
-      } finally {
-        done++
-        if (done % 100 === 0 || done === todo.length) log(`[exercisedb]   ${done}/${todo.length} GIFs processed (${s.gifsUploaded} ok, ${s.gifsMissingUpstream} missing upstream, ${s.gifsFailed} failed)`)
-      }
-    })
-    if (missingUpstream.length) warn(`${missingUpstream.length} GIF(s) do not exist on ExerciseDB (404); rows kept without gif_path`)
-  }
-
-  // Rows.
-  const rows = exercises.map((e) => {
-    const row = {
-      external_id: e.exerciseId,
-      source: 'exercisedb',
-      is_custom: false,
-      name_en: capitalize(e.name),
-      body_parts: e.bodyParts ?? [],
-      target_muscles: e.targetMuscles ?? [],
-      secondary_muscles: e.secondaryMuscles ?? [],
-      equipment: e.equipments ?? [],
-      instructions_en: (e.instructions ?? []).map(cleanInstruction),
-    }
-    // Only assert gif_path when we know the file is in the bucket; never null-out an earlier value.
-    if (gifPath.has(e.exerciseId)) row.gif_path = gifPath.get(e.exerciseId)
-    return row
-  })
-  if (DRY_RUN) {
-    log(`[exercisedb] dry run: would upsert ${rows.length} exercise row(s) (${rows.filter((r) => r.gif_path).length} with gif_path)`)
-  } else {
-    s.upserted = await upsertRows('exercises', rows, 'external_id')
-    log(`[exercisedb] upserted ${s.upserted} exercise row(s)`)
-  }
-
-  await applyTurkishNames(exercises)
-
-  await upsertMeta('exercisedb', exercises.length)
-}
-
-async function fetchAllExercises() {
-  const byId = new Map()
-  let cursor = null
-  const seenCursors = new Set()
-  for (;;) {
-    const url = new URL(EXERCISEDB_API)
-    url.searchParams.set('limit', '100') // server caps at 25; harmless if they raise it
-    if (cursor) url.searchParams.set('after', cursor)
-    const page = await fetchJson(url, apiGate)
-    if (!page || page.success === false || !Array.isArray(page.data)) throw new Error(`ExerciseDB: unexpected response shape on page ${stats.exercisedb.pages + 1}`)
-    stats.exercisedb.pages++
-    stats.exercisedb.fetched += page.data.length
-    for (const e of page.data) {
-      if (!e?.exerciseId || !e?.name) { warn(`ExerciseDB: skipping malformed item on page ${stats.exercisedb.pages}`); continue }
-      byId.set(e.exerciseId, e)
-    }
-    const meta = page.meta ?? {}
-    if (stats.exercisedb.pages === 1) log(`[exercisedb]   total=${meta.total ?? '?'} pageSize=${page.data.length}`)
-    if (stats.exercisedb.pages % 10 === 0) log(`[exercisedb]   page ${stats.exercisedb.pages}: ${byId.size} exercises so far`)
-    if (!meta.hasNextPage || !meta.nextCursor) break
-    if (seenCursors.has(meta.nextCursor)) throw new Error(`ExerciseDB: pagination loop detected at cursor ${meta.nextCursor}`)
-    seenCursors.add(meta.nextCursor)
-    cursor = meta.nextCursor
-  }
-  log(`[exercisedb]   ${stats.exercisedb.pages} page(s), ${stats.exercisedb.fetched} item(s), ${byId.size} unique`)
-  if (stats.exercisedb.fetched !== byId.size) warn(`ExerciseDB returned ${stats.exercisedb.fetched - byId.size} duplicate item(s) across pages`)
-  return [...byId.values()]
-}
-
-async function applyTurkishNames(exercises) {
-  const file = resolve(root, 'scripts/exercise-names-tr.json')
-  if (!existsSync(file)) { warn('scripts/exercise-names-tr.json not found; name_tr seed skipped'); return }
-  const seed = JSON.parse(readFileSync(file, 'utf8'))
-  const names = seed.names ?? seed
-  const catalogIds = new Set(exercises.map((e) => e.exerciseId))
-  const entries = Object.entries(names).filter(([id, tr]) => typeof tr === 'string' && tr.trim())
-  const missing = entries.filter(([id]) => !catalogIds.has(id))
-  stats.exercisedb.nameTrMissingIds = missing.length
-  if (missing.length) warn(`${missing.length} id(s) in exercise-names-tr.json are not in the ExerciseDB catalog: ${missing.map(([id]) => id).join(', ')}`)
-  const applicable = entries.filter(([id]) => catalogIds.has(id))
-
-  if (DRY_RUN) {
-    log(`[exercisedb] dry run: ${applicable.length} Turkish name(s) match catalog ids (applied only where name_tr is null)`)
-    return
-  }
-  // Find rows whose name_tr is still null, then update each one with the null guard in the
-  // predicate so a concurrent user edit can never be overwritten.
-  const ids = applicable.map(([id]) => id)
-  const needs = new Set()
-  for (const chunk of chunks(ids, 100)) {
-    const { data, error } = await withRetry(() => supabase.from('exercises').select('external_id,name_tr').in('external_id', chunk), 'select name_tr')
-    if (error) throw new Error(`select exercises.name_tr: ${error.message}`)
-    for (const r of data) { if (r.name_tr == null) needs.add(r.external_id); else stats.exercisedb.nameTrAlreadySet++ }
-  }
-  for (const [id, tr] of applicable) {
-    if (!needs.has(id)) continue
-    const { error } = await withRetry(() => supabase.from('exercises').update({ name_tr: tr.trim() }).eq('external_id', id).is('name_tr', null), `update name_tr ${id}`)
-    if (error) { hardError(`name_tr ${id}: ${error.message}`); continue }
-    stats.exercisedb.nameTrApplied++
-  }
-  log(`[exercisedb] name_tr seed: ${stats.exercisedb.nameTrApplied} applied, ${stats.exercisedb.nameTrAlreadySet} already set`)
 }
 
 // ---------------------------------------------------------------------------
@@ -406,13 +222,12 @@ async function upsertMeta(source, count) {
   stats.meta++
 }
 
-// Lists gifs/, muscles/, muscles/main/, muscles/secondary/ once (pages of 1000) -> Set of paths.
+// Lists muscles/, muscles/main/, muscles/secondary/ once (pages of 1000) -> Set of paths.
 async function listExistingMedia() {
   const set = new Set()
   if (!supabase) return set
   const folders = []
-  if (RUN_EXERCISEDB) folders.push('gifs')
-  if (RUN_WGER) folders.push('muscles', 'muscles/main', 'muscles/secondary')
+  folders.push('muscles', 'muscles/main', 'muscles/secondary')
   for (const folder of folders) {
     for (let offset = 0; ; offset += STORAGE_PAGE) {
       const { data, error } = await withRetry(
@@ -568,21 +383,9 @@ function* chunks(arr, size) { for (let i = 0; i < arr.length; i += size) yield a
 function fail(msg) { console.error(`error: ${msg}`); process.exit(1) }
 
 function printSummary() {
-  const e = stats.exercisedb, w = stats.wger
+  const w = stats.wger
   const rows = []
-  if (RUN_EXERCISEDB) rows.push(
-    ['exercisedb', 'pages fetched', e.pages],
-    ['exercisedb', 'exercises (unique)', `${e.unique}${e.fetched !== e.unique ? ` of ${e.fetched} items` : ''}`],
-    ['exercisedb', 'exercise rows upserted', DRY_RUN ? `(dry) ${e.unique}` : e.upserted],
-    ['exercisedb', 'GIFs already in bucket', e.gifsExisting],
-    ['exercisedb', 'GIFs uploaded', e.gifsUploaded],
-    ['exercisedb', 'GIFs skipped', e.gifsSkipped],
-    ['exercisedb', 'GIFs missing upstream (404)', e.gifsMissingUpstream],
-    ['exercisedb', 'GIFs failed', e.gifsFailed],
-    ['exercisedb', 'name_tr applied / already set', `${e.nameTrApplied} / ${e.nameTrAlreadySet}`],
-    ['exercisedb', 'name_tr ids not in catalog', e.nameTrMissingIds],
-  )
-  if (RUN_WGER) rows.push(
+  rows.push(
     ['wger', 'muscles fetched', w.muscles],
     ['wger', 'muscle rows upserted', DRY_RUN ? `(dry) ${w.muscles}` : w.upserted],
     ['wger', 'SVGs already in bucket', w.svgsExisting],
@@ -592,7 +395,7 @@ function printSummary() {
     ['wger', 'silhouettes ok / missing (404)', `${w.silhouettesOk} / ${w.silhouettesMissing}`],
     ['wger', 'alias rows upserted', DRY_RUN ? '(dry)' : w.aliasesApplied],
   )
-  if (RUN_EXERCISEDB) rows.push(['wger', 'catalog muscles without alias', w.aliasesUnmapped])
+  rows.push(['wger', 'catalog muscles without alias', w.aliasesUnmapped])
   rows.push(
     ['meta', 'exercise_catalog_meta rows', DRY_RUN ? '(dry)' : stats.meta],
     ['run', 'warnings', warnings.length],

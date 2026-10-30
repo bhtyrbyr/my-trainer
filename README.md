@@ -23,5 +23,7 @@ Requirements and architecture: [docs/PRD.md](docs/PRD.md).
 `app_config.access_mode`: `open` (default, anyone with Google) or `invite` (only emails in `allowed_emails`). Admins can also block users (`profiles.is_blocked`).
 
 ## Data sources and attribution
-- Exercise catalog & GIFs: [ExerciseDB (open source)](https://exercisedb.dev)
-- Muscle diagrams: [wger](https://wger.de), CC-BY-SA
+- Exercise texts: [wger](https://wger.de) contributors, CC BY-SA
+- Exercise illustrations: [workout-guide](https://github.com/bryllim/workout-guide) by Bryl Lim / Everkinetic, CC BY-SA 4.0
+- Muscle diagrams: Termininja via [wger](https://wger.de), CC BY-SA 3.0
+- Full list: Profile > About > Licences in the app, and docs/LICENSING.md

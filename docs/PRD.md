@@ -27,7 +27,7 @@ Soru-cevap turlarında netleşen isterler:
 | Gelişim fotoğrafı | Periyodik fotoğraf, **uçtan uca şifreli** (anahtar sunucuya gitmez) |
 | Dil | TR/EN, ayarlardan değiştirilebilir |
 | Cihazlar | **iPhone 16 birincil tasarım hedefi** (393×852 pt, Dynamic Island güvenli alanı), masaüstü ikincil (Windows'a kurulu PWA) |
-| Egzersiz verisi | **ExerciseDB açık kaynak** (1500 egzersiz + GIF) + **wger** kas SVG diyagramları; görseller Supabase Storage'a kopyalanır |
+| Egzersiz verisi | **wger** (metin, CC BY-SA) + **workout-guide / Everkinetic** çizimleri (CC BY-SA 4.0) + wger kas diyagramları; ExerciseDB 2026-10-30'da kaldırıldı (§2.2) |
 | Antrenman akışı | Programı adım adım rehberli akış olarak uygula: egzersiz → set başlat → kaydet → mola zamanlayıcı → sonraki set/egzersiz |
 
 ---
@@ -37,7 +37,7 @@ Soru-cevap turlarında netleşen isterler:
 ### 1.1 Fonksiyonel isterler (modüller)
 
 **M1 — Antrenman takibi (çekirdek)**
-- Egzersiz kütüphanesi: **ExerciseDB açık kaynak** kataloğu (1500 egzersiz, her biri GIF animasyonlu, adım adım talimat, hedef/ikincil kaslar, vücut bölgesi, ekipman) Supabase'e içe aktarılır (bkz. §2.2). Kullanıcı kendi egzersizini de ekleyebilir. Filtreler: vücut bölgesi, hedef kas, ekipman, arama.
+- Egzersiz kütüphanesi: açık lisanslı katalog (~888 egzersiz; wger metinleri, workout-guide çizimleri, hedef/ikincil kaslar, vücut bölgesi, ekipman) Supabase'e içe aktarılır (bkz. §2.2). Kullanıcı kendi egzersizini de ekleyebilir. Filtreler: vücut bölgesi, hedef kas, ekipman, arama.
 - Egzersiz detay ekranı: **GIF** (nasıl yapılır) + **kas diyagramı** (wger ön/arka vücut silueti üzerinde hedef kas koyu, ikincil kas açık renk boyalı → "hangi bölgeyi çalıştırıyor") + talimat adımları (EN; TR çevirisi kullanıcı tarafından düzenlenebilir).
 - Program şablonları: ör. Push / Pull / Legs; her gün için egzersiz sırası + hedef set/tekrar + set arası mola süresi.
 - **Gün bazlı plan** (2026-10-26 eklendi): Şablon haftanın bir veya birkaç gününe atanır (ör. "Pazartesi: Push"). Antrenman sekmesi ve Özet ekranı o günün planını "Bugünün antrenmanı" kartıyla gösterir; tek dokunuşla o plandan seans başlar.
@@ -191,33 +191,15 @@ Barkod okuma, çoklu kullanıcı, native mağaza uygulaması, giyilebilir cihaz 
 
 `anon` key istemcide görünür olacak (Supabase'in normal modeli); güvenlik RLS'tendir, key gizliliğinden değil. `service_role` key hiçbir zaman istemciye girmez.
 
-### 2.2 Egzersiz kataloğu: ExerciseDB (açık kaynak) + wger kas diyagramları
+### 2.2 Egzersiz kataloğu (2026-10-30 güncellendi)
 
-Kullanıcı kararı: ExerciseAPI yerine GIF'li kaynak. Değerlendirilen alternatifler: ExerciseAPI (görselsiz, 100 istek/gün), free-exercise-db (kamu malı, 2 fotoğraf/egzersiz), wger (TR çeviri + kas SVG, görsel az, video MOV), ExerciseDB OSS (GIF, 1500 egzersiz). **Seçim: ExerciseDB OSS + wger.**
+ExerciseDB kaldırıldı: kullanım şartları önbelleğe almayı, kopyalamayı ve yeniden dağıtmayı yasaklıyor, GIF'lerin kaynağı tartışmalı (docs/LICENSING.md). Ürün sahibi kararıyla katalog açık lisanslı kaynaklara taşındı ve ExerciseDB verisi, GIF'leri ve kodu tamamen silindi.
 
-**Kaynak A — ExerciseDB açık kaynak** (`https://oss.exercisedb.dev/api/v1`, doğrulandı 2026-10-25)
-- `GET /exercises?limit=100&cursor=…` (cursor sayfalama, `meta.total = 1500`), `GET /muscles` (38 kas), `GET /bodyparts` (10 bölge), `GET /equipments`.
-- Alanlar: `exerciseId`, `name`, `gifUrl` (`https://static.exercisedb.dev/media/{id}.gif`, ~67 KB), `bodyParts[]`, `equipments[]`, `targetMuscles[]`, `secondaryMuscles[]`, `instructions[]`.
-- Anahtarsız, CORS açık, rate-limit başlığı görülmedi. **Risk**: GIF lisansı belirsiz, üçüncü taraf hosting kapanabilir → bu yüzden GIF'ler Supabase Storage'a kopyalanır (1500 × ~67 KB ≈ 100 MB, 1 GB ücretsiz limite sığar). Kişisel kullanım; Hakkında ekranında kaynak gösterilir.
-
-**Kaynak B — wger** (`https://wger.de/api/v2`, salt okunur anahtarsız)
-- `GET /muscle/` → 15 kas: `name`, `name_en`, `is_front`, `image_url_main`, `image_url_secondary` (vücut silueti üzerine binen SVG katmanları). Lisans CC-BY-SA; atıf Hakkında ekranında.
-- Kas diyagramı bileşeni: ön/arka silüet taban görseli + ExerciseDB `targetMuscles` → wger kas id eşlemesi (`src/features/exercises/muscleMap.ts`, 38 → 15 elle eşleme; eşleşmeyenler diyagramda gösterilmez, metin olarak listelenir) → `image_url_main` (hedef, koyu) ve `image_url_secondary` (ikincil, açık) katmanları üst üste.
-- 15 SVG + 2 silüet dosyası Storage'a kopyalanır.
-
-**Senkron akışı** — `scripts/sync-exercises.ts` (Node, `service_role` ile)
-1. ExerciseDB'yi cursor ile tamamen çek (15 istek) → `exercises` tablosuna `upsert` (`external_id = exerciseId`, `source = 'exercisedb'`).
-2. Her egzersiz için GIF'i indir → Supabase Storage `exercise-media/gifs/{exerciseId}.gif` olarak yükle (varsa atla) → `gif_path` yaz.
-3. wger `/muscle/` → `muscles` tablosuna upsert + SVG'leri `exercise-media/muscles/` altına kopyala.
-4. `exercise_catalog_meta` güncelle (kaynak, sayım, `synced_at`).
-5. GitHub Actions `sync-exercises.yml`: **ayda 1** + manuel tetikleme; `service_role` key yalnızca GitHub Secrets'ta.
-6. Kullanıcı egzersizleri (`is_custom = true`) senkronda dokunulmaz. Uygulama her zaman kendi DB + Storage'ından okur; kaynaklar kapansa bile çalışır.
-
-**Dil**: Kaynak İngilizce. `name_tr` ve `instructions_tr` boş başlar; en yaygın ~100 egzersiz için seed çevirisi (`supabase/seed.sql`), kalanı kullanıcı egzersiz detayından düzenleyebilir. TR arayüzde `name_tr ?? name_en` gösterilir.
-
-**RLS**: Katalog satırları (`is_custom = false`) beyaz listeli kullanıcıya salt okunur; `is_custom = true` satırlar `user_id = auth.uid()` ile tam yetkili. Storage `exercise-media` bucket'ı: okuma sadece authenticated + beyaz liste, yazma sadece `service_role`.
-
----
+- **Metin:** wger egzersiz veritabanı (CC BY-SA, giriş bazında yazar/lisans), ~888 egzersiz, bütün temel hareketler.
+- **Görsel:** workout-guide (Bryl Lim / Everkinetic, CC BY-SA 4.0, sabit commit) 3 karelik çizimler, hareketli gösterim; çizimi olmayanlarda wger kas haritası (Termininja, CC BY-SA 3.0).
+- **Türkçe:** küratörlü adlar + Gemini Flash Lite ile kota korumalı makine çevirisi (CC BY-SA uyarlaması olarak işaretli).
+- **Senkron:** `scripts/sync-catalog.mjs` (egzersizler) ve `scripts/sync-muscles.mjs` (kas diyagramları); her deploy'da ve aylık `sync-catalog.yml` ile. Ayrıntı: `docs/catalog-v2-spec.md`.
+- Her egzersizde kaynak satırı; Profil > Hakkında > Lisanslar.
 
 ## 3. Veri modeli (özet)
 
@@ -267,7 +249,7 @@ my-trainer/
     migrations/      # SQL şema + RLS + trigger
     seed.sql         # TR egzersiz adı çevirileri (name_tr), varsayılan ayarlar
   scripts/
-    sync-exercises.ts  # ExerciseDB + wger → Supabase DB & Storage senkronu (§2.2)
+    sync-catalog.mjs   # wger + workout-guide → Supabase DB & Storage (§2.2); sync-muscles.mjs kas diyagramları
   supabase/functions/
     ai-coach/        # Edge Function: Gemini/OpenRouter proxy, JWT + beyaz liste + kota
   src/
@@ -316,7 +298,7 @@ my-trainer/
 
 **Faz 1 — Antrenman modülü (M1) + Liderlik tablosu UI (M12)**
 - Antrenman/kardiyo/PR puan trigger'ları, liderlik sayfası (hafta/ay/tümü), profil kartı (seviye, seri).
-- ExerciseDB + wger senkron scripti, GIF/SVG'lerin Storage'a kopyalanması, 38→15 kas eşlemesi, `name_tr` seed çevirisi (~100 egzersiz), kaynak atıf ekranı.
+- Egzersiz katalog senkron scripti (2026-10-30'dan beri wger + workout-guide, §2.2), görsellerin Storage'a kopyalanması, 38→15 kas eşlemesi, `name_tr` seed çevirisi (~100 egzersiz), kaynak atıf ekranı.
 - Egzersiz kütüphanesi UI (bölge / kas / ekipman filtreleri, arama), egzersiz detayı (GIF + kas diyagramı + talimat), şablonlar, **rehberli antrenman akışı** (set başlat / bitir / mola zamanlayıcı / sonraki), kesintiye dayanıklı taslak seans, kardiyo, PR tespiti, geçmiş + egzersiz trend grafiği.
 
 **Faz 2 — Vücut, beslenme, uyku/su, gelişim fotoğrafları (M2, M3, M4, M9)**

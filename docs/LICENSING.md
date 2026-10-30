@@ -4,7 +4,7 @@ Research summary, not legal advice. Items marked **[lawyer]** need a Turkish IP/
 
 | Item | Terms | Verdict | What it means for us |
 |---|---|---|---|
-| ExerciseDB (1,500 exercises + GIFs, copied into our Storage) | oss.exercisedb.dev: "All rights reserved"; API Terms (8 Jun 2026): content incl. animations owned by ExerciseDB API, licence only for subscribers, **caching / mirroring / redistribution prohibited**; free endpoints "for exploration only". Code repo is AGPL-3.0 (code only). GIF origin possibly Gym Visual (paid licences). | **Blocker** | Our bulk copy and self-hosting is what the terms forbid. Before a public launch: a written licence (AscendAPI and/or the real rights holder) or replacement media/text. **[lawyer]** |
+| ExerciseDB (**removed 2026-10-30**: data, GIFs and code deleted; replaced by wger + workout-guide) | oss.exercisedb.dev: "All rights reserved"; API Terms (8 Jun 2026): content incl. animations owned by ExerciseDB API, licence only for subscribers, **caching / mirroring / redistribution prohibited**; free endpoints "for exploration only". Code repo is AGPL-3.0 (code only). GIF origin possibly Gym Visual (paid licences). | **Blocker** | Our bulk copy and self-hosting is what the terms forbid. Before a public launch: a written licence (AscendAPI and/or the real rights holder) or replacement media/text. **[lawyer]** |
 | wger muscle SVGs | Based on Wikimedia "Muscular system" by Termininja, **CC BY-SA 3.0** | OK with obligations | Credit + licence link on an About/Licences page; share-alike covers only the (adapted) images, not our code. |
 | USDA FoodData Central | Public domain / CC0 | OK | Citation requested: "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central". Turkish names are our machine translation. |
 | Open Food Facts (live search) | ODbL 1.0 (database), DbCL (contents), CC BY-SA (images); not for medical use | OK with obligations | Credit "Open Food Facts" + link near the results; descriptive User-Agent (done); API usage form; **10 searches/min per IP** (all users share the server IP: explicit search button and caching, already in place); no shared cross-user OFF table unless released under ODbL. **[lawyer]** for private per-user logs. |
@@ -19,7 +19,7 @@ Research summary, not legal advice. Items marked **[lawyer]** need a Turkish IP/
 
 ## Before a public launch
 
-1. Replace or license the ExerciseDB GIFs and copied texts.
+1. ~~Replace or license the ExerciseDB GIFs and copied texts.~~ Done 2026-10-30 (catalog v2).
 2. AI: 18+ rule, explicit consent naming Google and OpenRouter, no identifiers, off for EEA/UK/CH, "not medical advice"; decide on the paid tier.
 3. About/Licences page (TR + EN): Open Food Facts, USDA, wger/Termininja, OSS and font notices; OFF credit under food search.
 4. Open Food Facts: API usage form.

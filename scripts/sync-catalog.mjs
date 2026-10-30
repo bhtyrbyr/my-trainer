@@ -70,7 +70,6 @@ import {
 const WG_SHA = 'aac599224bb9780305239607ef98540b7e0ce389'
 const WG_MANIFEST = `https://raw.githubusercontent.com/bryllim/workout-guide/${WG_SHA}/packages/workout-guide/manifest.json`
 const WGER = 'https://wger.de/api/v2'
-const EXERCISEDB_API = 'https://oss.exercisedb.dev/api/v1/exercises'
 const BUCKET = 'exercise-media'
 const RETRIES = 3
 const BACKOFF_BASE_MS = 1000
@@ -89,7 +88,6 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const OUT = resolve(root, 'scripts/out')
 const PLAN_FILE = resolve(OUT, 'catalog-plan.json')
 const LEGACY_FILE = resolve(OUT, 'legacy-map.json')
-const EDB_CACHE = resolve(OUT, 'exercisedb-cache.json')
 
 // ---------------------------------------------------------------------------
 // CLI + env
@@ -188,7 +186,7 @@ async function sync() {
   // 3. Legacy map + curated Turkish names
   const legacy = await loadLegacyRows()
   const legacyMap = buildLegacyMap(legacy.rows, rows)
-  const curated = curatedNames(legacyMap)
+  const curated = curatedNames()
   writeOutputs({ catalog, core, legacy, legacyMap, curated, licenses })
 
   if (DRY_RUN) return
@@ -273,55 +271,26 @@ async function fetchPaged(start) {
   return out
 }
 
-/** Old ExerciseDB rows: database (credentials) > local cache > one paced fetch of the public list. */
+/** Old ExerciseDB rows still in the database (only until the one-time removal has run). Never fetched from ExerciseDB. */
 async function loadLegacyRows() {
   if (supabase) {
     const rows = await selectAll('exercises', 'external_id,name_en,equipment', (q) => q.eq('source', 'exercisedb'))
-    log(`[legacy] ${rows.length} ExerciseDB row(s) from the database`)
+    log(`[legacy] ${rows.length} ExerciseDB row(s) left in the database`)
     return { origin: 'database', rows }
   }
-  if (existsSync(EDB_CACHE)) {
-    const rows = normalizeEdb(JSON.parse(readFileSync(EDB_CACHE, 'utf8')))
-    log(`[legacy] ${rows.length} ExerciseDB row(s) from ${rel(EDB_CACHE)}`)
-    return { origin: 'cache', rows }
-  }
-  log('[legacy] no database access and no cache: fetching the ExerciseDB list once')
-  const byId = new Map()
-  let cursor = null
-  for (let page = 1; ; page++) {
-    const url = new URL(EXERCISEDB_API)
-    url.searchParams.set('limit', '100')
-    if (cursor) url.searchParams.set('after', cursor)
-    const res = await fetchJson(url, apiGate)
-    if (!Array.isArray(res?.data)) throw new Error(`ExerciseDB: unexpected response shape on page ${page}`)
-    for (const e of res.data) if (e?.exerciseId && e?.name) byId.set(e.exerciseId, e)
-    if (!res.meta?.hasNextPage || !res.meta?.nextCursor || res.meta.nextCursor === cursor) break
-    cursor = res.meta.nextCursor
-  }
-  const rows = normalizeEdb([...byId.values()])
-  mkdirSync(OUT, { recursive: true })
-  writeFileSync(EDB_CACHE, JSON.stringify(rows))
-  log(`[legacy] ${rows.length} ExerciseDB row(s) fetched, cached in ${rel(EDB_CACHE)}`)
-  return { origin: 'exercisedb-api', rows }
+  log('[legacy] no database access: legacy map skipped')
+  return { origin: 'none', rows: [] }
 }
 
-/** Accepts the API shape ({exerciseId, name, equipments}) or the DB shape ({external_id, name_en, equipment}). */
-function normalizeEdb(list) {
-  return (Array.isArray(list) ? list : list?.data ?? [])
-    .map((e) => ({ external_id: e.external_id ?? e.exerciseId, name_en: e.name_en ?? e.name, equipment: e.equipment ?? e.equipments ?? [] }))
-    .filter((e) => e.external_id && e.name_en)
-}
-
-/** scripts/exercise-names-tr.json is keyed by ExerciseDB id; a matched legacy entry carries it over. */
-function curatedNames(legacyMap) {
+/** scripts/exercise-names-tr.json: curated Turkish names keyed by catalog external_id. */
+function curatedNames() {
   const file = resolve(root, 'scripts/exercise-names-tr.json')
   const out = new Map()
   if (!existsSync(file)) return out
   const json = JSON.parse(readFileSync(file, 'utf8'))
-  const names = json.names ?? json
-  for (const e of legacyMap) {
-    const tr = typeof names[e.old] === 'string' ? names[e.old].trim() : ''
-    if (e.new && tr && !out.has(e.new)) out.set(e.new, tr.slice(0, 120))
+  for (const [externalId, name] of Object.entries(json.names ?? {})) {
+    const tr = typeof name === 'string' ? name.trim() : ''
+    if (tr) out.set(externalId, tr.slice(0, 120))
   }
   return out
 }
