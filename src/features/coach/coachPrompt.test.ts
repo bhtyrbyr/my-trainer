@@ -10,6 +10,7 @@ import {
   coachModelOrder,
   compactContext,
   istanbulDay,
+  signCoachReply,
   trimHistory,
   type ChatMessage,
 } from '../../../supabase/functions/ai-coach/coach'
@@ -132,5 +133,15 @@ describe('cleanReply', () => {
   it('caps the length to what the database stores', () => {
     const r = cleanReply('a'.repeat(COACH_REPLY_CHARS + 50))
     expect(r).toHaveLength(COACH_REPLY_CHARS)
+  })
+})
+
+describe('signCoachReply', () => {
+  it('matches the SQL check (hmac of "<id>:<content>" with the derived key)', async () => {
+    // reference computed with pgcrypto: encode(hmac(id||':'||content, encode(hmac('coach-reply-v1', secret, 'sha256'), 'hex'), 'sha256'), 'hex')
+    const sig = await signCoachReply('coach-test-secret', '00000000-0000-0000-0000-000000000541', 'Harika')
+    expect(sig).toMatch(/^[0-9a-f]{64}$/)
+    expect(sig).toBe('84ae3011a3f4964ad48b06018d1c99c8ce43662f00c8f6f8aaabf65a9b5eb0af')
+    expect(await signCoachReply('coach-test-secret', '00000000-0000-0000-0000-000000000541', 'Harika!')).not.toBe(sig)
   })
 })

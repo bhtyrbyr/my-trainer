@@ -3,6 +3,7 @@
 Live: https://my-trainer-nine.vercel.app
 
 Fitness, nutrition, habit and to-do tracker with points and a leaderboard. Google sign-in, free-tier only, privacy first (each user sees only their own data; progress photos are end-to-end encrypted).
+**Private use**: the owner and invited people only; not published and kept out of search engines (`robots.txt`, `noindex`).
 Requirements and architecture: [docs/PRD.md](docs/PRD.md).
 
 ## One-time setup
@@ -12,7 +13,8 @@ Requirements and architecture: [docs/PRD.md](docs/PRD.md).
 4. **Seed**: edit `supabase/seed.sql` (your Google email as `admin_bootstrap_email`) and run it in the SQL editor. That account becomes admin after onboarding.
 5. **Run locally**: `npm install && npm run dev`, open the LAN URL on your phone. Add `http://<lan-ip>:5173` to Supabase Auth -> URL Configuration -> Redirect URLs for phone testing.
 6. **Vercel**: import the GitHub repo, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars. Add `https://<app>.vercel.app` to Supabase Auth URL Configuration (Site URL + Redirect URLs).
-7. **GitHub Secrets** (Settings -> Secrets and variables -> Actions): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
+7. **GitHub Secrets** (Settings -> Secrets and variables -> Actions): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (catalog sync and push setup in CI only), `GEMINI_API_KEY` (catalog translation). Push reminders: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_DISPATCH_SECRET` (also signs AI coach replies; the deploy copies them to Supabase secrets).
+8. **Supabase Edge Function secrets**: `GEMINI_API_KEY`, optional `OPENROUTER_API_KEY` (AI food estimate and coach).
 
 ## CI/CD
 - Every push/PR: typecheck, lint, tests, i18n parity, build, secret scan, RLS sanity. PRs get a Vercel preview URL as a comment.
@@ -20,7 +22,18 @@ Requirements and architecture: [docs/PRD.md](docs/PRD.md).
 - `keepalive.yml` pings Supabase daily so the free project never pauses.
 
 ## Access modes (admin)
-`app_config.access_mode`: `open` (default, anyone with Google) or `invite` (only emails in `allowed_emails`). Admins can also block users (`profiles.is_blocked`).
+Profile > Admin > Access. `invite` (recommended for private use: only e-mails on the allowed list can sign up) or `open` (anyone with Google can request access). With approval on, every new account waits for the admin. Admins can block users and set per-user AI limits (Admin > Users).
+
+If the Google OAuth app is in *Testing*, add each invited person under Google Cloud > OAuth consent screen > Test users (max 100).
+
+## Free-tier limits (checked 2026-10-31)
+| Service | Limit that matters | How we stay inside |
+|---|---|---|
+| Supabase Free | 500 MB database, 1 GB storage, 500k Edge Function calls a month; pauses after 7 days without activity | `keepalive.yml` daily ping; photos downscaled and encrypted; exercise media is small SVG/PNG frames |
+| Vercel Hobby | personal, non-commercial use | private app, no ads or payments |
+| GitHub Actions | 2,000 minutes a month (private repo) | CI only on push/PR; catalog syncs are monthly or manual |
+| Gemini API free tier | per-model daily and per-minute quotas (Flash about 20, Flash Lite about 500 requests a day), reset at midnight Pacific | per-user and app-wide daily caps; coach and food estimate try Flash Lite first; Admin > AI usage shows today's use against the limits (`app_config.ai_model_limits`) |
+| OpenRouter free | about 50 requests a day | text fallback only |
 
 ## Data sources and attribution
 - Exercise texts: [wger](https://wger.de) contributors, CC BY-SA

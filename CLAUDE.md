@@ -50,4 +50,4 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 - [x] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos, KVKK (v0.3.0)
 - [x] Faz 3: habits + todos (shared recurrence engine), push reminders (v0.4.0)
 - [x] Faz 4: units option, dashboard, AI coach (Edge Function, no health data), badges, admin panel, offline queue (v0.5.0)
-- [ ] Faz 5: hardening + publish
+- [ ] Faz 5: hardening for private use (public launch cancelled 2026-10-31; owner + invited people, invite-only access)
