@@ -154,3 +154,18 @@ export function cleanReply(raw: string): string {
     .trim()
   return text.length <= COACH_REPLY_CHARS ? text : `${text.slice(0, COACH_REPLY_CHARS - 1).trimEnd()}…`
 }
+
+async function hmacHex(key: string, data: string): Promise<string> {
+  const enc = new TextEncoder()
+  const k = await crypto.subtle.importKey('raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(data)))
+  return Array.from(sig, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Signature ai_add_assistant_message() requires (migration 20261108000000): HMAC-SHA256 over
+ * "<conversation id>:<content>" with a key derived from the server secret under the label 'coach-reply-v1'.
+ */
+export async function signCoachReply(secret: string, conversationId: string, content: string): Promise<string> {
+  return hmacHex(await hmacHex(secret, 'coach-reply-v1'), `${conversationId}:${content}`)
+}

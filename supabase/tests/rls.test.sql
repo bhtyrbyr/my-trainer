@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(403);
+select plan(404);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -1582,6 +1582,13 @@ update public.user_settings set daily_water_ml = 2000 where user_id = :'uc';
 insert into public.water_entries (user_id, drunk_on, amount_ml) values
   (:'uc', :'wk'::date, 1500), (:'uc', :'wk'::date, 600), (:'uc', :'wk'::date + 1, 1999), (:'uc', :'wk'::date + 2, 2000), (:'uc', :'wk'::date - 1, 3000);
 
+-- coach replies must carry the server signature (20261108000000); test secret and signer
+insert into private.push_config (id, function_url, secret) values (true, 'http://127.0.0.1:9/push', 'coach-test-secret')
+  on conflict (id) do update set secret = excluded.secret;
+create function pg_temp.coach_sig(c uuid, t text) returns text language sql as $f$
+  select encode(extensions.hmac(c::text || ':' || t, encode(extensions.hmac('coach-reply-v1', 'coach-test-secret', 'sha256'), 'hex'), 'sha256'), 'hex')
+$f$;
+grant execute on function pg_temp.coach_sig(uuid, text) to authenticated;
 set local role authenticated;
 set local request.jwt.claims = :'jwt_c';
 select public.record_consent('health_data', 'test');
@@ -1620,15 +1627,16 @@ select throws_ok(
   $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000541', '00000000-0000-0000-0000-00000000000c', 'user', repeat('x', 4001)) $$,
   '23514', null, 'coach: messages are at most 4000 characters'
 );
-select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'Harika') $$, '%NO_RESERVATION%', 'coach: no assistant reply without a reserved AI request');
+select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'Harika', 'deadbeef') $$, '%BAD_SIGNATURE%', 'coach: a reply without the server signature is refused');
+select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'Harika', pg_temp.coach_sig('00000000-0000-0000-0000-000000000541', 'Harika')) $$, '%NO_RESERVATION%', 'coach: no assistant reply without a reserved AI request');
 reset role;
 insert into public.ai_usage (user_id, day, request_count) values (:'uc', current_date, 1)
   on conflict (user_id, day) do update set request_count = 1;
 set local role authenticated;
 set local request.jwt.claims = :'jwt_c';
-select ok(public.ai_add_assistant_message(:'conv1', 'Harika gidiyorsun') is not null, 'coach: one assistant reply per reserved request is stored');
-select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'ikinci') $$, '%NO_RESERVATION%', 'coach: a second reply needs a second reservation');
-select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', repeat('x', 4001)) $$, '22023', 'BAD_CONTENT', 'coach: assistant replies are length-checked');
+select ok(public.ai_add_assistant_message(:'conv1', 'Harika gidiyorsun', pg_temp.coach_sig(:'conv1', 'Harika gidiyorsun')) is not null, 'coach: one assistant reply per reserved request is stored');
+select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'ikinci', pg_temp.coach_sig('00000000-0000-0000-0000-000000000541', 'ikinci')) $$, '%NO_RESERVATION%', 'coach: a second reply needs a second reservation');
+select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', repeat('x', 4001), 'x') $$, '22023', 'BAD_CONTENT', 'coach: assistant replies are length-checked');
 select is((select string_agg(role, ',' order by role) from public.ai_messages where conversation_id = :'conv1'), 'assistant,user', 'coach: the conversation holds the question and the reply');
 update public.ai_messages set content = 'edited';
 select is((select count(*)::int from public.ai_messages where content = 'edited'), 0, 'coach: messages are immutable');
@@ -1641,7 +1649,7 @@ select throws_ok(
   $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000541', '00000000-0000-0000-0000-00000000000b', 'user', 'hi') $$,
   '42501', 'FORBIDDEN', 'coach IDOR: bob cannot post into carol''s conversation'
 );
-select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'x') $$, '42501', 'FORBIDDEN', 'coach IDOR: bob cannot add a reply to carol''s conversation');
+select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'x', pg_temp.coach_sig('00000000-0000-0000-0000-000000000541', 'x')) $$, '42501', 'FORBIDDEN', 'coach IDOR: bob cannot add a reply to carol''s conversation');
 delete from public.ai_messages where conversation_id = :'conv1';
 delete from public.ai_conversations where id = :'conv1';
 select is(

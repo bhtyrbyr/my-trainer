@@ -22,6 +22,7 @@ import {
   coachModelOrder,
   compactContext,
   istanbulDay,
+  signCoachReply,
   trimHistory,
   type ChatMessage,
 } from './coach.ts'
@@ -263,10 +264,17 @@ async function coachChat(supabase: SupabaseClient, body: Record<string, unknown>
     return json({ error: 'AI_UNAVAILABLE' }, 502)
   }
 
-  // stored with the caller's token; the SQL function checks ownership and the reservation made above
+  // stored with the caller's token; the SQL function checks ownership, the reservation made above and
+  // the server signature (a client calling the RPC directly cannot produce it)
+  const secret = Deno.env.get('PUSH_DISPATCH_SECRET')
+  if (!secret) {
+    console.error('coach-chat: PUSH_DISPATCH_SECRET missing, replies cannot be signed')
+    return json({ error: 'AI_UNAVAILABLE' }, 502)
+  }
   const { data: id, error: storeError } = await supabase.rpc('ai_add_assistant_message', {
     p_conversation: conversationId,
     p_content: reply.text,
+    p_signature: await signCoachReply(secret, conversationId, reply.text),
   })
   if (storeError || typeof id !== 'string') {
     console.error('ai_add_assistant_message failed', storeError?.message)

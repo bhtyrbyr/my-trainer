@@ -85,6 +85,7 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - Secrets: `VAPID_PRIVATE_KEY` and `PUSH_DISPATCH_SECRET` exist only in GitHub Secrets and Supabase function secrets (set by deploy.yml); the public VAPID key is built into the client.
 
 ## AI safeguards (free-tier terms)
+- Coach replies: `ai_add_assistant_message(conversation, content, signature)` only accepts an HMAC-SHA256 over `<conversation id>:<content>` keyed with a value derived from the server secret (`private.push_config`, label `coach-reply-v1`). The Edge Function signs with `PUSH_DISPATCH_SECRET`; a client calling the RPC directly cannot.
 
 - Age: the app is open to all ages; AI is 18+. The AI consent includes an 18+ confirmation (`adult`); `record_consent` refuses it and `ai_reserve()` refuses every request (`AI_UNDERAGE`) when the stored birth year is under 18.
 - Explicit AI consent (`ai_processing`): required by `ai_reserve()` (raises `AI_CONSENT_REQUIRED`), withdrawable via `withdraw_ai_consent()`; `ai_consent_of()` is internal.
