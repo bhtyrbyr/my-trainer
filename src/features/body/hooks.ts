@@ -17,7 +17,8 @@ export function useBodyMetrics() {
 
 export function usePrivateWeights() {
   const preview = useIsBodyPreview()
-  return useQuery({ queryKey: bodyKeys.target, queryFn: api.getPrivateWeights, enabled: !preview })
+  // profile_private (target weight, height): not written to IndexedDB
+  return useQuery({ queryKey: bodyKeys.target, queryFn: api.getPrivateWeights, enabled: !preview, meta: { persist: false } })
 }
 
 /** Points changed server-side (weight / measurement logs): refresh the profile, leaderboard and energy. */

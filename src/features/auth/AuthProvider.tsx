@@ -82,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(s)
         return
       }
-      void evaluate(s)
+      // A passive sign-out (refresh token revoked, or signed out in another tab) clears this device's
+      // copy too; an offline start without a session does not, so queued writes survive it.
+      if (event === 'SIGNED_OUT') void clearUserData(qc).then(() => evaluate(null))
+      else void evaluate(s)
     })
 
     return () => {
