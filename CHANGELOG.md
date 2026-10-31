@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+
+## [0.6.0] - 2026-10-31
 ### Security
 - AI coach replies are signed by the server (HMAC with a server-only key); the database refuses an "assistant" message without a valid signature, so nobody can plant fake coach turns in a chat.
 ### Changed
