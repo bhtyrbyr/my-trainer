@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Bug, ChevronRight, DoorOpen, LogOut, Scale, Sparkles, UserCheck, Users } from 'lucide-react'
+import { Bug, ChevronRight, DoorOpen, Gauge, LogOut, Scale, Sparkles, UserCheck, Users } from 'lucide-react'
 import { useAdminConfig, useAiLive, useErrorReports, usePendingCount } from '@/features/admin/hooks'
 import { BadgeShelf } from '@/features/badges'
 import { PageShell } from '@/components/layout/PageShell'
@@ -148,6 +148,14 @@ export function SettingsPage() {
                   {t('admin:ai.linkToday', { count: aiToday })}
                 </span>
               )}
+              <ChevronRight className="size-4 text-ink-faint" aria-hidden />
+            </Link>
+            <Link
+              to="/admin/usage"
+              className="hairline flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 transition-colors hover:bg-raised"
+            >
+              <Gauge className="size-5 text-ink-muted" aria-hidden />
+              <span className="flex-1 text-[15px]">{t('admin:usage.link')}</span>
               <ChevronRight className="size-4 text-ink-faint" aria-hidden />
             </Link>
           </section>

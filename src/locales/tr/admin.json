@@ -176,5 +176,26 @@
     "unblock": "Engeli kaldır",
     "cancel": "Vazgeç",
     "close": "Kapat"
+  },
+  "usage": {
+    "link": "Ücretsiz katman",
+    "title": "Ücretsiz katman",
+    "highest": "En dolu kota",
+    "meter": {
+      "db": "Veritabanı",
+      "storage": "Dosya depolama",
+      "edge": "Edge Function çağrısı (bu ay)"
+    },
+    "bucket": {
+      "avatars": "Profil fotoğrafları",
+      "progress-photos": "Gelişim fotoğrafları (şifreli)",
+      "exercise-media": "Egzersiz görselleri"
+    },
+    "edgeNote": "Tahmin: yapay zekâ istekleri ve gönderilen hatırlatmalar sayılır; yemek araması gibi diğer çağrılar sayılmaz.",
+    "users_one": "{{count}} kayıtlı kişi",
+    "users_other": "{{count}} kayıtlı kişi",
+    "active_one": "Son 7 günde {{count}} kişi aktif",
+    "active_other": "Son 7 günde {{count}} kişi aktif",
+    "footer": "Limitler Supabase Free planına göre (31.10.2026): 500 MB veritabanı, 1 GB depolama, ayda 500 bin Edge Function çağrısı. Yüzde %80'i geçince çubuk kırmızıya döner. Yapay zekâ kotası Yapay zekâ kullanımı sayfasında."
   }
 }

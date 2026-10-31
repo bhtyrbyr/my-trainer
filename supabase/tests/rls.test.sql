@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(404);
+select plan(406);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -38,7 +38,9 @@ select is(
         -- Faz 4
         'get_user_badges', 'admin_set_config', 'admin_list_allowed_emails', 'admin_add_allowed_email',
         'admin_remove_allowed_email', 'admin_list_users', 'admin_set_blocked', 'admin_set_ai_limit',
-        'ai_add_assistant_message')),
+        'ai_add_assistant_message',
+        -- Faz 5
+        'admin_usage_summary')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -1492,6 +1494,7 @@ select throws_ok($$ select * from public.admin_list_allowed_emails() $$, '42501'
 select throws_ok($$ select public.admin_add_allowed_email('x@example.com', null) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot invite');
 select throws_ok($$ select public.admin_remove_allowed_email('x@example.com') $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot remove invites');
 select throws_ok($$ select * from public.admin_list_users(null, 10) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot list users');
+select throws_ok($$ select public.admin_usage_summary() $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot read the usage summary');
 select throws_ok($$ select public.admin_set_blocked('00000000-0000-0000-0000-00000000000c', true) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot block');
 select throws_ok($$ select public.admin_set_ai_limit('00000000-0000-0000-0000-00000000000b', 1000) $$, '42501', 'FORBIDDEN', 'admin: non-admins cannot set AI limits (not even their own)');
 
@@ -1523,6 +1526,7 @@ select is(public.admin_remove_allowed_email('NEW.FRIEND@example.com'), true, 'ad
 select is(public.admin_remove_allowed_email('new.friend@example.com'), false, 'admin: removing a missing invite reports false');
 
 select is((select email from public.admin_list_users('caro', 10)), 'carol@example.com', 'admin: users are searchable by username and show their e-mail');
+select ok((public.admin_usage_summary() ->> 'db_bytes')::bigint > 0 and public.admin_usage_summary() ? 'storage', 'admin: the usage summary reports database and storage size');
 select is((select count(*)::int from public.admin_list_users('example.com', 2)), 2, 'admin: search by e-mail, the limit applies');
 select is((select count(*)::int from public.admin_list_users('%', 50)), 0, 'admin: LIKE wildcards in the query are literal');
 select is((select count(*)::int from public.admin_list_users(null, 50)), 4, 'admin: an empty query lists every user');

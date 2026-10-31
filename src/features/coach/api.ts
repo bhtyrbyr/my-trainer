@@ -1,7 +1,16 @@
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { coachErrorCode } from './logic'
-import { conversationSchema, messageSchema, replySchema, type CoachMessage, type CoachReply, type Conversation } from './schema'
+import {
+  conversationSchema,
+  messageSchema,
+  programReplySchema,
+  replySchema,
+  type CoachMessage,
+  type CoachProgramReply,
+  type CoachReply,
+  type Conversation,
+} from './schema'
 
 /** The trigger's LIMIT_REACHED means different things per table; give each its own code. */
 function retag(error: { message?: string }, code: string): never {
@@ -62,17 +71,31 @@ export async function deleteConversation(id: string): Promise<void> {
  * providers; the function reads the conversation and the context with this user's token.
  */
 export async function requestReply(input: { conversationId: string; locale: 'tr' | 'en'; unit: 'kg' | 'lb' }): Promise<CoachReply> {
-  const { data, error } = await supabase.functions.invoke('ai-coach', {
-    body: { action: 'coach-chat', conversation_id: input.conversationId, locale: input.locale, unit: input.unit },
-  })
+  return replySchema.parse(
+    await invokeCoach({ action: 'coach-chat', conversation_id: input.conversationId, locale: input.locale, unit: input.unit }),
+  )
+}
+
+/**
+ * Ask for a workout program for the newest (user) message. The function matches the exercises to the
+ * catalog and stores a readable summary as the reply; the structured program is only in the answer.
+ */
+export async function requestProgram(input: { conversationId: string; locale: 'tr' | 'en'; request: string }): Promise<CoachProgramReply> {
+  return programReplySchema.parse(
+    await invokeCoach({ action: 'coach-program', conversation_id: input.conversationId, locale: input.locale, request: input.request || undefined }),
+  )
+}
+
+async function invokeCoach(body: Record<string, unknown>): Promise<unknown> {
+  const { data, error } = await supabase.functions.invoke('ai-coach', { body })
   if (error) {
     if (error instanceof FunctionsHttpError) {
       const res = error.context as Response
-      const body = await res.json().catch(() => null)
-      throw new Error(coachErrorCode(res.status, typeof body?.error === 'string' ? body.error : 'AI_UNAVAILABLE'))
+      const payload = await res.json().catch(() => null)
+      throw new Error(coachErrorCode(res.status, typeof payload?.error === 'string' ? payload.error : 'AI_UNAVAILABLE'))
     }
     throw error
   }
-  return replySchema.parse(data)
+  return data
 }
 

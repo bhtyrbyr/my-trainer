@@ -72,5 +72,32 @@
   "settings": {
     "link": "AI coach",
     "hint": "Answers your questions from your logs"
+  },
+  "program": {
+    "suggest": "Suggest a program",
+    "placeholder": "e.g. 3 days, dumbbells",
+    "hint": "Optional: days, equipment or focus. Uses one AI request.",
+    "submit": "Suggest",
+    "cancel": "Cancel",
+    "ask": "Suggest a workout program for me.",
+    "askWith": "Suggest a workout program for me: {{request}}",
+    "eyebrow": "Suggested program",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "exercises_one": "{{count}} exercise",
+    "exercises_other": "{{count}} exercises",
+    "setsReps": "{{sets}}×{{reps}}",
+    "rest": "{{sec}} s",
+    "saveDay": "Save as template",
+    "saveDayLabel": "Save {{day}} as a template",
+    "saveAll": "Save all",
+    "saveRest_one": "Save the remaining {{count}} day",
+    "saveRest_other": "Save the remaining {{count}} days",
+    "saved": "Saved",
+    "skipped": "Skipped (not in the catalog): {{names}}",
+    "toast_one": "Template saved",
+    "toast_other": "{{count}} templates saved",
+    "toastLink": "Workouts",
+    "toWorkouts": "Go to Workouts"
   }
 }

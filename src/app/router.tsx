@@ -7,7 +7,6 @@ import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { AccessDeniedPage } from '@/features/auth/pages/AccessDeniedPage'
 import { PendingApprovalPage } from '@/features/auth/pages/PendingApprovalPage'
-import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { HealthGate, NoticeGate } from '@/features/privacy/components/Gates'
 
 /**
@@ -180,7 +179,8 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      // lazy like every other page: the sign-in screen does not download the dashboard, zod or date-fns
+      { index: true, lazy: page(() => import('@/features/dashboard/pages/DashboardPage'), 'DashboardPage') },
       { path: 'workouts', lazy: workouts.list },
       { path: 'workouts/plans/new', lazy: workouts.editor },
       { path: 'workouts/plans/:id', lazy: workouts.editor },
@@ -236,6 +236,7 @@ export const router = createBrowserRouter([
       },
       { path: 'admin/access', lazy: adminPage(() => import('@/features/admin/pages/AccessPage'), 'AccessPage') },
       { path: 'admin/users', lazy: adminPage(() => import('@/features/admin/pages/UsersPage'), 'UsersPage') },
+      { path: 'admin/usage', lazy: adminPage(() => import('@/features/admin/pages/UsagePage'), 'UsagePage') },
       {
         path: 'admin/requests',
         lazy: async () => {

@@ -7,13 +7,26 @@ import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { useAiAvailability } from '@/features/nutrition'
 import { useConsents } from '@/features/privacy/hooks'
-import { useAsk, useConversations, useDeleteConversation, useMessages, useReply, useReplyState } from '../hooks'
-import { isQuickPrompt, type QuickPrompt } from '../logic'
+import { useAsk, useConversations, useDeleteConversation, useMessages, useProgram, useProgramFor, useReply, useReplyState } from '../hooks'
+import { PROGRAM_SLOT, isQuickPrompt, programRequestOf, type QuickPrompt } from '../logic'
 import { useCoachBase } from '../previewContext'
 import { Composer } from '../components/Composer'
 import { CoachConsent, CoachStatusCard, UnderageNote } from '../components/Gates'
 import { MessageBubble, TypingBubble } from '../components/Messages'
+import { ProgramCard } from '../components/ProgramCard'
+import { ProgramRequest } from '../components/ProgramRequest'
 import { QuickPrompts } from '../components/QuickPrompts'
+import type { CoachMessage } from '../schema'
+
+/** A message, with the program card in place of the summary when this session received one. */
+function ThreadMessage({ message, index }: { message: CoachMessage; index: number }) {
+  const program = useProgramFor(message.id)
+  return (
+    <MessageBubble message={message} index={index}>
+      {message.role === 'assistant' && program ? <ProgramCard data={program} /> : undefined}
+    </MessageBubble>
+  )
+}
 
 /**
  * One conversation (/coach/:id; `new` before the first question). The user's message is stored first,
@@ -21,7 +34,7 @@ import { QuickPrompts } from '../components/QuickPrompts'
  * it survives leaving the chat and coming back.
  */
 export function ChatPage() {
-  const { t } = useTranslation(['coach', 'common'])
+  const { t, i18n } = useTranslation(['coach', 'common'])
   const params = useParams()
   const id = params.id && params.id !== 'new' ? params.id : null
   const base = useCoachBase()
@@ -34,6 +47,7 @@ export function ChatPage() {
   const messages = useMessages(id)
   const ask = useAsk()
   const reply = useReply()
+  const program = useProgram()
   const replyState = useReplyState(id)
   const del = useDeleteConversation()
 
@@ -48,6 +62,18 @@ export function ChatPage() {
   const missing = id !== null && conversations.isSuccess && !conversation && !ask.isPending
   const last = list[list.length - 1]
   const unanswered = !thinking && last?.role === 'user'
+
+  // an unanswered program request is asked again as a program (same wish), anything else as a chat reply
+  const retry = () => {
+    if (!id || !last) return
+    const templates = ['tr', 'en'].map((lng) => ({
+      ask: i18n.t('coach:program.ask', { lng }),
+      askWith: i18n.t('coach:program.askWith', { lng, request: PROGRAM_SLOT, interpolation: { escapeValue: false } }),
+    }))
+    const request = programRequestOf(last.content, templates)
+    if (request !== null) program.mutate({ conversationId: id, request })
+    else reply.mutate({ conversationId: id })
+  }
 
   const send = useCallback(
     (text: string) => {
@@ -64,6 +90,17 @@ export function ChatPage() {
     [ask, reply, id, base, navigate],
   )
   const pick = (p: QuickPrompt) => send(t(`coach:prompts.${p}`))
+  // the wish is stored as the user's message first, then the function answers it with a program
+  const suggest = (request: string) =>
+    ask.mutate(
+      { conversationId: id, text: request ? t('coach:program.askWith', { request }) : t('coach:program.ask') },
+      {
+        onSuccess: ({ conversationId }) => {
+          if (!id) navigate(`${base}/coach/${conversationId}`, { replace: true })
+          program.mutate({ conversationId, request })
+        },
+      },
+    )
 
   // Opened from Home's weekly review (or a quick question on the list): send that one question once.
   // The tap was the request; the history entry is cleared so a reload does not ask again.
@@ -150,7 +187,7 @@ export function ChatPage() {
 
             <ol className="space-y-4 pb-4">
               {list.map((m, i) => (
-                <MessageBubble key={m.id} message={m} index={list.length - i} />
+                <ThreadMessage key={m.id} message={m} index={list.length - i} />
               ))}
               {ask.isPending && ask.variables && <MessageBubble message={{ role: 'user', content: ask.variables.text }} pending />}
               {thinking && <TypingBubble />}
@@ -167,7 +204,7 @@ export function ChatPage() {
                   {unanswered && consentOk && (
                     <div className="flex items-center justify-between gap-3 px-1">
                       <p className="text-[13px] text-ink-faint">{t('coach:chat.unanswered')}</p>
-                      <Button variant="secondary" size="sm" className="h-11" disabled={!canAsk} onClick={() => id && reply.mutate({ conversationId: id })}>
+                      <Button variant="secondary" size="sm" className="h-11" disabled={!canAsk} onClick={retry}>
                         <RotateCcw className="size-4" aria-hidden />
                         {t('coach:chat.retry')}
                       </Button>
@@ -185,6 +222,7 @@ export function ChatPage() {
               </p>
             )}
 
+            {consentOk && !underage && !blocked && <ProgramRequest className="mb-3 self-start" disabled={!canAsk} onSubmit={suggest} />}
             {consentOk && !underage && <Composer disabled={!consentOk || Boolean(blocked)} busy={thinking} footnote={remaining} onSend={send} />}
           </>
         )}

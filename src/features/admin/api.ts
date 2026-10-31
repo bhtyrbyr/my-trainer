@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { parseAdminConfig, type AdminConfig, type AdminConfigKey } from './adminLogic'
+import { parseUsageSummary, type UsageSummary } from './usageLogic'
 import type { Database, RegistrationRow, RegistrationStatus } from '@/lib/database.types'
 
 export async function listRegistrations(status: RegistrationStatus | 'all' = 'pending'): Promise<RegistrationRow[]> {
@@ -154,4 +155,10 @@ export async function setUserBlocked(userId: string, blocked: boolean): Promise<
 export async function setUserAiLimit(userId: string, limit: number): Promise<void> {
   const { error } = await supabase.rpc('admin_set_ai_limit', { p_user: userId, p_limit: limit })
   if (error) throw error
+}
+
+export async function usageSummary(): Promise<UsageSummary> {
+  const { data, error } = await supabase.rpc('admin_usage_summary')
+  if (error) throw error
+  return parseUsageSummary(data)
 }

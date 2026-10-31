@@ -40,6 +40,9 @@ export function OfflinePersistence({ children }: { children: ReactNode }) {
       .then(() => {
         if (cancelled) return
         unsubscribe = persistQueryClientSubscribe(options)
+        // the restored copy is for showing something at once and offline; online, every page refetches
+        // on mount instead of trusting it for staleTime (a reload right after a change showed old data)
+        void qc.invalidateQueries({ refetchType: 'none' })
         setRestored(current)
         // writes queued in an earlier visit: replay now (they pause again right away when offline)
         void qc.resumePausedMutations()

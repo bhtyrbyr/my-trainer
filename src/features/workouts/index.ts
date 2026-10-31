@@ -2,5 +2,6 @@
 export { TodayWorkoutCard } from './components/TodayWorkoutCard'
 export { workoutKeys, useBurnedOn, useBurnedToday, useHistory, useSessionsOn } from './hooks'
 export { sessionTitle } from './components/sessionTitle'
-export type { HistoryItem } from './schema'
+export type { HistoryItem, TemplateInput } from './schema'
+export { saveTemplate } from './api'
 export { Stepper } from './components/Stepper'

@@ -176,5 +176,26 @@
     "unblock": "Unblock",
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "usage": {
+    "link": "Free tier",
+    "title": "Free tier",
+    "highest": "Fullest quota",
+    "meter": {
+      "db": "Database",
+      "storage": "File storage",
+      "edge": "Edge Function calls (this month)"
+    },
+    "bucket": {
+      "avatars": "Profile photos",
+      "progress-photos": "Progress photos (encrypted)",
+      "exercise-media": "Exercise media"
+    },
+    "edgeNote": "Estimate: AI requests and delivered reminders are counted; other calls such as food search are not.",
+    "users_one": "{{count}} registered person",
+    "users_other": "{{count}} registered people",
+    "active_one": "{{count}} active in the last 7 days",
+    "active_other": "{{count}} active in the last 7 days",
+    "footer": "Limits from the Supabase Free plan (2026-10-31): 500 MB database, 1 GB storage, 500k Edge Function calls a month. Bars turn red above 80%. The AI quota is on the AI usage page."
   }
 }
