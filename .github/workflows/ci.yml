@@ -47,9 +47,9 @@ jobs:
           exit $fail
 
   db-tests:
-    name: Database tests (pgTAP on a local Supabase stack)
+    name: Database + E2E tests (local Supabase stack)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       # config.toml reads these for the (unused in tests) Google provider
       GOOGLE_CLIENT_ID: ci-dummy
@@ -63,6 +63,24 @@ jobs:
         run: supabase start -x studio,imgproxy,inbucket,mailpit,realtime,edge-runtime,logflare,vector,supavisor || supabase start
       - name: Run pgTAP suite
         run: supabase test db
+      # E2E (Playwright, Chromium) against the same local stack; not part of release:check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run E2E suite
+        run: npm run test:e2e
+        env:
+          SUPABASE_BIN: supabase
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
       - name: Stop stack
         if: always()
         run: supabase stop --no-backup

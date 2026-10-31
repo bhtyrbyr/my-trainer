@@ -72,5 +72,32 @@
   "settings": {
     "link": "Yapay zekâ koçu",
     "hint": "Kayıtlarına bakarak sorularını cevaplar"
+  },
+  "program": {
+    "suggest": "Program öner",
+    "placeholder": "Örn. 3 gün, dambıl",
+    "hint": "İsteğe bağlı: gün sayısı, ekipman ya da odak. Bir yapay zekâ hakkı kullanır.",
+    "submit": "Öner",
+    "cancel": "Vazgeç",
+    "ask": "Bana bir antrenman programı öner.",
+    "askWith": "Bana bir antrenman programı öner: {{request}}",
+    "eyebrow": "Önerilen program",
+    "days_one": "{{count}} gün",
+    "days_other": "{{count}} gün",
+    "exercises_one": "{{count}} hareket",
+    "exercises_other": "{{count}} hareket",
+    "setsReps": "{{sets}}×{{reps}}",
+    "rest": "{{sec}} sn",
+    "saveDay": "Şablon olarak kaydet",
+    "saveDayLabel": "{{day}} gününü şablon olarak kaydet",
+    "saveAll": "Tümünü kaydet",
+    "saveRest_one": "Kalan {{count}} günü kaydet",
+    "saveRest_other": "Kalan {{count}} günü kaydet",
+    "saved": "Kaydedildi",
+    "skipped": "Katalogda bulunamadığı için atlananlar: {{names}}",
+    "toast_one": "Şablon kaydedildi",
+    "toast_other": "{{count}} şablon kaydedildi",
+    "toastLink": "Antrenmanlar",
+    "toWorkouts": "Antrenmanlara git"
   }
 }

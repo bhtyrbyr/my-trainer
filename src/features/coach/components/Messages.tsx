@@ -60,7 +60,18 @@ function CoachText({ content }: { content: string }) {
   )
 }
 
-export function MessageBubble({ message, pending, index = 0 }: { message: Pick<CoachMessage, 'role' | 'content'>; pending?: boolean; index?: number }) {
+export function MessageBubble({
+  message,
+  pending,
+  index = 0,
+  children,
+}: {
+  message: Pick<CoachMessage, 'role' | 'content'>
+  pending?: boolean
+  index?: number
+  /** Replaces the reply text (a program card shows the same content, structured). */
+  children?: React.ReactNode
+}) {
   if (message.role === 'user') {
     return (
       <li className="rise-in flex justify-end" style={{ '--i': Math.min(index, 4) } as React.CSSProperties}>
@@ -78,9 +89,11 @@ export function MessageBubble({ message, pending, index = 0 }: { message: Pick<C
   return (
     <li className="rise-in" style={{ '--i': Math.min(index, 4) } as React.CSSProperties}>
       <CoachMark />
-      <div className="hairline max-w-[94%] break-words rounded-[20px] rounded-tl-[6px] bg-surface px-4 py-3 text-[15px] leading-[1.55] text-ink-muted">
-        <CoachText content={message.content} />
-      </div>
+      {children ?? (
+        <div className="hairline max-w-[94%] break-words rounded-[20px] rounded-tl-[6px] bg-surface px-4 py-3 text-[15px] leading-[1.55] text-ink-muted">
+          <CoachText content={message.content} />
+        </div>
+      )}
     </li>
   )
 }

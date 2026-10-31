@@ -6,6 +6,13 @@
 //                  -> { message: { id, role: 'assistant', content, created_at }, remaining }
 //                  The client has already inserted the user's message. Only the conversation's recent
 //                  messages and get_coach_context() aggregates reach the model: never names, e-mails or ids.
+//   coach-program  { conversation_id: uuid, locale: 'tr' | 'en', request?: string (<= 300 chars) }
+//                  -> { program: { name, notes, days: [{ name, exercises: [{ exercise_id, name_en, name_tr,
+//                       sets, reps, rest_sec }] }] }, unmatched: string[], message, remaining }
+//                  The client has already inserted the user's request as a message. The model returns JSON;
+//                  exercise names are matched to the catalog (plus the caller's custom rows) with the
+//                  caller's token, unmatched ones are dropped and reported. A readable summary is stored
+//                  (signed) as the assistant message; the structured program is only returned.
 //
 // Security (docs/SECURITY.md): the user comes from the caller's JWT; every database call uses the
 // caller's token (RLS applies), never service_role. ai_reserve() enforces the per-user and global
@@ -17,7 +24,19 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import {
   COACH_HISTORY_MESSAGES,
   COACH_MAX_OUTPUT_TOKENS,
+  PROGRAM_MAX_OUTPUT_TOKENS,
+  PROGRAM_REQUEST_CHARS,
+  PROGRAM_SCHEMA,
+  applyMatches,
   buildCoachSystemPrompt,
+  buildProgramPrompt,
+  normalizeProgram,
+  parseModelJson,
+  pickBestMatch,
+  programSummary,
+  searchTokens,
+  type CatalogCandidate,
+  type ProgramDraft,
   cleanReply,
   coachModelOrder,
   compactContext,
@@ -84,10 +103,11 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: 'AI_BAD_INPUT' }, 400)
   }
-  if (body.action !== 'food-estimate' && body.action !== 'coach-chat') return json({ error: 'AI_BAD_INPUT' }, 400)
+  if (body.action !== 'food-estimate' && body.action !== 'coach-chat' && body.action !== 'coach-program') return json({ error: 'AI_BAD_INPUT' }, 400)
   const country = requestCountry(req)
   if (country && FREE_TIER_BLOCKED.has(country)) return json({ error: 'AI_REGION' }, 451)
   if (body.action === 'coach-chat') return coachChat(supabase, body)
+  if (body.action === 'coach-program') return coachProgram(supabase, userData.user.id, body)
 
   const text = typeof body.text === 'string' ? body.text.trim().slice(0, MAX_TEXT) : ''
   const locale = body.locale === 'en' ? 'en' : 'tr'
@@ -284,6 +304,201 @@ async function coachChat(supabase: SupabaseClient, body: Record<string, unknown>
     message: { id, role: 'assistant', content: reply.text, created_at: new Date().toISOString() },
     remaining: gate.remaining,
   })
+}
+
+// ---------------------------------------------------------------------------------------------
+// coach-program
+
+async function coachProgram(supabase: SupabaseClient, userId: string, body: Record<string, unknown>): Promise<Response> {
+  const conversationId = typeof body.conversation_id === 'string' && UUID.test(body.conversation_id) ? body.conversation_id : null
+  if (!conversationId) return json({ error: 'AI_BAD_INPUT' }, 400)
+  const locale = body.locale === 'en' ? 'en' : 'tr'
+  if (body.request !== undefined && body.request !== null && typeof body.request !== 'string') return json({ error: 'AI_BAD_INPUT' }, 400)
+  const request = typeof body.request === 'string' ? body.request.replace(/\s+/g, ' ').trim() : ''
+  if (request.length > PROGRAM_REQUEST_CHARS) return json({ error: 'AI_BAD_INPUT' }, 400)
+
+  const geminiKey = Deno.env.get('GEMINI_API_KEY')
+  const openRouterKey = Deno.env.get('OPENROUTER_API_KEY')
+  if (!geminiKey && !openRouterKey) return json({ error: 'AI_NOT_CONFIGURED' }, 503)
+  const secret = Deno.env.get('PUSH_DISPATCH_SECRET')
+  if (!secret) {
+    console.error('coach-program: PUSH_DISPATCH_SECRET missing, replies cannot be signed')
+    return json({ error: 'AI_UNAVAILABLE' }, 502)
+  }
+
+  // Ownership via RLS (a guessed id looks like a missing one); the newest message must be the user's
+  // request, so a double tap does not spend quota.
+  const [conv, last] = await Promise.all([
+    supabase.from('ai_conversations').select('id').eq('id', conversationId).maybeSingle(),
+    supabase.from('ai_messages').select('role').eq('conversation_id', conversationId).order('created_at', { ascending: false }).limit(1),
+  ])
+  if (conv.error || last.error) {
+    console.error('coach-program lookup failed', conv.error?.message ?? last.error?.message)
+    return json({ error: 'AI_UNAVAILABLE' }, 502)
+  }
+  if (!conv.data) return json({ error: 'NOT_FOUND' }, 404)
+  if (last.data?.[0]?.role !== 'user') return json({ error: 'AI_BAD_INPUT' }, 409)
+
+  const context = await coachContext(supabase)
+  const gate = await reserve(supabase)
+  if (gate instanceof Response) return gate
+
+  const prompt = buildProgramPrompt({ locale, context, request, now: new Date() })
+  const fallback = { name: 'Program', day: (n: number) => (locale === 'tr' ? `Gün ${n}` : `Day ${n}`) }
+  const log = usageLogger(supabase, 'coach_chat') // the usage log has no separate action for programs
+  const models = coachModelOrder(gate.models.length ? gate.models : [Deno.env.get('GEMINI_FALLBACK_MODEL') || DEFAULT_LITE])
+  const failures: string[] = []
+  let draft: ProgramDraft | null = null
+
+  if (geminiKey) {
+    for (const model of models) {
+      try {
+        const r = await geminiProgram(geminiKey, model, prompt)
+        draft = normalizeProgram(parseModelJson(r.text), fallback)
+        await log('gemini', model, r.usage, true)
+        if (!draft) throw new ProviderError(502, 'unusable program')
+        break
+      } catch (e) {
+        failures.push(`${model}: ${(e as Error).message}`)
+        if (e instanceof ProviderError && e.message === 'unusable program') continue
+        if (!(e instanceof ProviderError && e.status === 429)) await log('gemini', model, null, false)
+        if (e instanceof ProviderError && e.status < 500 && e.status !== 429 && e.status !== 404) break
+      }
+    }
+  }
+  if (!draft && openRouterKey) {
+    const model = Deno.env.get('OPENROUTER_MODEL') || 'meta-llama/llama-3.3-70b-instruct:free'
+    try {
+      const r = await openRouterText(openRouterKey, model, prompt, PROGRAM_MAX_OUTPUT_TOKENS)
+      await log('openrouter', model, r.usage, true)
+      draft = normalizeProgram(parseModelJson(r.text), fallback)
+      if (!draft) failures.push(`${model}: unusable program`)
+    } catch (e) {
+      failures.push(`${model}: ${(e as Error).message}`)
+      await log('openrouter', model, null, false)
+    }
+  }
+  if (!draft) {
+    console.error('coach-program failed', failures.join(' | '))
+    if (failures.length && failures.every((f) => / 429$/.test(f))) return json({ error: 'AI_GOOGLE_DAILY' }, 429)
+    return json({ error: 'AI_UNAVAILABLE' }, 502)
+  }
+
+  const matches = await matchExercises(supabase, userId, [...new Set(draft.days.flatMap((d) => d.exercises.map((e) => e.name_en)))])
+  if (!matches) return json({ error: 'AI_UNAVAILABLE' }, 502)
+  const { program, unmatched } = applyMatches(draft, matches)
+  const content = programSummary(program, unmatched, locale)
+
+  const { data: id, error: storeError } = await supabase.rpc('ai_add_assistant_message', {
+    p_conversation: conversationId,
+    p_content: content,
+    p_signature: await signCoachReply(secret, conversationId, content),
+  })
+  if (storeError || typeof id !== 'string') {
+    console.error('ai_add_assistant_message failed', storeError?.message)
+    return json({ error: 'AI_UNAVAILABLE' }, 502)
+  }
+  return json({
+    program,
+    unmatched,
+    message: { id, role: 'assistant', content, created_at: new Date().toISOString() },
+    remaining: gate.remaining,
+  })
+}
+
+/**
+ * Model name -> catalog row, with the caller's token. Candidates: listed sources only (no retired
+ * legacy rows), catalog rows (user_id null) or the caller's own custom rows (RLS enforces the same),
+ * name_en containing every search word (ilike); if none, the longest word alone. The pure
+ * pickBestMatch() then decides. Null when the catalog could not be read.
+ */
+async function matchExercises(supabase: SupabaseClient, userId: string, names: string[]): Promise<Map<string, CatalogCandidate | null> | null> {
+  const candidates = async (tokens: string[], limit: number) => {
+    let q = supabase
+      .from('exercises')
+      .select('id, name_en, name_tr, source')
+      .in('source', ['wger', 'workout-guide', 'custom'])
+      .or(`user_id.is.null,user_id.eq.${userId}`)
+    for (const t of tokens) q = q.ilike('name_en', `%${t}%`)
+    const { data, error } = await q.limit(limit)
+    if (error) throw error
+    return (data ?? []) as CatalogCandidate[]
+  }
+  try {
+    const pairs = await Promise.all(
+      names.map(async (name): Promise<[string, CatalogCandidate | null]> => {
+        const tokens = searchTokens(name)
+        if (!tokens.length) return [name, null]
+        let rows = await candidates(tokens, 40)
+        let hit = pickBestMatch(name, rows)
+        if (!hit && tokens.length > 1) {
+          rows = await candidates(tokens.slice(0, 1), 60)
+          hit = pickBestMatch(name, rows)
+        }
+        return [name, hit]
+      }),
+    )
+    return new Map(pairs)
+  } catch (e) {
+    console.error('coach-program catalog lookup failed', (e as Error).message)
+    return null
+  }
+}
+
+async function geminiProgram(key: string, model: string, prompt: string): Promise<TextResult> {
+  const call = (noThinking: boolean) =>
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: PROGRAM_MAX_OUTPUT_TOKENS,
+          responseMimeType: 'application/json',
+          responseSchema: PROGRAM_SCHEMA,
+          ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        },
+      }),
+      signal: AbortSignal.timeout(25_000),
+    })
+  let res = await call(true)
+  if (res.status === 400) res = await call(false)
+  if (!res.ok) throw new ProviderError(res.status, `gemini ${res.status}`)
+  const data = await res.json()
+  if (data?.promptFeedback?.blockReason) throw new ProviderError(422, 'blocked')
+  const parts: { text?: string; thought?: boolean }[] = data?.candidates?.[0]?.content?.parts ?? []
+  const text = parts.map((p) => (p.thought ? '' : (p.text ?? ''))).join('')
+  if (!text.trim()) throw new ProviderError(502, `empty (${data?.candidates?.[0]?.finishReason ?? 'none'})`)
+  const u = data?.usageMetadata ?? {}
+  return {
+    text,
+    usage: { prompt: u.promptTokenCount ?? 0, output: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0), total: u.totalTokenCount ?? 0 },
+  }
+}
+
+/** OpenRouter free models: plain text (JSON mode is not supported everywhere); parsed defensively by the caller. */
+async function openRouterText(key: string, model: string, prompt: string, maxTokens: number): Promise<TextResult> {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model,
+      temperature: 0.4,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: 'Return only one JSON object, no prose and no code fences.' },
+        { role: 'user', content: prompt },
+      ],
+    }),
+    signal: AbortSignal.timeout(25_000),
+  })
+  if (!res.ok) throw new ProviderError(res.status, `openrouter ${res.status}`)
+  const data = await res.json()
+  const text = String(data?.choices?.[0]?.message?.content ?? '')
+  if (!text.trim()) throw new ProviderError(502, 'empty')
+  const u = data?.usage ?? {}
+  return { text, usage: { prompt: u.prompt_tokens ?? 0, output: u.completion_tokens ?? 0, total: u.total_tokens ?? 0 } }
 }
 
 /** get_coach_context() plus this and last week's summaries, compacted. Null when nothing could be read. */

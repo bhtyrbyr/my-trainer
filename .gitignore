@@ -16,3 +16,8 @@ coverage
 
 # sync-catalog outputs (plans, legacy map; local only)
 scripts/out/
+
+# Playwright E2E (local session + reports)
+e2e/.auth/
+test-results/
+playwright-report/

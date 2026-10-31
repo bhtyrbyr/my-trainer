@@ -93,3 +93,37 @@ export function coachErrorCode(status: number, code: string): string {
   if (/^AI_(QUOTA|APP_LIMIT|GOOGLE_DAILY|UNAVAILABLE|NOT_CONFIGURED|REGION)$/.test(code)) return `COACH_${code}`
   return code
 }
+
+/** Template name for one program day, "<program> - <day>", within the 80 characters templates allow. */
+export function programTemplateName(program: string, day: string, max = 80): string {
+  const p = program.replace(/\s+/g, ' ').trim()
+  const d = day.replace(/\s+/g, ' ').trim()
+  const full = p && d ? `${p} - ${d}` : p || d
+  return full.length <= max ? full : `${full.slice(0, max - 1).trimEnd()}…`
+}
+
+/** Program request input limit (the Edge Function rejects longer ones). */
+export const PROGRAM_REQUEST_MAX = 300
+
+/** Stand-in for the wish when a program-request template is rendered for matching (never typed by users). */
+export const PROGRAM_SLOT = ''
+
+/**
+ * The wish of a stored program request ("Suggest a workout program for me: 3 days"), '' for the plain
+ * request, null for any other message. Templates are rendered per language with PROGRAM_SLOT as the
+ * wish, so a request asked in either language is recognised after switching.
+ */
+export function programRequestOf(text: string, templates: readonly { ask: string; askWith: string }[]): string | null {
+  const msg = text.trim()
+  for (const { ask, askWith } of templates) {
+    if (msg === ask.trim()) return ''
+    const at = askWith.indexOf(PROGRAM_SLOT)
+    if (at < 0) continue
+    const head = askWith.slice(0, at)
+    const tail = askWith.slice(at + PROGRAM_SLOT.length)
+    if (msg.length > head.length + tail.length && msg.startsWith(head) && msg.endsWith(tail)) {
+      return msg.slice(head.length, msg.length - tail.length).trim().slice(0, PROGRAM_REQUEST_MAX)
+    }
+  }
+  return null
+}

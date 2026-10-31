@@ -3,6 +3,7 @@
 // ?delay ms. Nothing is written to Supabase and no model is called.
 //   ?consent=0 consent card · ?blocked=user_daily|app_daily|google_daily|google_minute · ?empty=1
 //   ?fail=AI_UNDERAGE|COACH_AI_UNAVAILABLE|COACH_AI_QUOTA · ?delay=1800 · ?left=37
+//   /__dev/coach/c4: a suggested program card ("Program öner" answers with the same sample)
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -13,7 +14,7 @@ import { settingsKeys } from '@/features/settings/hooks'
 import type { UserSettings } from '@/lib/database.types'
 import { coachKeys } from '../hooks'
 import { CoachPreviewContext, type CoachPreview } from '../previewContext'
-import type { CoachMessage, Conversation } from '../schema'
+import type { CoachMessage, CoachProgram, Conversation } from '../schema'
 
 const REPLY_TR = `Güzel bir hafta: **3 antrenman**, 46 set ve yaklaşık 9,2 ton hacim. Geçen haftadan bir antrenman fazla.
 
@@ -45,6 +46,40 @@ For next week:
 2. Aim for at least 130 g protein a day.
 3. Be in bed before 23:30 on two weeknights.`
 
+const ex = (id: string, name_en: string, name_tr: string | null, sets: number, reps: number, rest_sec: number) => ({ exercise_id: id, name_en, name_tr, sets, reps, rest_sec })
+const sampleProgram = (en: boolean): CoachProgram => ({
+  name: en ? 'Dumbbell full body' : 'Dambıl tüm vücut',
+  notes: en ? 'Leave a rest day between sessions; add weight when every set reaches the top of the range.' : 'Antrenmanlar arasında bir gün dinlen; tüm setlerde hedef tekrara ulaşınca ağırlığı artır.',
+  days: [
+    {
+      name: en ? 'Push' : 'İtiş',
+      exercises: [
+        ex('x1', 'Dumbbell Bench Press', 'Dambıl bench press', 4, 8, 120),
+        ex('x2', 'Dumbbell Shoulder Press', 'Dambıl omuz press', 3, 10, 90),
+        ex('x3', 'Incline Dumbbell Fly', 'Eğimli dambıl fly', 3, 12, 60),
+        ex('x4', 'Triceps Extension', 'Triceps extension', 3, 12, 60),
+      ],
+    },
+    {
+      name: en ? 'Pull' : 'Çekiş',
+      exercises: [
+        ex('x5', 'Dumbbell Row', 'Dambıl row', 4, 10, 90),
+        ex('x6', 'Reverse Fly', 'Ters fly', 3, 12, 60),
+        ex('x7', 'Hammer Curl', 'Hammer curl', 3, 12, 60),
+      ],
+    },
+    {
+      name: en ? 'Legs' : 'Bacak',
+      exercises: [
+        ex('x8', 'Goblet Squat', 'Goblet squat', 4, 10, 120),
+        ex('x9', 'Romanian Deadlift', 'Romanian deadlift', 3, 10, 120),
+        ex('x10', 'Walking Lunge', 'Yürüyerek lunge', 3, 12, 90),
+        ex('x11', 'Plank', 'Plank', 3, 30, 45),
+      ],
+    },
+  ],
+})
+
 function seed(params: URLSearchParams, userId: string, en: boolean): QueryClient {
   const qc = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, gcTime: Infinity, retry: false, refetchOnWindowFocus: false, refetchOnMount: false } },
@@ -58,6 +93,7 @@ function seed(params: URLSearchParams, userId: string, en: boolean): QueryClient
     : [
         { id: 'c1', title: en ? 'Can you review my week?' : 'Haftamı değerlendirir misin?', created_at: at(40), updated_at: at(38) },
         { id: 'c2', title: en ? 'What should I train tomorrow?' : 'Yarın ne çalışayım?', created_at: at(60 * 26), updated_at: at(60 * 26) },
+        { id: 'c4', title: en ? 'Suggest a workout program for me' : 'Bana bir antrenman programı öner', created_at: at(20), updated_at: at(19) },
         { id: 'c3', title: en ? 'How can I get more protein?' : 'Proteinimi nasıl artırırım?', created_at: at(60 * 24 * 4), updated_at: at(60 * 24 * 4) },
       ]
   qc.setQueryData(coachKeys.conversations, conversations)
@@ -79,6 +115,12 @@ function seed(params: URLSearchParams, userId: string, en: boolean): QueryClient
     msg('n1', 'user', en ? 'What should I train tomorrow?' : 'Yarın ne çalışayım?', 60 * 26),
     msg('n2', 'assistant', en ? 'Back has rested longest (6 days). Tomorrow: rows, pull-ups or lat pulldown, and face pulls, 3-4 sets each.' : 'En uzun dinlenen bölgen sırt (6 gün). Yarın: row, barfiks ya da lat pulldown ve face pull, her biri 3-4 set.', 60 * 26),
   ])
+  qc.setQueryData<CoachMessage[]>(coachKeys.messages('c4'), [
+    msg('q1', 'user', en ? 'Suggest a workout program for me: 3 days, dumbbells' : 'Bana bir antrenman programı öner: 3 gün, dambıl', 20),
+    msg('q2', 'assistant', en ? 'Dumbbell full body: 3-day program' : 'Dambıl tüm vücut: 3 günlük program', 19),
+  ])
+  qc.setQueryDefaults(['coach', 'program'], { staleTime: Infinity, gcTime: Infinity })
+  qc.setQueryData(coachKeys.program('q2'), { program: sampleProgram(en), unmatched: ['Cable Crossover'] })
   // last question without a reply: the retry state
   qc.setQueryData<CoachMessage[]>(coachKeys.messages('c3'), [msg('p1', 'user', en ? 'How can I get more protein?' : 'Proteinimi nasıl artırırım?', 60 * 24 * 4)])
 
@@ -112,6 +154,7 @@ export function DevCoachLayout() {
     delayMs: Number(params.get('delay') ?? 1800),
     fail: params.get('fail') ?? undefined,
     base: '/__dev',
+    program: { program: sampleProgram(en), unmatched: ['Cable Crossover'] },
   }))
   return (
     <QueryClientProvider client={client}>

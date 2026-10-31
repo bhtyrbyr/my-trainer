@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+### Added
+- **Program from the AI coach**: "Suggest a program" (optionally "3 days, dumbbells") returns a structured plan; exercises are matched to the catalog on the server and each day can be saved as a workout template in one tap. Unmatched names are listed, not guessed.
+- **Admin > Free tier**: database and storage size, an estimate of this month's Edge Function calls (AI requests and reminders) against the Supabase Free limits, and registered / active people.
+- **End-to-end tests** (Playwright, iPhone-sized Chromium) for a workout session, habits, water and offline sync; they run in CI against a local Supabase stack.
+- **Maintenance automation**: monthly Dependabot PRs (npm and GitHub Actions, grouped) and a monthly check that the Gemini models in use still exist (a failure e-mails the owner).
+### Changed
+- Faster start: the home page loads as its own chunk and rarely changing libraries are split into long-cached chunks (main script 449 KB -> 243 KB).
+### Fixed
+- A reload shortly after a change could show the copy restored from the device cache (for example a just-ticked habit missing) until it went stale; restored data now refetches on open when online.
 
 ## [0.6.0] - 2026-10-31
 ### Security

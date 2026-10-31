@@ -26,6 +26,16 @@ Profile > Admin > Access. `invite` (recommended for private use: only e-mails on
 
 If the Google OAuth app is in *Testing*, add each invited person under Google Cloud > OAuth consent screen > Test users (max 100).
 
+## Maintenance (automatic)
+- `keepalive.yml`: daily ping so the free Supabase project never pauses.
+- `sync-catalog.yml` / `sync-foods.yml`: monthly catalog syncs (also on deploy).
+- `ai-models.yml`: monthly check that the Gemini models in `app_config.ai_model_limits` still exist; a failed run e-mails you. Fix by updating the limits in Admin > AI usage and the model defaults.
+- Dependabot: monthly grouped update PRs; merge them only when CI is green.
+- Admin > Free tier shows how close the project is to the Supabase Free limits.
+
+## Tests
+`npm run test` (unit), `npx supabase test db` (pgTAP, RLS), `npm run test:e2e` (Playwright against the local stack: `npx supabase start` first; creates and deletes its own test user).
+
 ## Free-tier limits (checked 2026-10-31)
 | Service | Limit that matters | How we stay inside |
 |---|---|---|

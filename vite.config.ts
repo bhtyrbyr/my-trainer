@@ -131,6 +131,10 @@ export default defineConfig(({ mode }) => ({
           if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return 'vendor-react'
           if (id.includes('node_modules/@supabase/')) return 'vendor-supabase'
           if (/node_modules\/(@tanstack|i18next|react-i18next|i18next-browser-languagedetector)\//.test(id)) return 'vendor-app'
+          // shared by most pages, change rarely: long-cached chunks that survive app releases
+          // (zod is still needed at start-up: the offline queue registers the workout writes)
+          if (id.includes('node_modules/zod/')) return 'vendor-zod'
+          if (/node_modules\/(date-fns|tailwind-merge)\//.test(id)) return 'vendor-utils'
           return undefined
         },
       },

@@ -21,6 +21,7 @@ import {
   setRegistrationStatus,
   setUserAiLimit,
   setUserBlocked,
+  usageSummary,
   type AdminUser,
 } from './api'
 import type { AdminConfig, AdminConfigKey } from './adminLogic'
@@ -48,6 +49,7 @@ export const adminKeys = {
   config: ['admin', 'config'] as const,
   allowed: ['admin', 'allowed'] as const,
   users: (query: string) => ['admin', 'users', query] as const,
+  usage: ['admin', 'usage'] as const,
 }
 
 export function useIsAdmin() {
@@ -248,4 +250,9 @@ export function useSetUserAiLimit() {
       if (!preview) void qc.invalidateQueries({ queryKey: ['admin', 'users'] })
     },
   })
+}
+
+export function useUsageSummary() {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.usage, queryFn: usageSummary, enabled: isAdmin, staleTime: 5 * 60_000 })
 }
