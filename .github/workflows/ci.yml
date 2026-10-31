@@ -48,7 +48,8 @@ jobs:
 
   db-tests:
     name: Database + E2E tests (local Supabase stack)
-    runs-on: ubuntu-latest
+    # pinned: ubuntu-latest moved to Ubuntu 26, where `playwright install --with-deps` (1.56) cannot install Chromium's deps
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       # config.toml reads these for the (unused in tests) Google provider
