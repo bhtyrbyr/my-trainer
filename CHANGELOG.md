@@ -3,6 +3,8 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+
+## [0.5.0] - 2026-10-31
 ### Added
 - **AI safeguards** (Gemini / OpenRouter free tiers): AI features are 18+ (people under 18 may use the rest of the app; a stored birth year under 18 keeps AI off on the server); AI food estimates need explicit consent naming the providers, that free-tier content may be used for product improvement and read by humans, and the region limit (not in the EEA, UK or Switzerland); the server refuses without consent, and requests from those regions are refused when the edge reports a country. Estimates carry a "not medical or dietary advice" note. AI consent can be withdrawn in Settings > Privacy & data. The privacy notice gained an age section (under 18: give health-data consent with a parent or guardian).
 - **Home dashboard**: today (workout, water, sleep, habits and to-dos, eaten / burned) and a weekly summary from `get_week_summary`, plus at most two rule-based suggestions (untrained muscle group, low water in the evening, no weigh-in for a week, streak at risk, undone habit), dismissible for the day.
@@ -14,6 +16,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ### Changed
 - **AI consent** now also covers coach messages and workout / habit summaries; everyone who gave the earlier AI consent is asked once more, and the server only accepts the current version. The privacy notice was updated accordingly.
 - **Exercise catalog**: replaced with openly licensed sources: 888 exercises from wger (texts, CC BY-SA) with workout-guide / Everkinetic illustrations (CC BY-SA 4.0) played as a short animation, and the muscle map where there is no illustration. A credit line on every exercise and a Licences page (Profile > About). Turkish names are filled gradually by a quota-safe translation.
+### Security
+- Coach chats, the private profile and consents are never stored in the device's offline cache; a sign-out from another tab or an expired session also clears this device's copy.
 ### Removed
 - **ExerciseDB**: its exercises, GIFs and sync code are removed (its terms forbid storing and redistributing the content). Workout history moves to the matching new exercise where one exists; other exercises you used stay in your history by name only. Cached GIFs are cleared from devices on the next update.
 

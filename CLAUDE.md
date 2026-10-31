@@ -49,5 +49,5 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 - [x] Faz 1: workouts (guided session flow) + leaderboard UI (v0.2.0); exercise catalog since 2026-10-30: wger + workout-guide (docs/catalog-v2-spec.md), ExerciseDB removed
 - [x] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos, KVKK (v0.3.0)
 - [x] Faz 3: habits + todos (shared recurrence engine), push reminders (v0.4.0)
-- [ ] Faz 4: dashboard, AI coach (Edge Function), badges, admin panel, offline queue, export
+- [x] Faz 4: units option, dashboard, AI coach (Edge Function, no health data), badges, admin panel, offline queue (v0.5.0)
 - [ ] Faz 5: hardening + publish

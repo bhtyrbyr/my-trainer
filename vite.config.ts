@@ -70,9 +70,11 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/auth\/callback/],
         runtimeCaching: [
           {
-            // Photo vault and photo rows: never from a cache. A stale "no vault yet" answer could lead
-            // to a second vault being created; rows carry IVs and wrapped data. Must precede the rule below.
-            urlPattern: ({ url }) => /^\/rest\/v1\/(photo_vault|progress_photos)\b/.test(url.pathname),
+            // Never from a cache, never stored on the device. Photo vault and photo rows: a stale "no vault
+            // yet" answer could lead to a second vault; rows carry IVs and wrapped data. Coach chats, private
+            // profile and consents stay off the device (src/lib/offline/policy.ts). Must precede the rule below.
+            urlPattern: ({ url }) =>
+              /^\/rest\/v1\/(photo_vault|progress_photos|ai_conversations|ai_messages|profile_private|user_consents)\b/.test(url.pathname),
             handler: 'NetworkOnly',
           },
           {
