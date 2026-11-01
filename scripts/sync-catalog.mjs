@@ -181,6 +181,11 @@ const mediaGate = makeGate(MEDIA_MIN_INTERVAL_MS)
 const geminiGate = makeGate(GEMINI_MIN_INTERVAL_MS)
 const edbGate = makeGate(EDB_MIN_INTERVAL_MS)
 
+// Gemini run state (declared before main runs; used by every AI step)
+let aiStopped = null // reason; set once, ends every AI step of the run
+const stopLogged = new Set()
+const failures = { count: 0 }
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -588,7 +593,6 @@ async function syncExerciseDb(rows, edbRows, existing) {
 // Gemini Flash Lite: shared budget, generation, translation
 // ---------------------------------------------------------------------------
 
-let aiStopped = null // reason; set once, ends every AI step of the run
 
 async function liteBudget() {
   const { data: cfg, error: e1 } = await supabase.from('app_config').select('value').eq('key', 'ai_model_limits').maybeSingle()
@@ -611,14 +615,12 @@ async function aiAvailable(step) {
   return aiStopped ? logStop(step, aiStopped) : true
 }
 
-const stopLogged = new Set()
 function logStop(step, reason) {
   if (!stopLogged.has(step)) { stopLogged.add(step); log(`[${step}] AI paused: ${reason}`) }
   return false
 }
 
 /** Handles a failed request; returns true when the step should stop. */
-const failures = { count: 0 }
 function aiFailed(step, err) {
   if (err.status === 429) { aiStopped = 'Gemini quota reached (429)'; warn(`[${step}] Gemini quota reached (429); AI steps stop for this run`); return true }
   failures.count++
