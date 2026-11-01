@@ -451,17 +451,21 @@ function Stat({ label, value }: { label: string; value: string }) {
   )
 }
 
-/* 5. Community: segments, a feed post with a finished workout, private by default. */
+/* 5. Community: Home | Discover, a feed post with a finished workout, private by default. */
 function Social() {
   const { t } = useTranslation(['tour', 'social'])
   const u = useUnits()
   const n = useNumber()
   return (
     <div className="space-y-3 p-5">
-      <div className="hairline grid grid-cols-3 rounded-[12px] bg-bg/60 p-1 text-center text-[13px] font-medium">
-        <span className="rounded-[9px] bg-raised py-1.5 text-ink">{t('social:tabs.feed')}</span>
-        <span className="py-1.5 text-ink-muted">{t('social:tabs.groups')}</span>
-        <span className="py-1.5 text-ink-muted">{t('social:tabs.ranking')}</span>
+      {/* the real section switch: two words split by a hairline, the active one on a volt dot */}
+      <div className="flex items-center text-center text-[13px] font-semibold">
+        <span className="relative flex-1 pb-2.5 text-ink">
+          {t('social:tabs.home')}
+          <span className="absolute bottom-0 left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-volt" />
+        </span>
+        <span className="mb-2.5 h-3.5 w-px bg-line-strong" />
+        <span className="flex-1 pb-2.5 text-ink-faint">{t('social:tabs.discover')}</span>
       </div>
       {/* a timeline row like the real feed: avatar column, no card */}
       <div className="flex gap-3 border-b border-line pb-3">

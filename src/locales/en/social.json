@@ -2,9 +2,8 @@
   "title": "Community",
   "sections": "Community sections",
   "tabs": {
-    "feed": "Feed",
-    "groups": "Groups",
-    "ranking": "Ranking"
+    "home": "Home",
+    "discover": "Discover"
   },
   "share": "Share",
   "back": "Back",
@@ -23,18 +22,43 @@
   "copy": "Copy link",
   "copied": "Copied",
   "feed": {
-    "label": "Feed",
-    "following": "Following",
-    "discover": "Discover",
     "emptyTitle": "Your feed is quiet",
     "emptyBody": "Follow people or join a group and their posts show up here. Yours too.",
-    "goDiscover": "Discover people",
+    "goDiscover": "Browse Discover",
     "discoverEmptyTitle": "Nothing to discover yet",
     "discoverEmptyBody": "Public posts from public accounts appear here."
   },
   "search": {
+    "title": "Search",
+    "segments": "Search type",
+    "kinds": {
+      "people": "People",
+      "groups": "Groups",
+      "tags": "Tags"
+    },
     "people": "Search people by name or username",
-    "none": "No results."
+    "groups": "Search groups by name",
+    "tags": "Search tags, e.g. #legday",
+    "none": "No results.",
+    "peopleHint": "Find someone to follow by name or username.",
+    "tagsHint": "Tags are the #words in posts. Type at least two letters to search.",
+    "clear": "Clear search"
+  },
+  "ranking": {
+    "title": "Ranking"
+  },
+  "rail": {
+    "title": "My groups",
+    "create": "New group",
+    "joinByCode": "Enter code",
+    "invited": "{{name}}, you are invited",
+    "pending": "{{name}}, request sent"
+  },
+  "tags": {
+    "posts_one": "{{count}} post",
+    "posts_other": "{{count}} posts",
+    "emptyTitle": "No posts with this tag",
+    "emptyBody": "Use #{{tag}} in a post and it shows up here. Only posts you are allowed to see are listed."
   },
   "follow": {
     "follow": "Follow",
@@ -124,7 +148,8 @@
     "birthYearTitle": "Add your birth year first",
     "birthYearBody": "Community is 18+, so we need your birth year to check it. It stays private.",
     "addBirthYear": "Add birth year",
-    "rankingStill": "The Ranking tab works without joining."
+    "rankingStill": "The ranking works without joining.",
+    "openRanking": "Open ranking"
   },
   "notifications": {
     "title": "Notifications",
@@ -149,8 +174,6 @@
   },
   "groups": {
     "title": "Group",
-    "search": "Search groups",
-    "results": "Results",
     "create": "New group",
     "createAction": "Create group",
     "members_one": "{{count}} member",
@@ -170,7 +193,6 @@
     "invitations": "Invitations",
     "mine": "My groups",
     "requested": "Requests sent",
-    "emptyTitle": "No groups yet",
     "emptyBody": "Start one for your gym crew or search for an open group.",
     "form": {
       "name": "Name",
@@ -214,6 +236,9 @@
     "joinBody": "You were invited with this code. Join to see the group's posts and members.",
     "joinAction": "Join group",
     "joinNeedsSocial": "Join Community first, then open the invite link again.",
+    "codeEntryTitle": "Join a group with a code",
+    "codeEntryBody": "Type the code from the group admin, or paste the invite link.",
+    "codeContinue": "Continue",
     "rotate": "New invite code",
     "rotateTitle": "Create a new code?",
     "rotateHint": "The old link and code stop working.",

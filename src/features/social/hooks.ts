@@ -13,6 +13,7 @@ export const socialKeys = {
   feed: (mode: 'following' | 'discover') => ['social', 'feed', mode] as const,
   userPosts: (id: string) => ['social', 'posts', 'user', id] as const,
   groupPosts: (id: string) => ['social', 'posts', 'group', id] as const,
+  tagPosts: (tag: string) => ['social', 'posts', 'tag', tag] as const,
   post: (id: string) => ['social', 'post', id] as const,
   profile: (id: string) => ['social', 'profile', id] as const,
   followers: (id: string) => ['social', 'followers', id] as const,
@@ -20,6 +21,7 @@ export const socialKeys = {
   requests: ['social', 'requests'] as const,
   blocked: ['social', 'blocked'] as const,
   searchUsers: (q: string) => ['social', 'search-users', q] as const,
+  searchTags: (q: string) => ['social', 'search-tags', q] as const,
   notifications: ['social', 'notifications'] as const,
   unread: ['social', 'unread'] as const,
   myGroups: ['social', 'groups', 'mine'] as const,
@@ -58,6 +60,9 @@ export const useUserPosts = (id: string, enabled: boolean) =>
 export const useGroupPosts = (id: string, enabled: boolean) =>
   usePosts(socialKeys.groupPosts(id), (b) => api.fetchGroupPosts(id, b), enabled)
 
+export const useTagPosts = (tag: string, enabled: boolean) =>
+  usePosts(socialKeys.tagPosts(tag), (b) => api.fetchTagPosts(tag, b), enabled && tag.length > 0)
+
 export const usePost = (id: string) =>
   useQuery({ queryKey: socialKeys.post(id), queryFn: () => api.fetchPost(id) })
 export const useSocialProfile = (id: string, enabled = true) =>
@@ -78,6 +83,14 @@ export const useSearchUsers = (q: string) =>
   useQuery({
     queryKey: socialKeys.searchUsers(q),
     queryFn: () => api.searchUsers(q),
+    enabled: q.length >= 2,
+    staleTime: 30_000,
+  })
+/** `q` is the normalised tag prefix (no `#`). */
+export const useSearchTags = (q: string) =>
+  useQuery({
+    queryKey: socialKeys.searchTags(q),
+    queryFn: () => api.searchTags(q),
     enabled: q.length >= 2,
     staleTime: 30_000,
   })

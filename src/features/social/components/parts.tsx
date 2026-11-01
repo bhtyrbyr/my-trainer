@@ -61,14 +61,27 @@ export function BackLink({ fallback = '/social', title }: { fallback?: string; t
   )
 }
 
-export function BellButton() {
+const headerIcon =
+  'relative flex size-11 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-raised hover:text-ink'
+
+/** A 44 pt icon link for a page header (Community: search, ranking). */
+export function HeaderIconLink({ to, label, icon: Icon }: { to: string; label: string; icon: LucideIcon }) {
+  return (
+    <Link to={to} aria-label={label} className={headerIcon}>
+      <Icon className="size-[22px]" aria-hidden />
+    </Link>
+  )
+}
+
+/** Notifications bell; by default it hangs 8 px into the header's right padding (optical edge). */
+export function BellButton({ className }: { className?: string }) {
   const { t } = useTranslation('social')
   const unread = useUnreadCount()
   return (
     <Link
       to="/social/notifications"
       aria-label={unread > 0 ? t('notifications.openUnread', { count: unread }) : t('notifications.title')}
-      className="relative -mr-2 flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink"
+      className={cn(headerIcon, '-mr-2', className)}
     >
       <Bell className="size-[22px]" aria-hidden />
       {unread > 0 && (
@@ -154,7 +167,18 @@ export function TimelineSkeleton({ rows = 3 }: { rows?: number }) {
  * Infinite post list: loads the next keyset page when the sentinel scrolls into view (button fallback).
  * `list` is the full-bleed timeline (rows split by hairlines); `grid` shows the posts with media, 3 across.
  */
-export function PostList({ query, empty, layout = 'list' }: { query: PostsQuery; empty: ReactNode; layout?: 'list' | 'grid' }) {
+export function PostList({
+  query,
+  empty,
+  layout = 'list',
+  flush,
+}: {
+  query: PostsQuery
+  empty: ReactNode
+  layout?: 'list' | 'grid'
+  /** The list starts right under the page header, whose hairline already divides: no top border. */
+  flush?: boolean
+}) {
   const { t } = useTranslation('social')
   const sentinel = useRef<HTMLDivElement>(null)
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query
@@ -182,7 +206,7 @@ export function PostList({ query, empty, layout = 'list' }: { query: PostsQuery;
           <PostGrid posts={posts} />
         </div>
       ) : (
-        <ul className="-mx-4 divide-y divide-line border-y border-line" aria-label={t('posts')}>
+        <ul className={cn('-mx-4 divide-y divide-line border-y border-line', flush && 'border-t-0')} aria-label={t('posts')}>
           {posts.map((p) => (
             <li key={p.id}>
               <PostCard post={p} />

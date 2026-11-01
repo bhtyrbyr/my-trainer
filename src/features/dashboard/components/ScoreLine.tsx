@@ -15,7 +15,7 @@ export function ScoreLine({ points, streak, base = '' }: { points: number; strea
   const nf = new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr')
   return (
     <Link
-      to={base ? `${base}/leaderboard` : '/social?tab=ranking'}
+      to={base ? `${base}/leaderboard` : '/social/ranking'}
       aria-label={t('score.summary', { points, streak })}
       className="flex min-h-11 items-center gap-4 px-1"
     >

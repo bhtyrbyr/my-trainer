@@ -98,14 +98,14 @@ function seed(
     (typeof PEOPLE)[number],
   ]
   const feed = [
-    post(1, deniz, 'Yeni deadlift rekoru: 140 kg x 3. Altı aydır bu ana çalışıyordum.', 25),
+    post(1, deniz, 'Yeni deadlift rekoru: 140 kg x 3. Altı aydır bu ana çalışıyordum. #Deadlift #PR', 25),
     post(2, elif, 'Sabah 10 km, tempo 5:20. Yağmur başlamadan bitirdim.', 140, { audience: 'public' }),
     post(3, can, 'Salı akşamı grup antrenmanı 19:00, herkes gelsin.', 400, {
       audience: 'group',
       group_id: 'g1',
       group_name: 'Kadıköy Barbell',
     }),
-    post(4, mert, 'İki haftadır uyku düzenim oturdu, farkı squatta hissediyorum.', 1500),
+    post(4, mert, 'İki haftadır uyku düzenim oturdu, farkı squatta hissediyorum. #BacakGünü', 1500),
   ]
   qc.setQueryData(socialKeys.feed('following'), pages(feed))
   qc.setQueryData(
@@ -116,6 +116,12 @@ function seed(
     ]),
   )
   qc.setQueryData(socialKeys.unread, 3)
+  qc.setQueryData(socialKeys.tagPosts('bacakgünü'), pages([feed[3]!, post(8, elif, 'Squat 5x5 bitti. #bacakgünü', 4000)]))
+  qc.setQueryData(socialKeys.searchTags('bacak'), [
+    { tag: 'bacakgünü', post_count: 128 },
+    { tag: 'bacak', post_count: 41 },
+    { tag: 'bacakantrenmanı', post_count: 9 },
+  ])
 
   const profile = (p: (typeof PEOPLE)[number], o: Partial<SocialProfile>): SocialProfile =>
     rowOf<SocialProfile>({

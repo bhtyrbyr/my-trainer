@@ -26,7 +26,7 @@ test('Community: private follow, post with a photo, block hides it', async ({ pa
   await a.goto('/social')
   await a.getByRole('checkbox').check()
   await a.getByRole('button', { name: 'Join Community' }).click()
-  await expect(a.getByRole('tab', { name: 'Following' })).toBeVisible()
+  await expect(a.getByRole('tab', { name: 'Home' })).toBeVisible()
   // B joins through the same RPC the intro calls
   await rpcAs(B, 'social_enable', { p_consent_version: brand.legal.socialConsentVersion })
 

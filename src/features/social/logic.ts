@@ -104,3 +104,25 @@ export function compactCount(n: number, locale: string): string {
   if (n < 10_000) return new Intl.NumberFormat(locale).format(n)
   return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(n)
 }
+
+/** Group monogram for the rail: first letters of the first two words (one for a one-word name). */
+export function groupMonogram(name: string | null | undefined, locale = 'tr'): string {
+  const words = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  const letters = words.slice(0, 2).map((w) => Array.from(w)[0] ?? '')
+  return letters.join('').toLocaleUpperCase(locale) || '?'
+}
+
+/** The code from what someone typed or pasted: a bare code or a whole invite link; '' when nothing usable. */
+export function parseInviteCode(input: string): string {
+  const s = input.trim()
+  const fromLink = /\/social\/join\/([^/?#\s]+)/.exec(s)?.[1]
+  let code = s
+  if (fromLink) {
+    try {
+      code = decodeURIComponent(fromLink)
+    } catch {
+      code = fromLink
+    }
+  }
+  return /^[A-Za-z0-9]{4,32}$/.test(code) ? code.toUpperCase() : ''
+}

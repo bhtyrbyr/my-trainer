@@ -4,13 +4,14 @@ import type { Database } from '@/lib/database.types'
 type Fns = Database['public']['Functions']
 type Row<F extends keyof Fns> = Fns[F]['Returns'] extends (infer R)[] ? R : never
 
-/** One rendered post (social_feed, social_discover, social_user_posts, social_group_posts, social_post). */
+/** One rendered post (social_feed, social_discover, social_tag_posts, social_user_posts, social_group_posts, social_post). */
 export type PostItem = Database['public']['CompositeTypes']['social_post_item']
 export type SocialProfile = Row<'social_profile'>
 export type Person = Row<'social_followers'>
 export type FollowRequest = Row<'social_follow_requests'>
 export type BlockedUser = Row<'social_blocked_users'>
 export type UserHit = Row<'social_search_users'>
+export type TagHit = Row<'social_search_tags'>
 export type SocialNotification = Row<'social_notifications_list'>
 export type MyGroup = Row<'social_my_groups'>
 export type GroupInfo = Row<'social_group'>

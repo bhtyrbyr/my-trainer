@@ -1,384 +1,125 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Compass, Lock, Plus, Search, Users } from 'lucide-react'
+import { Navigate, useSearchParams } from 'react-router-dom'
+import { Compass, Search, Trophy, Users } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { GroupedList, ListRow } from '@/components/ui/GroupedList'
-import { LeaderboardContent } from '@/features/leaderboard/pages/LeaderboardPage'
-import { cn } from '@/lib/utils'
-import { useFeed, useMyGroups, useSearchGroups, useSearchUsers, useSocialAction, useSocialMe } from '../hooks'
-import * as api from '../api'
+import { useFeed, useSocialMe } from '../hooks'
+import { GroupRail } from '../components/GroupRail'
 import { JoinIntro } from '../components/JoinIntro'
 import {
   BellButton,
   EmptyState,
+  HeaderIconLink,
   ListSkeleton,
-  PersonRow,
   PostList,
   RowButton,
   ShareFab,
 } from '../components/parts'
+import { SectionTabs } from '../components/SectionTabs'
 import { ComposerSheet } from '../components/shareBridge'
-import { GroupCreateSheet } from '../components/GroupSheets'
 
-type Tab = 'feed' | 'groups' | 'ranking'
-const TABS: Tab[] = ['feed', 'groups', 'ranking']
+type Tab = 'home' | 'discover'
+const TABS: readonly Tab[] = ['home', 'discover']
 
 /**
- * Community tab (/social). Point of view: the posts are the page. Chrome is one title, the bell, and one
- * row of text tabs; the feed has a quieter second switch (Following / Discover) and one floating volt
- * action. The Ranking segment works without joining.
+ * Community tab (/social). Point of view: the posts are the page. Chrome is one title, three header
+ * icons (search, ranking, bell), two words (Home | Discover) and one floating volt action. Home opens
+ * with the "My groups" rail. `/social?tab=discover` is Discover; old links (?tab=groups, ?tab=ranking,
+ * ?feed=discover) land on their new homes.
  */
 export function SocialPage() {
   const { t } = useTranslation(['social', 'common'])
   const [params, setParams] = useSearchParams()
-  const navigate = useNavigate()
-  const raw = params.get('tab') as Tab | null
-  const tab: Tab = raw && TABS.includes(raw) ? raw : 'feed'
   const me = useSocialMe()
   const enabled = me.data?.enabled === true
+  const [composer, setComposer] = useState(false)
+
+  const raw = params.get('tab')
+  if (raw === 'ranking') return <Navigate to="/social/ranking" replace />
+  if (raw === 'groups') return <Navigate to="/social/search?s=groups" replace />
+  const tab: Tab = raw === 'discover' || params.get('feed') === 'discover' ? 'discover' : 'home'
+  const setTab = (v: Tab) => setParams(v === 'home' ? {} : { tab: v }, { replace: true })
 
   return (
-    <PageShell title={t('social:title')} actions={enabled ? <BellButton /> : undefined}>
+    <PageShell
+      title={t('social:title')}
+      actions={
+        <div className="-mr-2 flex items-center">
+          {enabled && <HeaderIconLink to="/social/search" label={t('social:search.title')} icon={Search} />}
+          <HeaderIconLink to="/social/ranking" label={t('social:ranking.title')} icon={Trophy} />
+          {enabled && <BellButton className="mr-0" />}
+        </div>
+      }
+    >
       <div className="mx-auto max-w-xl">
-        <SectionTabs
-          label={t('social:sections')}
-          value={tab}
-          onChange={(v) => setParams(v === 'feed' ? {} : { tab: v }, { replace: true })}
-          labelOf={(v) => t(`social:tabs.${v}`)}
-        />
-        {tab === 'ranking' ? (
-          <LeaderboardContent
-            onOpenPerson={
-              enabled ? (row) => navigate(`/social/u/${row.user_id}`, { state: { person: row } }) : undefined
-            }
-          />
-        ) : me.isLoading ? (
+        {me.isLoading ? (
           <ListSkeleton tall />
         ) : me.error ? (
           <ErrorNote error={me.error} />
         ) : !enabled ? (
           <JoinIntro paused={me.data?.enabled === false && me.data.enabled_at != null} />
-        ) : tab === 'feed' ? (
-          <FeedView />
         ) : (
-          <GroupsView />
+          <>
+            <SectionTabs
+              label={t('social:sections')}
+              options={TABS}
+              value={tab}
+              onChange={setTab}
+              labelOf={(v) => t(`social:tabs.${v}`)}
+            />
+            {tab === 'home' ? (
+              <>
+                <GroupRail />
+                <HomeFeed onDiscover={() => setTab('discover')} />
+              </>
+            ) : (
+              <DiscoverFeed />
+            )}
+            <ShareFab onClick={() => setComposer(true)} />
+            <ComposerSheet open={composer} onClose={() => setComposer(false)} />
+          </>
         )}
       </div>
     </PageShell>
   )
 }
 
-/**
- * Section switch: plain words split by hairline bars, no box. The active word lifts a little and sits on
- * a volt dot; the others stay faint.
- */
-function SectionTabs({
-  label,
-  value,
-  onChange,
-  labelOf,
-}: {
-  label: string
-  value: Tab
-  onChange: (v: Tab) => void
-  labelOf: (v: Tab) => string
-}) {
-  return (
-    <div role="tablist" aria-label={label} className="mb-5 flex items-center">
-      {TABS.map((v, i) => {
-        const active = v === value
-        return (
-          <div key={v} className="flex flex-1 items-center">
-            {i > 0 && <span aria-hidden className="h-4 w-px bg-line-strong" />}
-            <button
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onChange(v)}
-              className="relative flex h-12 flex-1 flex-col items-center justify-center"
-            >
-              <span
-                className={cn(
-                  'text-[15px] font-semibold transition-[color,transform] duration-200 ease-out',
-                  active ? '-translate-y-1 text-ink' : 'text-ink-faint hover:text-ink-muted',
-                )}
-              >
-                {labelOf(v)}
-              </span>
-              <span
-                aria-hidden
-                className={cn(
-                  'absolute bottom-2 size-1.5 rounded-full bg-volt transition-[opacity,transform] duration-200 ease-out',
-                  active ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
-                )}
-              />
-            </button>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function FeedView() {
+function HomeFeed({ onDiscover }: { onDiscover: () => void }) {
   const { t } = useTranslation('social')
-  const [params, setParams] = useSearchParams()
-  const mode = params.get('feed') === 'discover' ? 'discover' : 'following'
-  const feed = useFeed(mode)
-  const [composer, setComposer] = useState(false)
-
+  const feed = useFeed('following')
   return (
-    <>
-      <div role="tablist" aria-label={t('feed.label')} className="-mt-1 mb-4 flex gap-5 px-1">
-        {(['following', 'discover'] as const).map((m) => (
-          <button
-            key={m}
-            role="tab"
-            aria-selected={mode === m}
-            onClick={() => setParams(m === 'following' ? {} : { feed: m }, { replace: true })}
-            className={cn(
-              'relative h-11 text-[15px] font-semibold transition-colors',
-              mode === m ? 'text-ink' : 'text-ink-faint hover:text-ink-muted',
-            )}
-          >
-            {t(`feed.${m}`)}
-            <span
-              className={cn(
-                'absolute inset-x-0 bottom-1.5 h-0.5 rounded-full bg-volt transition-opacity',
-                mode !== m && 'opacity-0',
-              )}
-            />
-          </button>
-        ))}
-      </div>
-
-      {mode === 'discover' && <PeopleSearch />}
-
-      <div className="pb-20">
-        <PostList
-          query={feed}
-          empty={
-            mode === 'following' ? (
-              <EmptyState
-                icon={Users}
-                title={t('feed.emptyTitle')}
-                body={t('feed.emptyBody')}
-                action={
-                  <RowButton
-                    tone="secondary"
-                    onClick={() => setParams({ feed: 'discover' }, { replace: true })}
-                  >
-                    {t('feed.goDiscover')}
-                  </RowButton>
-                }
-              />
-            ) : (
-              <EmptyState
-                icon={Compass}
-                title={t('feed.discoverEmptyTitle')}
-                body={t('feed.discoverEmptyBody')}
-              />
-            )
-          }
-        />
-      </div>
-
-      <ShareFab onClick={() => setComposer(true)} />
-      <ComposerSheet open={composer} onClose={() => setComposer(false)} />
-    </>
-  )
-}
-
-function SearchField({
-  value,
-  onChange,
-  label,
-}: {
-  value: string
-  onChange: (v: string) => void
-  label: string
-}) {
-  return (
-    <label className="hairline flex h-11 items-center gap-2 rounded-[var(--radius-input)] bg-surface px-3 focus-within:border-volt">
-      <Search className="size-4 shrink-0 text-ink-faint" aria-hidden />
-      <input
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={label}
-        aria-label={label}
-        maxLength={60}
-        className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint"
+    <div className="pb-20">
+      <PostList
+        query={feed}
+        empty={
+          <EmptyState
+            icon={Users}
+            title={t('feed.emptyTitle')}
+            body={t('feed.emptyBody')}
+            action={
+              <RowButton tone="secondary" onClick={onDiscover}>
+                {t('feed.goDiscover')}
+              </RowButton>
+            }
+          />
+        }
       />
-    </label>
-  )
-}
-
-function PeopleSearch() {
-  const { t } = useTranslation('social')
-  const [q, setQ] = useState('')
-  const query = q.trim()
-  const hits = useSearchUsers(query)
-  return (
-    <div className="mb-5 space-y-3">
-      <SearchField value={q} onChange={setQ} label={t('search.people')} />
-      {query.length >= 2 && (
-        <GroupedList footer={hits.data?.length === 0 ? t('search.none') : undefined}>
-          {hits.isLoading ? (
-            <div className="h-14 animate-pulse bg-surface" />
-          ) : (
-            (hits.data ?? []).map((h) => (
-              <PersonRow
-                key={h.user_id}
-                userId={h.user_id}
-                name={h.display_name}
-                username={h.username}
-                avatarPath={h.avatar_path}
-                hint={
-                  h.relation && h.relation !== 'none'
-                    ? t(`follow.${h.relation}`)
-                    : h.is_private
-                      ? t('profile.privateShort')
-                      : undefined
-                }
-              />
-            ))
-          )}
-        </GroupedList>
-      )}
     </div>
   )
 }
 
-function GroupsView() {
+function DiscoverFeed() {
   const { t } = useTranslation('social')
-  const [q, setQ] = useState('')
-  const query = q.trim()
-  const mine = useMyGroups()
-  const hits = useSearchGroups(query)
-  const [creating, setCreating] = useState(false)
-  const respond = useSocialAction((a: { id: string; accept: boolean }) => api.respondGroup(a.id, a.accept))
-
-  const groups = mine.data ?? []
-  const invited = groups.filter((g) => g.status === 'invited')
-  const active = groups.filter((g) => g.status === 'active')
-  const pending = groups.filter((g) => g.status === 'pending')
-
+  const feed = useFeed('discover')
   return (
-    <div className="space-y-7 pb-6">
-      <div className="flex gap-2">
-        <div className="min-w-0 flex-1">
-          <SearchField value={q} onChange={setQ} label={t('groups.search')} />
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          aria-label={t('groups.create')}
-          className="inner-glow flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-input)] bg-volt text-volt-ink"
-        >
-          <Plus className="size-5" strokeWidth={2.5} aria-hidden />
-        </button>
-      </div>
-
-      {query.length >= 2 ? (
-        <GroupedList
-          title={t('groups.results')}
-          footer={hits.data?.length === 0 ? t('search.none') : undefined}
-        >
-          {(hits.data ?? []).map((g) => (
-            <ListRow
-              key={g.group_id}
-              icon={g.visibility === 'closed' ? Lock : Users}
-              label={g.name}
-              hint={
-                g.member_count != null ? t('groups.members', { count: g.member_count }) : t('groups.closed')
-              }
-              value={g.my_status ? t(`groups.status.${g.my_status}`) : undefined}
-              to={`/social/g/${g.group_id}`}
-            />
-          ))}
-          {hits.isLoading && <div className="h-14 animate-pulse bg-surface" />}
-        </GroupedList>
-      ) : mine.isLoading ? (
-        <ListSkeleton />
-      ) : (
-        <>
-          <ErrorNote error={mine.error ?? respond.error} />
-          {invited.length > 0 && (
-            <GroupedList title={t('groups.invitations')}>
-              {invited.map((g) => (
-                <div key={g.group_id} className="px-4 pb-2 pt-3">
-                  <Link to={`/social/g/${g.group_id}`} className="block">
-                    <span className="block truncate text-[15px] text-ink">{g.name}</span>
-                    <span className="block text-[12px] text-ink-faint">
-                      {t('groups.members', { count: g.member_count ?? 0 })}
-                    </span>
-                  </Link>
-                  <div className="-ml-0.5 mt-1 flex">
-                    <RowButton
-                      tone="primary"
-                      disabled={respond.isPending}
-                      onClick={() => respond.mutate({ id: g.group_id!, accept: true })}
-                    >
-                      {t('accept')}
-                    </RowButton>
-                    <RowButton
-                      disabled={respond.isPending}
-                      onClick={() => respond.mutate({ id: g.group_id!, accept: false })}
-                    >
-                      {t('decline')}
-                    </RowButton>
-                  </div>
-                </div>
-              ))}
-            </GroupedList>
-          )}
-          {active.length === 0 && invited.length === 0 && pending.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title={t('groups.emptyTitle')}
-              body={t('groups.emptyBody')}
-              action={
-                <RowButton tone="primary" onClick={() => setCreating(true)}>
-                  {t('groups.create')}
-                </RowButton>
-              }
-            />
-          ) : (
-            active.length > 0 && (
-              <GroupedList title={t('groups.mine')}>
-                {active.map((g) => (
-                  <ListRow
-                    key={g.group_id}
-                    icon={g.visibility === 'closed' ? Lock : Users}
-                    label={g.name}
-                    hint={t('groups.members', { count: g.member_count ?? 0 })}
-                    value={g.role !== 'member' ? t(`groups.role.${g.role}`) : undefined}
-                    to={`/social/g/${g.group_id}`}
-                  />
-                ))}
-              </GroupedList>
-            )
-          )}
-          {pending.length > 0 && (
-            <GroupedList title={t('groups.requested')}>
-              {pending.map((g) => (
-                <ListRow
-                  key={g.group_id}
-                  icon={Lock}
-                  label={g.name}
-                  value={t('groups.status.pending')}
-                  to={`/social/g/${g.group_id}`}
-                />
-              ))}
-            </GroupedList>
-          )}
-        </>
-      )}
-
-      <GroupCreateSheet open={creating} onClose={() => setCreating(false)} />
+    <div className="pb-20">
+      <PostList
+        query={feed}
+        empty={
+          <EmptyState icon={Compass} title={t('feed.discoverEmptyTitle')} body={t('feed.discoverEmptyBody')} />
+        }
+      />
     </div>
   )
 }

@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(662);
+select plan(697);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -55,7 +55,9 @@ select is(
         'group_delete', 'social_my_groups', 'social_group', 'social_search_groups', 'social_group_members',
         'social_report', 'admin_list_reports', 'admin_resolve_report', 'admin_remove_post',
         -- social hardening (20261160000000)
-        'group_unban', 'group_bans_list')),
+        'group_unban', 'group_bans_list',
+        -- hashtags (20261170000000)
+        'social_tag_posts', 'social_search_tags')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -2621,6 +2623,149 @@ reset role;
 select ok((select array_agg(user_id order by user_id) from public.group_members where group_id = :'go') = array[:'s3', :'s8']::uuid[]
           and (select count(*) from public.group_bans where group_id = :'go' and user_id in (:'s4', :'s5')) = 2,
   'block: the owner''s block removes an admin; an admin''s block never removes the owner');
+
+-- =============================================================================
+-- Hashtags (20261170000000). Fresh users: hana (public author), hugo (stranger), hale (hana's friend),
+-- hans (blocked by hana), hira (private account), halil (public, not discoverable).
+-- =============================================================================
+reset role;
+set local request.jwt.claims = '';
+\set h1 '00000000-0000-0000-0000-000000000201'
+\set h2 '00000000-0000-0000-0000-000000000202'
+\set h3 '00000000-0000-0000-0000-000000000203'
+\set h4 '00000000-0000-0000-0000-000000000204'
+\set h5 '00000000-0000-0000-0000-000000000205'
+\set h6 '00000000-0000-0000-0000-000000000206'
+\set k1 '{"sub":"00000000-0000-0000-0000-000000000201","role":"authenticated"}'
+\set k2 '{"sub":"00000000-0000-0000-0000-000000000202","role":"authenticated"}'
+\set k3 '{"sub":"00000000-0000-0000-0000-000000000203","role":"authenticated"}'
+\set k4 '{"sub":"00000000-0000-0000-0000-000000000204","role":"authenticated"}'
+\set k5 '{"sub":"00000000-0000-0000-0000-000000000205","role":"authenticated"}'
+\set k6 '{"sub":"00000000-0000-0000-0000-000000000206","role":"authenticated"}'
+
+-- Tag rule (internal helper)
+select is(private.post_tag_list('Leg day #LegDay #legday #Squat'), array['legday', 'squat'], 'tags: lower-cased, distinct, in order');
+select is(private.post_tag_list('#İstanbul #IĞDIR #ÇALIŞ_1 #şöü'), array['istanbul', 'ığdır', 'çalış_1', 'şöü'],
+  'tags: Turkish normalisation (İ -> i, I -> ı)');
+select is(private.post_tag_list('a#bc &#abc; &#39; #1234 #x #-ab mail#ok'), '{}'::text[],
+  'tags: preceded by a word char or &, all digits, one char -> not tags');
+select is(private.post_tag_list('##ab (#cd) #123abc #a_1'), array['ab', 'cd', '123abc', 'a_1'], 'tags: punctuation before #, digits plus letters');
+select is(private.post_tag_list('#' || repeat('a', 30) || ' #' || repeat('b', 31)), array[repeat('a', 30)], 'tags: 30 chars at most; a longer run is not a tag');
+select is(private.post_tag_list((select string_agg('#t' || i, ' ' order by i) from generate_series(1, 12) i)),
+  (select array_agg('t' || i order by i) from generate_series(1, 10) i), 'tags: at most 10 per post');
+select is(private.post_tag_list(null), '{}'::text[], 'tags: a null body has no tags');
+select ok(private.tag_parse('#İSTANBUL') = 'istanbul' and private.tag_parse(' legday ') = 'legday'
+          and private.tag_parse('#12') is null and private.tag_parse('#a') is null and private.tag_parse('a b') is null,
+  'tags: a typed tag is normalised; invalid input is null');
+select is((select count(*)::int from public.posts p
+            where coalesce((select array_agg(t order by t) from unnest(private.post_tag_list(p.body)) t), '{}')
+                  is distinct from coalesce((select array_agg(pt.tag order by pt.tag) from public.post_tags pt where pt.post_id = p.id), '{}')),
+  0, 'tags: post_tags matches the tag rule for every existing post');
+select ok(has_function_privilege('authenticated', 'public.social_tag_posts(text, timestamptz, integer)', 'execute')
+  and has_function_privilege('authenticated', 'public.social_search_tags(text)', 'execute')
+  and not has_function_privilege('anon', 'public.social_tag_posts(text, timestamptz, integer)', 'execute')
+  and not has_function_privilege('anon', 'public.social_search_tags(text)', 'execute')
+  and not has_function_privilege('authenticated', 'private.post_tags_sync()', 'execute')
+  and not has_function_privilege('authenticated', 'private.post_tag_list(text)', 'execute')
+  and not has_function_privilege('authenticated', 'private.tag_parse(text)', 'execute')
+  and not has_function_privilege('authenticated', 'private.tag_norm(text)', 'execute')
+  and not has_table_privilege('authenticated', 'public.post_tags', 'select')
+  and not has_table_privilege('anon', 'public.post_tags', 'select')
+  and (select relrowsecurity from pg_class where oid = 'public.post_tags'::regclass),
+  'tags: two RPCs granted, helpers and table internal, post_tags has RLS');
+
+update public.app_config set value = 'false'::jsonb where key = 'require_approval';
+insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+select u.id::uuid, u.n || '@example.com', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now()
+  from (values (:'h1', 'hana'), (:'h2', 'hugo'), (:'h3', 'hale'), (:'h4', 'hans'), (:'h5', 'hira'), (:'h6', 'halil')) u(id, n);
+insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
+select u.id::uuid, u.n || '_h', initcap(u.n), u.id || '/avatar.jpg', now()
+  from (values (:'h1', 'hana'), (:'h2', 'hugo'), (:'h3', 'hale'), (:'h4', 'hans'), (:'h5', 'hira'), (:'h6', 'halil')) u(id, n);
+insert into public.profile_private (user_id, birth_year)
+select u.id::uuid, 1990 from (values (:'h1'), (:'h2'), (:'h3'), (:'h4'), (:'h5'), (:'h6')) u(id);
+update public.app_config set value = 'true'::jsonb where key = 'require_approval';
+
+set local role authenticated;
+set local request.jwt.claims = :'k1'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+set local request.jwt.claims = :'k2'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+set local request.jwt.claims = :'k3'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+select public.social_follow(:'h1');
+set local request.jwt.claims = :'k4'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+select public.social_create_post('text', '#LegDay by hans', null, 'public') as hx \gset
+set local request.jwt.claims = :'k5'; select public.social_enable('2026-11-01');
+select public.social_create_post('text', '#LegDay from hira #hiraonly', null, 'public') as ip1 \gset
+set local request.jwt.claims = :'k6'; select public.social_enable('2026-11-01'); select public.social_update_settings(false, false);
+select public.social_create_post('text', '#LegDay #hidden_tag', null, 'public') as lp1 \gset
+set local request.jwt.claims = :'k1';
+select public.social_follow(:'h3');
+select public.social_block(:'h4');
+select public.social_create_post('text', 'Morning run #Koşu #LegDay', null, 'public') as hp1 \gset
+select public.social_create_post('text', 'Friends only #LegDay #secret', null, 'friends') as hp2 \gset
+select public.social_create_post('text', '#LegDay for followers #Koşu', null, 'followers') as hp3 \gset
+select throws_ok('select * from public.post_tags', '42501', null, 'tags: no direct select on post_tags');
+
+reset role;
+select is((select array_agg(tag order by tag) from public.post_tags where post_id = :'hp1'), array['koşu', 'legday'], 'tags: written on insert');
+update public.posts set created_at = now() - (x.h || ' hours')::interval
+  from (values (:'hp1', 1), (:'hp2', 2), (:'hp3', 3), (:'ip1', 4), (:'hx', 5), (:'lp1', 6)) x(id, h) where posts.id = x.id::uuid;
+select ok(not exists (select 1 from public.post_tags pt join public.posts p on p.id = pt.post_id where pt.created_at <> p.created_at),
+  'tags: created_at is a copy of the post''s created_at');
+select created_at as hp2_at from public.posts where id = :'hp2' \gset
+
+-- Tag pages and search
+set local role authenticated;
+set local request.jwt.claims = :'k2';
+select is((select array_agg(id) from public.social_tag_posts('#LEGDAY')), array[:'hp1', :'hx']::uuid[],
+  'tag posts: a stranger sees public posts of public, discoverable accounts, newest first');
+select is(array(select distinct k from public.social_tag_posts('legday') g, jsonb_object_keys(to_jsonb(g)) k order by k),
+  array(select distinct k from public.social_discover() g, jsonb_object_keys(to_jsonb(g)) k order by k), 'tag posts: same row shape as discover');
+select is((select array_agg(row(tag, post_count)::text) from public.social_search_tags('#Leg')), array['(legday,2)'],
+  'tag search: counts only posts the stranger can view');
+select is((select count(*)::int from public.social_search_tags('sec')), 0, 'tag search: a tag used only in a friends post is hidden from strangers');
+select is((select count(*)::int from public.social_search_tags('hira')), 0, 'tag search: a private account''s tags are hidden from strangers');
+select is((select count(*)::int from public.social_search_tags('hidden')), 0, 'tag search: a non-discoverable author''s tags are hidden from strangers');
+select is((select count(*)::int from public.social_tag_posts('secret')), 0, 'tag posts: friends posts are not returned to strangers');
+select is((select array_agg(row(tag, post_count)::text) from public.social_search_tags('KOŞ')), array['(koşu,1)'],
+  'tag search: Turkish query normalised (the followers post is not counted)');
+select ok((select count(*) from public.social_search_tags('#')) = 0 and (select count(*) from public.social_search_tags('')) = 0
+          and (select count(*) from public.social_search_tags('a b')) = 0 and (select count(*) from public.social_tag_posts('#1')) = 0,
+  'tag search: empty or invalid queries return nothing');
+select public.social_follow(:'h6');
+select is((select count(*)::int from public.social_tag_posts('legday')), 3, 'tag posts: following a non-discoverable author shows their posts');
+set local request.jwt.claims = :'k3';
+select is((select array_agg(id) from public.social_tag_posts('legday')), array[:'hp1', :'hp2', :'hp3', :'hx']::uuid[],
+  'tag posts: a friend sees public, friends and followers posts');
+select is((select array_agg(id) from public.social_tag_posts('legday', :'hp2_at')),
+  array[:'hp3', :'hx']::uuid[], 'tag posts: keyset pagination by p_before');
+select is((select array_agg(id) from public.social_tag_posts('legday', null, 1)), array[:'hp1']::uuid[], 'tag posts: p_limit');
+select is((select array_agg(row(tag, post_count)::text order by tag) from public.social_search_tags('s')), array['(secret,1)'],
+  'tag search: a friend sees the friends-only tag');
+set local request.jwt.claims = :'k1';
+select is((select array_agg(id) from public.social_tag_posts('legday')), array[:'hp1', :'hp2', :'hp3']::uuid[],
+  'tag posts: the author sees own posts; the blocked user''s post is excluded');
+set local request.jwt.claims = :'k4';
+select is((select array_agg(id) from public.social_tag_posts('legday')), array[:'hx']::uuid[], 'tag posts: a blocked user sees none of the blocker''s posts');
+select is((select array_agg(row(tag, post_count)::text) from public.social_search_tags('leg')), array['(legday,1)'],
+  'tag search: a blocked user''s counts exclude the blocker''s posts');
+set local request.jwt.claims = :'j9';
+select ok((select count(*) from public.social_tag_posts('legday')) = 0 and (select count(*) from public.social_search_tags('leg')) = 0,
+  'tags: a non-social user gets empty results, like the other social reads');
+
+-- Update replaces tags, delete cascades
+reset role;
+update public.posts set body = 'Morning run #Yoga' where id = :'hp1';
+select is((select array_agg(tag) from public.post_tags where post_id = :'hp1'), array['yoga'], 'tags: editing the body replaces the tags');
+update public.posts set body = 'no tags now' where id = :'hp1';
+select is((select count(*)::int from public.post_tags where post_id = :'hp1'), 0, 'tags: removing all tags clears them');
+set local role authenticated;
+set local request.jwt.claims = :'k1';
+select public.social_delete_post(:'hp3');
+reset role;
+select is((select count(*)::int from public.post_tags where post_id = :'hp3'), 0, 'tags: deleting a post deletes its tags');
+set local role authenticated;
+set local request.jwt.claims = :'k2';
+select is((select array_agg(row(tag, post_count)::text) from public.social_search_tags('leg')), array['(legday,2)'],
+  'tag search: counts follow edits (hp1 lost #legday; hans and halil remain)');
 
 reset role;
 select * from finish();

@@ -14,6 +14,7 @@ import type {
   PostItem,
   SocialNotification,
   SocialProfile,
+  TagHit,
   UserHit,
 } from './schema'
 
@@ -79,6 +80,10 @@ export async function fetchGroupPosts(group: string, before: Before): Promise<Po
     ) ?? []
   )
 }
+/** Posts with one hashtag (same row shape and keyset as social_discover); `tag` is already normalised. */
+export async function fetchTagPosts(tag: string, before: Before): Promise<PostItem[]> {
+  return check(await supabase.rpc('social_tag_posts', { p_tag: tag, p_before: before, p_limit: PAGE_SIZE })) ?? []
+}
 export async function fetchPost(id: string): Promise<PostItem | null> {
   return (check(await supabase.rpc('social_post', { p_post: id })) ?? [])[0] ?? null
 }
@@ -89,6 +94,10 @@ export async function fetchProfile(user: string): Promise<SocialProfile | null> 
 }
 export async function searchUsers(q: string): Promise<UserHit[]> {
   return check(await supabase.rpc('social_search_users', { p_query: q })) ?? []
+}
+/** Hashtags by prefix, most used first. */
+export async function searchTags(q: string): Promise<TagHit[]> {
+  return check(await supabase.rpc('social_search_tags', { p_query: q })) ?? []
 }
 export async function fetchFollowers(user: string): Promise<Person[]> {
   return check(await supabase.rpc('social_followers', { p_user: user })) ?? []

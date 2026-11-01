@@ -1150,6 +1150,33 @@ export type Database = {
           },
         ]
       }
+      post_tags: {
+        Row: {
+          created_at: string
+          post_id: string
+          tag: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at: string
+          post_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'post_tags_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       posts: {
         Row: {
           audience: string
@@ -2571,6 +2598,13 @@ export type Database = {
           visibility: string
         }[]
       }
+      social_search_tags: {
+        Args: { p_query: string }
+        Returns: {
+          post_count: number
+          tag: string
+        }[]
+      }
       social_search_users: {
         Args: { p_query: string }
         Returns: {
@@ -2585,6 +2619,16 @@ export type Database = {
       social_set_audience: {
         Args: { p_audience: string; p_group?: string; p_post: string }
         Returns: undefined
+      }
+      social_tag_posts: {
+        Args: { p_before?: string; p_limit?: number; p_tag: string }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       social_unblock: { Args: { p_user: string }; Returns: undefined }
       social_unfollow: { Args: { p_user: string }; Returns: undefined }

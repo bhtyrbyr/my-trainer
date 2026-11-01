@@ -11,6 +11,7 @@ import { Sheet } from '@/components/ui/Sheet'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
 import { Avatar } from '../../components/Avatar'
+import { splitHashtags } from '../../hashtags'
 import { AUDIENCE_ICON, audienceReady } from '../audience'
 import { useDateFnsLocale, useDeletePost, useLike, useReportPost, useSetAudience } from '../hooks'
 import { REASON_MAX, readMeal, readProgram, readWorkout, relativeTime, toPost } from '../payload'
@@ -57,7 +58,7 @@ export function PostCard({ post: item }: { post: PostItem }) {
         <Avatar path={preview ? null : post.author_avatar_path} userId={post.author_id} size={40} label={name} />
         <div className="min-w-0 flex-1">
           <Header post={post} name={name} onMenu={() => setMenu(true)} />
-          {post.body && <p className="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45] text-ink">{post.body}</p>}
+          {post.body && <PostBody text={post.body} />}
           {post.media.length > 0 && (
             <div className="mt-2.5">
               <MediaGrid media={post.media} />
@@ -93,6 +94,23 @@ export function PostCard({ post: item }: { post: PostItem }) {
       )}
       {!mine && sheet === 'report' && <ReportSheet postId={post.id} onClose={() => setSheet(null)} />}
     </article>
+  )
+}
+
+/** Post text; hashtags (the same rule the database indexes) link to their tag page in volt, no underline. */
+function PostBody({ text }: { text: string }) {
+  return (
+    <p className="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45] text-ink">
+      {splitHashtags(text).map((s, i) =>
+        s.type === 'tag' ? (
+          <Link key={i} to={`/social/tag/${encodeURIComponent(s.tag)}`} className="font-medium text-volt hover:text-volt-hover">
+            {s.text}
+          </Link>
+        ) : (
+          s.text
+        ),
+      )}
+    </p>
   )
 }
 

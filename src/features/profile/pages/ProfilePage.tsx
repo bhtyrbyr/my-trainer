@@ -66,7 +66,7 @@ export function ProfilePage() {
           </Link>
 
           <Link
-            to="/social?tab=ranking"
+            to="/social/ranking"
             aria-label={t('profile:stats.open')}
             className="hairline group grid grid-cols-[1fr_1fr_1fr_auto] items-stretch overflow-hidden rounded-[var(--radius-card)] bg-surface transition-colors hover:bg-raised/40"
           >

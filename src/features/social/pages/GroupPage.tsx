@@ -39,7 +39,7 @@ export function GroupPage() {
   return (
     <PageShell
       title={g?.name ?? t('social:groups.title')}
-      leading={<BackLink fallback="/social?tab=groups" title={t('social:groups.title')} />}
+      leading={<BackLink fallback="/social/search?s=groups" title={t('social:groups.title')} />}
       actions={g ? <GroupMenu g={g} /> : undefined}
     >
       <div className="mx-auto max-w-xl pb-6">

@@ -58,7 +58,7 @@ function SettingsForm({ g }: { g: GroupInfo }) {
   )
   const del = useSocialAction(
     () => api.deleteGroup(g.group_id!),
-    () => navigate('/social?tab=groups', { replace: true }),
+    () => navigate('/social/search?s=groups', { replace: true }),
   )
   const dirty =
     form.name !== (g.name ?? '') ||

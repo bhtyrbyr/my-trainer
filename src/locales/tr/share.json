@@ -104,7 +104,7 @@
     },
     "close": "Kapat",
     "body": "Metin",
-    "placeholder": "Bir şeyler yaz…",
+    "placeholder": "Bir şeyler yaz… #etiket de ekleyebilirsin",
     "count": "{{count}} / {{max}}",
     "camera": "Kamera",
     "gallery": "Galeri",
