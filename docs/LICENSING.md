@@ -15,7 +15,7 @@ Research summary, not legal advice. Items marked **[lawyer]** need a Turkish IP/
 | Google Sign-In | OAuth app must be **In production**; brand verification needs a public homepage, privacy policy and terms on a domain verified in Search Console | OK with obligations | Without a custom domain the consent screen shows the supabase.co host. A custom domain is advisable. |
 | Web Push | Standard Web Push, no account needed | OK | Mentioned in the privacy notice. |
 | Fonts and libraries (Inter, Bricolage Grotesque: OFL 1.1; lucide: ISC/MIT; React, Recharts, TanStack, i18next, hash-wasm: MIT) | Permissive | OK with obligations | Ship a third-party notices page (licence texts). |
-| App name "My Trainer" | Trademark | **Risky** | Similar fitness apps exist (e.g. "MyTrainer: AI Coach", "My Trainer" on iOS). Check TÜRKPATENT and the stores; choose a distinctive name before marketing. **[lawyer]** |
+| App name "Ironmorrow" (was "My Trainer" until 0.9.0) | Trademark | Low (private use) | A web search on 2026-11-01 found no app or brand with this name ("Ironwake" was rejected: an iOS fitness alarm uses it). Not a TÜRKPATENT search; check before any public launch. **[lawyer]** |
 
 ## Before a public launch
 

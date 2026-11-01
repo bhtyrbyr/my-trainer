@@ -1,4 +1,6 @@
-# my-trainer
+# Ironmorrow
+
+Repository: my-trainer (technical identifiers keep the old name).
 
 Live: https://my-trainer-nine.vercel.app
 

@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-01
+### Changed
+- **New name and logo: Ironmorrow.** A sun rising behind a barbell on the horizon; new favicon and home-screen icons. Technical identifiers (repository, photo encryption labels) keep the old name.
+- **Sign-in screen**: full-screen photos (Unsplash License) cross-fade with a slow push-in and dissolve into the page above the Google button; each photo has its own one-line caption. Swipe works; reduced motion stops the slideshow. The old proof points (GIF count, E2E, points) are gone. Always dark, also in the light theme.
+- Privacy notice: the controller is now "Ironmorrow dev team"; everyone acknowledges the notice once more.
+
 ## [0.8.0] - 2026-11-01
 ### Added
 - **Community (social, opt-in, 18+)**: a new leftmost tab with Feed (following / discover), Groups and Ranking. Follow people; private accounts (the default) approve follow requests; mutual follows are friends. Posts pick an audience (everyone in Community, followers, friends, a group) and are snapshots: workouts, programs (others can copy them to their templates), meals, photos, progress photos and before/after comparisons from the encrypted album (shared as an unencrypted, downscaled copy only after an explicit warning). Likes, notifications (in-app and push), profiles with a list / photo grid, blocking and reporting, an admin reports queue. Groups: open or closed, invite links and codes, join requests, roles, removal with a ban. Leaving Community deletes its data; pausing hides it. Separate KVKK consent; the privacy notice has a Community section.

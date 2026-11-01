@@ -1,4 +1,4 @@
-# my-trainer: Claude Code project guide
+# Ironmorrow (repo: my-trainer): Claude Code project guide
 
 Multi-user fitness + habit tracker with points and a leaderboard. **Free-tier only. Google sign-in. Each user sees only their own data. Privacy first.**
 Full requirements and architecture: `docs/PRD.md` (read sections 1-3 before implementing anything).
@@ -52,3 +52,4 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 - [x] Faz 4: units option, dashboard, AI coach (Edge Function, no health data), badges, admin panel, offline queue (v0.5.0)
 - [x] Faz 5: hardening for private use (v0.6.0); v0.7.0 coach programs, E2E, maintenance
 - [x] v0.8.0: full security/scale audit, Profile/Settings/Admin redesign, profile edit, 32 badges, Community (social, docs/social-spec.md), first-run tour (public launch cancelled 2026-10-31; owner + invited people, invite-only access)
+- [x] v0.9.0: renamed to **Ironmorrow** (logo: sun rising behind a barbell, `public/favicon.svg`, icons via `scripts/gen-icons.mjs`), photo slideshow sign-in screen (`public/login/*.webp`). Technical identifiers keep "my-trainer".
