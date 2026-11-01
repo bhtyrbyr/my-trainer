@@ -54,3 +54,4 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 - [x] v0.8.0: full security/scale audit, Profile/Settings/Admin redesign, profile edit, 32 badges, Community (social, docs/social-spec.md), first-run tour (public launch cancelled 2026-10-31; owner + invited people, invite-only access)
 - [x] v0.9.0: renamed to **Ironmorrow** (logo: sun rising behind a barbell, `public/favicon.svg`, icons via `scripts/gen-icons.mjs`), photo slideshow sign-in screen (`public/login/*.webp`). Technical identifiers keep "my-trainer".
 - [x] v1.0.0: hashtags, mentions (docs/social-spec.md 5b), Community header search/ranking, Profile Posts | Tagged | Badges with settings gear, flat lists, coach program payload.
+- [x] v1.1.0: ExerciseDB GIFs hot-linked (`exercises.exercisedb_id`, admin unmatched list), body-highlighter muscle map (male/female), English-only exercise names, Turkish + AI-generated instructions.

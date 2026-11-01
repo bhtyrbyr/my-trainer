@@ -4,6 +4,16 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-02
+### Added
+- **ExerciseDB animations**: exercise GIFs load directly from ExerciseDB's servers (never copied to our storage or cached by the app); our illustrations or the muscle map remain the fallback.
+- Admin page "ExerciseDB animations": how many exercises are matched (by exact name, similar name, AI or by hand) and a searchable list of the ones without an animation.
+- AI-written how-to steps (English and Turkish) for exercises whose source has no text, marked as AI-generated.
+### Changed
+- **New muscle map**: flat figure (react-native-body-highlighter, MIT) with the target muscle in volt and helpers dimmed; female or male figure from your profile.
+- Exercise names are shown in English only; how-to steps are translated to Turkish.
+- Privacy notice: an ExerciseDB item (the animation server sees your IP address); everyone acknowledges it once more.
+
 ## [1.0.0] - 2026-11-01
 ### Added
 - **Hashtags**: `#tags` in post text link to a tag page; search finds tags. Only posts the viewer may see are listed or counted.
