@@ -831,7 +831,10 @@ export function buildInstructionsTranslatePrompt(items) {
   ].join('\n')
 }
 
-/** Known id, step count equal to the English step count, every step 1..600 chars, no markup. */
+/**
+ * Known id, 1..12 steps (the model may split or merge long wger paragraphs), total length 0.4..2.5x the
+ * English text, every step 1..600 chars, no markup.
+ */
 export function validateInstructionTranslations(items, output) {
   const byId = new Map(items.map((r) => [r.id, r]))
   const accepted = []
@@ -844,8 +847,10 @@ export function validateInstructionTranslations(items, output) {
     seen.add(o.id)
     const steps = Array.isArray(o.instructions_tr) ? o.instructions_tr.map(cleanText) : null
     let reason = null
+    const ratio = steps ? steps.join('').length / Math.max(1, src.instructions_en.join('').length) : 0
     if (!steps) reason = 'instructions_tr missing'
-    else if (steps.length !== src.instructions_en.length) reason = `instructions_tr has ${steps.length} steps, expected ${src.instructions_en.length}`
+    else if (steps.length < 1 || steps.length > 12) reason = `instructions_tr has ${steps.length} steps`
+    else if (ratio < 0.4 || ratio > 2.5) reason = `instructions_tr length ratio ${ratio.toFixed(2)}`
     else if (steps.some((s) => !s || s.length > STEP_TR_MAX)) reason = 'instructions_tr step empty or too long'
     else if (steps.some((s) => MARKUP.test(s))) reason = 'instructions_tr contains markup'
     if (reason) rejected.push({ id: o.id, reason })
