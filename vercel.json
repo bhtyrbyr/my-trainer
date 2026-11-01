@@ -13,7 +13,7 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tnamatnobmtxvdtovkzp.supabase.co https://*.googleusercontent.com; font-src 'self' data:; connect-src 'self' https://tnamatnobmtxvdtovkzp.supabase.co wss://tnamatnobmtxvdtovkzp.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tnamatnobmtxvdtovkzp.supabase.co https://*.googleusercontent.com https://static.exercisedb.dev; font-src 'self' data:; connect-src 'self' https://tnamatnobmtxvdtovkzp.supabase.co wss://tnamatnobmtxvdtovkzp.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" }
       ]
     },
     { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },

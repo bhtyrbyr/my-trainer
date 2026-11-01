@@ -46,7 +46,7 @@ type Item = TemplateExerciseInput
  * the order is the plan, so moving rows is explicit (up/down) rather than a fiddly drag on a phone.
  */
 export function TemplateForm({ template }: { template: TemplateWithExercises | null }) {
-  const { t, i18n } = useTranslation('workouts')
+  const { t } = useTranslation('workouts')
   const navigate = useNavigate()
   const preview = useIsPreview()
   const save = useSaveTemplate()
@@ -128,7 +128,7 @@ export function TemplateForm({ template }: { template: TemplateWithExercises | n
               kind: 'program',
               payload: templateProgramPayload({ name: name.trim() || template.name, exercises: items }, (id) => {
                 const ex = byId.get(id)
-                return ex ? { name: exerciseName(ex, i18n.resolvedLanguage), isCustom: ex.is_custom } : undefined
+                return ex ? { name: exerciseName(ex), isCustom: ex.is_custom } : undefined
               }),
             }}
           />
@@ -188,7 +188,7 @@ export function TemplateForm({ template }: { template: TemplateWithExercises | n
                       <span className="tabular w-5 text-[13px] font-semibold text-ink-faint">{String(index + 1).padStart(2, '0')}</span>
                       <ExerciseThumb exercise={ex} size={44} />
                       <span className="min-w-0 flex-1">
-                        <span className="line-clamp-2 text-[15px] font-semibold leading-snug">{ex ? exerciseName(ex, i18n.resolvedLanguage) : '…'}</span>
+                        <span className="line-clamp-2 text-[15px] font-semibold leading-snug">{ex ? exerciseName(ex) : '…'}</span>
                         <span className="tabular block text-[13px] text-ink-muted">
                           {t('editor.summary', {
                             sets: it.target_sets,

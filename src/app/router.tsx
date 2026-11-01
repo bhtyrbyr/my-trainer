@@ -61,6 +61,7 @@ const devSocial = (name: 'DevSocialLayout') => page(() => import('@/features/soc
 const admin = {
   access: page(() => import('@/features/admin/pages/AccessPage'), 'AccessPage'),
   users: page(() => import('@/features/admin/pages/UsersPage'), 'UsersPage'),
+  exercisedb: page(() => import('@/features/admin/pages/ExerciseDbPage'), 'ExerciseDbPage'),
 }
 
 /** Admin-only page: lazy component wrapped in RequireAdmin (the RPCs refuse non-admins anyway). */
@@ -156,12 +157,13 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         ],
       },
       {
-        // admin Access and Users with sample data: ?mode=invite
+        // admin Access, Users and ExerciseDB matches with sample data: ?mode=invite, exercisedb?all=1 (nothing unmatched)
         path: '/__dev/admin',
         lazy: page(() => import('@/features/admin/dev/DevAdminPreview'), 'DevAdminLayout'),
         children: [
           { path: 'access', lazy: admin.access },
           { path: 'users', lazy: admin.users },
+          { path: 'exercisedb', lazy: admin.exercisedb },
         ],
       },
       {
@@ -303,6 +305,7 @@ export const router = createBrowserRouter([
       { path: 'admin/access', lazy: adminPage(() => import('@/features/admin/pages/AccessPage'), 'AccessPage') },
       { path: 'admin/users', lazy: adminPage(() => import('@/features/admin/pages/UsersPage'), 'UsersPage') },
       { path: 'admin/usage', lazy: adminPage(() => import('@/features/admin/pages/UsagePage'), 'UsagePage') },
+      { path: 'admin/exercisedb', lazy: adminPage(() => import('@/features/admin/pages/ExerciseDbPage'), 'ExerciseDbPage') },
       { path: 'admin/social-reports', lazy: adminPage(() => import('@/features/social/pages/AdminReportsPage'), 'AdminReportsPage') },
       {
         path: 'admin/requests',

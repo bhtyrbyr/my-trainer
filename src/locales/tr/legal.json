@@ -49,6 +49,7 @@
           "Diğer kullanıcılar yalnızca kullanıcı adını, görünen adını, profil fotoğrafını, puanını, seviyeni ve serini görür; liderlikte görünmeyi kapatabilirsin.",
           "Verilerin satılmaz, reklam için kullanılmaz.",
           "Hizmet için yurt dışındaki sağlayıcılar kullanılır: Supabase (veritabanı, dosyalar, giriş; sunucular Londra, Birleşik Krallık), Vercel (uygulamanın barındırılması; ABD merkezli), Google (Google ile giriş ve Gemini besin tahmini; ABD), OpenRouter (yedek besin tahmini, yalnızca metin; ABD).",
+          "Egzersiz animasyonları doğrudan ExerciseDB'nin sunucularından (static.exercisedb.dev) yüklenir; bu sunucular, görsel yüklenen her sitede olduğu gibi cihazının IP adresini ve standart istek bilgilerini (ör. tarayıcı türü, istenen dosya) alır. Yönlendiren sayfa (referrer) ve hesap bilgisi gönderilmez.",
           "Bu aktarımlar KVKK m. 9 kapsamında yapılır; sağlık verilerinin bu sunucularda işlenmesi için açık rızan ayrıca alınır.",
           "Hatırlatma bildirimleri, cihazının tarayıcısına ait bildirim servisi (Apple, Google veya Mozilla) üzerinden iletilir; bildirim içeriği uçtan uca şifrelidir ve bu servisler okuyamaz.",
           "Gelişim fotoğrafların cihazında şifrelenir; sunucuda ve sağlayıcılarda yalnızca okunamayan şifreli hâlleri bulunur."

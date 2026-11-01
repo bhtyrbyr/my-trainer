@@ -1,6 +1,6 @@
-# Monthly refresh of the exercise catalog (wger exercises + workout-guide frames, Turkish names) and the
-# wger muscle diagrams
-# into Supabase. Idempotent: existing media is skipped, rows are upserted, user edits kept.
+# Monthly refresh of the exercise catalog (wger exercises + workout-guide frames, ExerciseDB id matching,
+# AI-written steps where the source has none, Turkish instructions) and the wger muscle diagrams into
+# Supabase. Idempotent: existing media is skipped, rows are upserted, user edits and manual matches kept.
 # The service_role key lives only in GitHub Secrets (never in the repo or the browser bundle).
 name: Sync exercise catalog
 on:
@@ -16,6 +16,10 @@ on:
         description: 'Fetch and report only, write nothing'
         type: boolean
         default: false
+      translate_limit:
+        description: 'Max Gemini Flash Lite requests this run (ExerciseDB matching + generated steps + Turkish instructions; 0 = no AI)'
+        type: number
+        default: 30
 
 permissions:
   contents: read
@@ -43,9 +47,13 @@ jobs:
           # Inputs go through env, never interpolated into the script (no shell injection).
           IN_SKIP_MEDIA: ${{ inputs.skip_media }}
           IN_DRY_RUN: ${{ inputs.dry_run }}
+          IN_TRANSLATE_LIMIT: ${{ inputs.translate_limit }}
         run: |
           flags=""
           [ "$IN_SKIP_MEDIA" = "true" ] && flags="$flags --skip-media"
           [ "$IN_DRY_RUN" = "true" ] && flags="$flags --dry-run"
+          # Scheduled runs have no inputs: default 30. Digits only, anything else falls back to 30.
+          limit="${IN_TRANSLATE_LIMIT:-30}"
+          case "$limit" in ''|*[!0-9]*) limit=30 ;; esac
           node scripts/sync-muscles.mjs $flags
-          node scripts/sync-catalog.mjs $flags --translate-limit=30
+          node scripts/sync-catalog.mjs $flags --translate-limit="$limit"

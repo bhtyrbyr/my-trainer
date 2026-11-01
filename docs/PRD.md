@@ -27,7 +27,7 @@ Soru-cevap turlarında netleşen isterler:
 | Gelişim fotoğrafı | Periyodik fotoğraf, **uçtan uca şifreli** (anahtar sunucuya gitmez) |
 | Dil | TR/EN, ayarlardan değiştirilebilir |
 | Cihazlar | **iPhone 16 birincil tasarım hedefi** (393×852 pt, Dynamic Island güvenli alanı), masaüstü ikincil (Windows'a kurulu PWA) |
-| Egzersiz verisi | **wger** (metin, CC BY-SA) + **workout-guide / Everkinetic** çizimleri (CC BY-SA 4.0) + wger kas diyagramları; ExerciseDB 2026-10-30'da kaldırıldı (§2.2) |
+| Egzersiz verisi | **wger** (metin, CC BY-SA) + **workout-guide / Everkinetic** çizimleri (CC BY-SA 4.0) + wger kas diyagramları; adlar yalnızca İngilizce, talimatlar Türkçe (Gemini makine çevirisi; kaynağında talimat olmayanlara AI ile yazılmış adımlar); **ExerciseDB GIF'leri** 2026-11-02'den beri ürün sahibi kararıyla yalnızca id saklanarak `static.exercisedb.dev`'den hot-link (kopyalanmaz/önbelleğe alınmaz, docs/LICENSING.md) (§2.2) |
 | Antrenman akışı | Programı adım adım rehberli akış olarak uygula: egzersiz → set başlat → kaydet → mola zamanlayıcı → sonraki set/egzersiz |
 
 ---
@@ -198,7 +198,8 @@ ExerciseDB kaldırıldı: kullanım şartları önbelleğe almayı, kopyalamayı
 
 - **Metin:** wger egzersiz veritabanı (CC BY-SA, giriş bazında yazar/lisans), ~888 egzersiz, bütün temel hareketler.
 - **Görsel:** workout-guide (Bryl Lim / Everkinetic, CC BY-SA 4.0, sabit commit) 3 karelik çizimler, hareketli gösterim; çizimi olmayanlarda wger kas haritası (Termininja, CC BY-SA 3.0).
-- **Türkçe:** küratörlü adlar + Gemini Flash Lite ile kota korumalı makine çevirisi (CC BY-SA uyarlaması olarak işaretli).
+- **ExerciseDB GIF (2026-11-02, ürün sahibi kararı):** senkron, ExerciseDB listesini yalnızca bellekte tutup her egzersize `exercisedb_id` eşler (exact / fuzzy / ai / manual); uygulama GIF'i `https://static.exercisedb.dev/media/<id>.gif` adresinden `<img>` ile gösterir. ExerciseDB adı, metni veya medyası saklanmaz; riskler docs/LICENSING.md'de.
+- **Türkçe:** adlar yalnızca İngilizce (2026-11-02); talimatlar Gemini Flash Lite ile kota korumalı makine çevirisi (CC BY-SA uyarlaması olarak işaretli). Kaynağında talimat olmayan egzersizlere Gemini EN + TR adım yazar (kaynak satırında "AI ile üretildi" notu).
 - **Senkron:** `scripts/sync-catalog.mjs` (egzersizler) ve `scripts/sync-muscles.mjs` (kas diyagramları); her deploy'da ve aylık `sync-catalog.yml` ile. Ayrıntı: `docs/catalog-v2-spec.md`.
 - Her egzersizde kaynak satırı; Profil > Hakkında > Lisanslar.
 

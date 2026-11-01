@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next'
-import { Bug, DoorOpen, Flag, Gauge, Sparkles, UserCheck, Users } from 'lucide-react'
+import { Bug, DoorOpen, Film, Flag, Gauge, Sparkles, UserCheck, Users } from 'lucide-react'
 import { BackTitle } from '@/components/layout/BackTitle'
 import { PageShell } from '@/components/layout/PageShell'
 import { GroupedList, ListRow } from '@/components/ui/GroupedList'
 import { useAdminReports } from '@/features/social/hooks'
-import { useAdminConfig, useAiLive, useErrorReports, usePendingCount } from '../hooks'
+import { useAdminConfig, useAiLive, useErrorReports, useExerciseDbMatchCounts, usePendingCount } from '../hooks'
 
 /** Admin hub (/admin): one grouped list of the admin screens, with live counts where they matter. */
 export function AdminHubPage() {
@@ -15,6 +15,7 @@ export function AdminHubPage() {
   const access = useAdminConfig()
   const aiLive = useAiLive()
   const aiToday = (aiLive.data ?? []).reduce((s, m) => s + m.requests_today, 0)
+  const exerciseDb = useExerciseDbMatchCounts()
 
   return (
     <PageShell title={t('admin:section')} leading={<BackTitle to="/settings" label={t('settings:title')} title={t('admin:section')} />}>
@@ -39,6 +40,12 @@ export function AdminHubPage() {
             value={aiLive.data ? <span className="tabular">{t('admin:ai.linkToday', { count: aiToday })}</span> : undefined}
           />
           <ListRow icon={Gauge} label={t('admin:usage.link')} to="/admin/usage" />
+          <ListRow
+            icon={Film}
+            label={t('admin:exercisedb.link')}
+            to="/admin/exercisedb"
+            value={exerciseDb.data ? <span className="tabular">{t('admin:exercisedb.linkUnmatched', { count: exerciseDb.data.unmatched })}</span> : undefined}
+          />
         </GroupedList>
       </div>
     </PageShell>

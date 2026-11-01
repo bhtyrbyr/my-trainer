@@ -24,11 +24,17 @@
       "license": "CC BY-SA 4.0 (drawings), MIT (metadata)",
       "note": "Three-frame movement drawings, recoloured to the app theme and played as a flipbook."
     },
-    "muscles": {
-      "title": "Muscle diagrams",
-      "holder": "Termininja (Wikimedia Commons), via wger",
-      "license": "CC BY-SA 3.0",
-      "note": "Based on the \"Muscular system\" drawing. Recoloured: worked muscles are painted in the app's accent."
+    "bodyHighlighter": {
+      "title": "Body map figures",
+      "holder": "ELABBASSI Hicham (react-native-body-highlighter)",
+      "license": "MIT",
+      "note": "Male and female figures, front and back. Repainted in flat colours of the app theme; worked muscles are shown in the app's accent."
+    },
+    "exercisedb": {
+      "title": "ExerciseDB animations",
+      "holder": "© ExerciseDB / AscendAPI",
+      "license": "All rights reserved",
+      "note": "Movement animations load on your device straight from exercisedb.dev; we never copy, store or cache them."
     },
     "usda": {
       "title": "USDA FoodData Central",

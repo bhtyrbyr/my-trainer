@@ -29,7 +29,13 @@ export const SOURCE_GROUPS: { id: 'exercises' | 'food'; items: SourceNotice[] }[
     items: [
       { id: 'wger', url: 'https://wger.de', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/' },
       { id: 'workoutGuide', url: 'https://github.com/bryllim/workout-guide', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/' },
-      { id: 'muscles', url: 'https://commons.wikimedia.org/wiki/File:Muscular_system.svg', licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/' },
+      {
+        id: 'bodyHighlighter',
+        url: 'https://github.com/HichamELBSI/react-native-body-highlighter',
+        licenseUrl: 'https://github.com/HichamELBSI/react-native-body-highlighter/blob/main/LICENSE',
+      },
+      // hot-linked, never copied (docs/LICENSING.md); the licence link points at their API terms
+      { id: 'exercisedb', url: 'https://exercisedb.dev', licenseUrl: 'https://edb-docs.up.railway.app/docs/api-terms-of-use' },
     ],
   },
   {

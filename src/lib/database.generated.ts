@@ -417,6 +417,8 @@ export type Database = {
           body_parts: string[]
           created_at: string
           equipment: string[]
+          exercisedb_id: string | null
+          exercisedb_match: string | null
           external_id: string | null
           id: string
           instructions_en: string[]
@@ -438,6 +440,8 @@ export type Database = {
           body_parts?: string[]
           created_at?: string
           equipment?: string[]
+          exercisedb_id?: string | null
+          exercisedb_match?: string | null
           external_id?: string | null
           id?: string
           instructions_en?: string[]
@@ -458,6 +462,8 @@ export type Database = {
           body_parts?: string[]
           created_at?: string
           equipment?: string[]
+          exercisedb_id?: string | null
+          exercisedb_match?: string | null
           external_id?: string | null
           id?: string
           instructions_en?: string[]

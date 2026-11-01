@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase'
 import { EXERCISE_COLUMNS, LISTED_SOURCES, type Exercise, type ExerciseFilters } from './types'
 import { createBatcher } from './batch'
 import { sanitizeSearch } from './name'
-import type { MuscleCatalog } from './muscles'
 import { toNum, type LoggedSet, type ProgressPoint } from './progress'
 
 export const MEDIA_BUCKET = 'exercise-media'
@@ -19,7 +18,8 @@ export async function searchExercises(filters: ExerciseFilters, page: number): P
     .in('source', [...LISTED_SOURCES])
     .order('name_en', { ascending: true })
   const q = sanitizeSearch(filters.q)
-  if (q) query = query.or(`name_en.ilike.%${q}%,name_tr.ilike.%${q}%`)
+  // names are English only (exerciseName), so search matches the English name only
+  if (q) query = query.ilike('name_en', `%${q}%`)
   if (filters.bodyPart) query = query.contains('body_parts', [filters.bodyPart])
   if (filters.muscle) query = query.contains('target_muscles', [filters.muscle])
   if (filters.equipment) query = query.contains('equipment', [filters.equipment])
@@ -62,7 +62,7 @@ export async function getFacets(): Promise<Facets> {
   return { bodyParts: sort(bp), muscles: sort(mu), equipment: sort(eq) }
 }
 
-/** Signed URLs for private media (illustration frames, muscle SVGs, legacy GIFs). Valid for one hour; hooks cache them per path for 50 min. */
+/** Signed URLs for private media (illustration frames). Valid for one hour; hooks cache them per path for 50 min. */
 export async function signMedia(paths: string[]): Promise<Record<string, string>> {
   const unique = [...new Set(paths.filter(Boolean))]
   if (!unique.length) return {}
@@ -75,19 +75,6 @@ export async function signMedia(paths: string[]): Promise<Record<string, string>
 
 /** One path, signed together with every other path requested in the same tick (one request per screen). */
 export const signMediaPath = createBatcher(signMedia)
-
-/** wger muscles + muscle-name alias table (15 + ~40 rows; cached for a day by the hook). */
-export async function getMuscleCatalog(): Promise<MuscleCatalog> {
-  const [muscles, aliases] = await Promise.all([
-    supabase.from('muscles').select('wger_id, name_latin, name_en, name_tr, is_front, svg_main_path, svg_secondary_path'),
-    supabase.from('muscle_aliases').select('exercisedb_name, wger_id'),
-  ])
-  if (muscles.error) throw muscles.error
-  if (aliases.error) throw aliases.error
-  const map: Record<string, number | null> = {}
-  for (const a of aliases.data ?? []) map[a.exercisedb_name.toLocaleLowerCase('en')] = a.wger_id
-  return { muscles: muscles.data ?? [], aliases: map }
-}
 
 /** Per finished session of the caller: best/avg weight, e1RM, volume (the RPC scopes to auth.uid()). */
 export async function getExerciseProgress(exerciseId: string): Promise<ProgressPoint[]> {

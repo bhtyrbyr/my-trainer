@@ -1,8 +1,10 @@
 import type { Exercise } from './types'
 
-/** Display name in the UI language: Turkish name when present, else the English name with a capital first letter. */
-export function exerciseName(ex: Pick<Exercise, 'name_en' | 'name_tr'>, lang: string | undefined): string {
-  if (lang?.startsWith('tr') && ex.name_tr?.trim()) return ex.name_tr.trim()
+/**
+ * Display name: always the English name with a capital first letter, in every UI language and for custom
+ * rows too (owner decision 2026-11-02: one name per movement, as said in the gym). Instructions stay localized.
+ */
+export function exerciseName(ex: Pick<Exercise, 'name_en'>): string {
   const en = ex.name_en.trim()
   return en.charAt(0).toLocaleUpperCase('en') + en.slice(1)
 }

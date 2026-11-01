@@ -21,6 +21,10 @@
   /* >= 4.5:1 on bg, surface and raised */
   --color-ink-faint: oklch(62% 0.008 120);
 
+  /* light plate for third-party media drawn on white (ExerciseDB GIFs, multiplied onto it): a dimmed,
+     olive-tinted paper so a white-background animation sits in the dark theme without glare */
+  --color-plate: oklch(91% 0.008 120);
+
   /* the one accent */
   --color-volt: oklch(91% 0.21 125);
   --color-volt-hover: oklch(94% 0.2 125);
@@ -57,6 +61,7 @@
   --color-ink: oklch(19% 0.012 120);
   --color-ink-muted: oklch(40% 0.012 120);
   --color-ink-faint: oklch(52% 0.01 120);
+  --color-plate: oklch(99.6% 0.003 120);
   --color-volt: oklch(56% 0.165 132);
   --color-volt-hover: oklch(51% 0.16 132);
   --color-volt-ink: oklch(99% 0.01 125);

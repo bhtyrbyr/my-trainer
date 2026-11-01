@@ -24,11 +24,17 @@
       "license": "CC BY-SA 4.0 (çizimler), MIT (üst veri)",
       "note": "Üç kareli hareket çizimleri; uygulama temasına göre yeniden renklendirildi ve kare kare oynatılıyor."
     },
-    "muscles": {
-      "title": "Kas diyagramları",
-      "holder": "Termininja (Wikimedia Commons), wger aracılığıyla",
-      "license": "CC BY-SA 3.0",
-      "note": "\"Muscular system\" çizimine dayanır. Yeniden renklendirildi: çalışan kaslar uygulamanın vurgu rengiyle boyanır."
+    "bodyHighlighter": {
+      "title": "Vücut haritası figürleri",
+      "holder": "ELABBASSI Hicham (react-native-body-highlighter)",
+      "license": "MIT",
+      "note": "Kadın ve erkek, önden ve arkadan vücut figürleri. Uygulama temasına göre düz renklerle yeniden boyandı; çalışan kaslar vurgu rengiyle gösterilir."
+    },
+    "exercisedb": {
+      "title": "ExerciseDB animasyonları",
+      "holder": "© ExerciseDB / AscendAPI",
+      "license": "Tüm hakları saklıdır",
+      "note": "Hareket animasyonları cihazına doğrudan exercisedb.dev sunucularından yüklenir; biz kopyalamaz, saklamaz ve önbelleğe almayız."
     },
     "usda": {
       "title": "USDA FoodData Central",

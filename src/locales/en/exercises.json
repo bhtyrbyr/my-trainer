@@ -56,8 +56,10 @@
       "label": "Credits",
       "text": "Text",
       "media": "Illustration",
-      "translation": "Turkish: machine translation"
-    }
+      "translation": "Turkish: machine translation",
+      "gif": "Animation: ExerciseDB"
+    },
+    "gifLabel": "{{name}}, animated movement"
   },
   "progress": {
     "title": "Progress",

@@ -178,7 +178,7 @@ export function ExerciseLibraryPage() {
         ) : (
           <ul className="divide-y divide-line">
             {items.map((ex) => (
-              <Row key={ex.id} ex={ex} lang={i18n.resolvedLanguage} />
+              <Row key={ex.id} ex={ex} />
             ))}
           </ul>
         )}
@@ -220,7 +220,7 @@ function sortByLabel<T extends { label: string }>(list: T[], lang: string | unde
   return [...list].sort((a, b) => a.label.localeCompare(b.label, lang))
 }
 
-function Row({ ex, lang }: { ex: Exercise; lang: string | undefined }) {
+function Row({ ex }: { ex: Exercise }) {
   const vocab = useVocab()
   const meta = [...ex.target_muscles.map(vocab.muscle), ...ex.equipment.map(vocab.equipment)].join(' · ')
   return (
@@ -231,7 +231,7 @@ function Row({ ex, lang }: { ex: Exercise; lang: string | undefined }) {
       >
         <ExerciseThumb exercise={ex} size={56} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-medium leading-snug text-ink">{exerciseName(ex, lang)}</span>
+          <span className="block truncate text-[15px] font-medium leading-snug text-ink">{exerciseName(ex)}</span>
           <span className="mt-0.5 block truncate text-[13px] text-ink-faint">{meta}</span>
         </span>
         <ChevronRight className="size-4 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" aria-hidden />

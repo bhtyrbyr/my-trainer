@@ -22,11 +22,15 @@ export type ExerciseAttribution = {
  * `media_frames` / `attribution` are declared here so the code typechecks before and after
  * database.generated.ts picks up the catalog v2 columns; the jsonb column gets its real shape.
  */
-export type Exercise = Omit<Tables<'exercises'>, 'search' | 'media_frames' | 'attribution'> & {
+export type Exercise = Omit<Tables<'exercises'>, 'search' | 'media_frames' | 'attribution' | 'exercisedb_match'> & {
   /** storage paths in exercise-media (frames/<slug>/<n>.svg), played in order */
   media_frames: string[]
   attribution: ExerciseAttribution | null
+  /** how `exercisedb_id` (hot-linked GIF) was matched by the catalog sync; null exactly when there is no id */
+  exercisedb_match: ExerciseDbMatch | null
 }
+
+export type ExerciseDbMatch = 'exact' | 'fuzzy' | 'ai' | 'manual'
 
 export type ExerciseFilters = {
   q?: string
@@ -36,4 +40,4 @@ export type ExerciseFilters = {
 }
 
 export const EXERCISE_COLUMNS =
-  'id, external_id, source, name_en, name_tr, body_parts, target_muscles, secondary_muscles, equipment, instructions_en, instructions_tr, media_frames, attribution, is_custom, user_id, created_at, updated_at'
+  'id, external_id, source, name_en, name_tr, body_parts, target_muscles, secondary_muscles, equipment, instructions_en, instructions_tr, media_frames, attribution, exercisedb_id, exercisedb_match, is_custom, user_id, created_at, updated_at'

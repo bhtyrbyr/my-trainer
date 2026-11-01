@@ -18,7 +18,7 @@ import { ShareButton, workoutPayload } from '@/features/social/share'
 export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
   const params = useParams()
   const id = sessionId ?? params.id ?? ''
-  const { t, i18n } = useTranslation('workouts')
+  const { t } = useTranslation('workouts')
   const navigate = useNavigate()
   const preview = useIsPreview()
   const locale = useDateLocale()
@@ -76,7 +76,7 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
           totalSets: s.total_sets,
           exercises: withSets.map((e) => {
             const meta = byId.get(e.exercise_id)
-            return { name: meta ? exerciseName(meta, i18n.resolvedLanguage) : '?', sets: e.sets }
+            return { name: meta ? exerciseName(meta) : '?', sets: e.sets }
           }),
         }),
       }}
@@ -142,13 +142,13 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
               const vol = sessionVolumeKg(ex.sets)
               let n = 0
               return (
-                <section key={ex.id} aria-label={meta ? exerciseName(meta, i18n.resolvedLanguage) : undefined}>
+                <section key={ex.id} aria-label={meta ? exerciseName(meta) : undefined}>
                   <div className="mb-1 flex items-baseline justify-between gap-3">
                     {preview ? (
-                      <h2 className="truncate text-[17px] font-semibold">{meta ? exerciseName(meta, i18n.resolvedLanguage) : '…'}</h2>
+                      <h2 className="truncate text-[17px] font-semibold">{meta ? exerciseName(meta) : '…'}</h2>
                     ) : (
                       <Link to={`/exercises/${ex.exercise_id}`} className="truncate text-[17px] font-semibold hover:text-volt">
-                        {meta ? exerciseName(meta, i18n.resolvedLanguage) : '…'}
+                        {meta ? exerciseName(meta) : '…'}
                       </Link>
                     )}
                     {vol > 0 && (

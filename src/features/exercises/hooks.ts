@@ -4,7 +4,6 @@ import {
   getExerciseProgress,
   getExercisesByIds,
   getFacets,
-  getMuscleCatalog,
   getRecentSets,
   PAGE_SIZE,
   searchExercises,
@@ -18,7 +17,6 @@ export const exerciseKeys = {
   one: (id: string) => ['exercises', 'one', id] as const,
   many: (ids: string[]) => ['exercises', 'many', [...ids].sort()] as const,
   facets: ['exercises', 'facets'] as const,
-  muscles: ['exercises', 'muscle-catalog'] as const,
   /** Invalidate `['exercises', 'progress']` after a session is finished or edited. */
   progress: (id: string) => ['exercises', 'progress', id] as const,
   recentSets: (id: string, limit: number) => ['exercises', 'progress', id, 'sets', limit] as const,
@@ -68,14 +66,14 @@ const mediaQuery = (path: string | null | undefined) =>
     gcTime: 55 * 60_000,
   })
 
-/** Signed URL for one storage path (illustration frame, muscle SVG, legacy GIF). */
+/** Signed URL for one storage path (illustration frame). */
 export function useMediaUrl(path: string | null | undefined) {
   return useQuery(mediaQuery(path))
 }
 
 export type MediaUrls = { data: Record<string, string>; error: Error | null; isLoading: boolean }
 
-/** Signed URLs for several paths, cached per path (flipbook frames, muscle diagram layers). */
+/** Signed URLs for several paths, cached per path (flipbook frames). */
 export function useMediaUrls(paths: string[]): MediaUrls {
   return useQueries({
     queries: paths.map((p) => mediaQuery(p)),
@@ -87,11 +85,6 @@ export function useMediaUrls(paths: string[]): MediaUrls {
       return { data, error: results.find((r) => r.error)?.error ?? null, isLoading: results.some((r) => r.isLoading) }
     },
   })
-}
-
-/** wger muscles + alias table; changes only when the sync script runs. */
-export function useMuscleCatalog() {
-  return useQuery({ queryKey: exerciseKeys.muscles, queryFn: getMuscleCatalog, staleTime: 24 * 60 * 60_000 })
 }
 
 export function useExerciseProgress(id: string | undefined) {

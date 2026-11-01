@@ -201,5 +201,30 @@
   "hub": {
     "people": "Kişiler ve erişim",
     "system": "Sistem"
+  },
+  "exercisedb": {
+    "link": "ExerciseDB animasyonları",
+    "linkUnmatched_one": "{{count}} eşleşmedi",
+    "linkUnmatched_other": "{{count}} eşleşmedi",
+    "title": "ExerciseDB animasyonları",
+    "eyebrow": "Animasyonu olmayan",
+    "ofTotal": "{{total}} katalog egzersizinin {{coverage}} kadarı eşleşti",
+    "barLabel": "Eşleşme dağılımı: {{detail}}",
+    "kind": {
+      "exact": "Birebir",
+      "fuzzy": "Benzer ad",
+      "ai": "Yapay zekâ",
+      "manual": "Elle",
+      "unmatched": "Eşleşmedi"
+    },
+    "search": "Egzersiz adı ara",
+    "found_one": "{{count}} sonuç",
+    "found_other": "{{count}} sonuç",
+    "count_one": "{{count}} egzersizin animasyonu yok",
+    "count_other": "{{count}} egzersizin animasyonu yok",
+    "empty": "Katalogdaki her egzersizin animasyonu var.",
+    "emptySearch": "Bu aramaya uyan eşleşmemiş egzersiz yok.",
+    "more": "Daha fazla göster ({{count}} kaldı)",
+    "note": "Eşleştirme scripts/sync-catalog.mjs ile yapılır. Eşleşmeyen egzersizlerde çizim ya da vücut haritası gösterilir."
   }
 }

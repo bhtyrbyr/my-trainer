@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { exerciseKeys } from '@/features/exercises/hooks'
-import { muscleMapPaths, resolveMuscleMap, type MuscleCatalog } from '@/features/exercises/muscles'
+import { profileKeys } from '@/features/profile/hooks'
 import type { LoggedSet, ProgressPoint } from '@/features/exercises/progress'
 import type { Exercise } from '@/features/exercises/types'
 import { ExerciseLibraryPage } from '@/features/exercises/pages/ExerciseLibraryPage'
@@ -11,19 +11,19 @@ import { ExerciseDetailPage } from '@/features/exercises/pages/ExerciseDetailPag
 /**
  * Dev-only previews of the exercise library and detail screens without a session: the TanStack Query
  * cache is seeded with sample rows before the real pages render (no preview props in the pages).
- * Media resolves to `/dev-media.local/...` (gitignored); drop wger SVGs (muscles/front.svg, back.svg,
- * main/<id>.svg, secondary/<id>.svg) and workout-guide frames (frames/<slug>/1..3.svg for bench-press,
- * deadlift, barbell-row) there to see images. Rows without frames show the muscle figure.
+ * ExerciseDB GIFs are hot-linked from static.exercisedb.dev (real ids). Frames resolve to `/dev-media.local/...`
+ * (gitignored); drop workout-guide frames (frames/<slug>/1..3.svg for bench-press, deadlift, barbell-row) there
+ * to see them. `sample-row` has a broken GIF id and falls back to its frames; rows with neither show the body map.
  *   /__dev/exercises             library
- *   /__dev/exercises/sample-bench detail with progress   (?empty=1 for the "no sessions yet" state)
+ *   /__dev/exercises/sample-bench detail with GIF and progress   (?empty=1 for the "no sessions yet" state)
+ *   /__dev/exercises/sample-pushup detail without media (body map)   ?sex=female for the female figure
  */
 const MEDIA_BASE = '/dev-media.local/'
 
 const ex = (
   id: string,
-  external: string,
+  gif: string | null,
   name_en: string,
-  name_tr: string | null,
   body_parts: string[],
   target_muscles: string[],
   secondary_muscles: string[],
@@ -31,10 +31,10 @@ const ex = (
   frames?: string,
 ): Exercise => ({
   id,
-  external_id: frames ? `wg:${frames}` : `wger:${external}`,
+  external_id: frames ? `wg:${frames}` : `wger:${id}`,
   source: frames ? 'workout-guide' : 'wger',
   name_en,
-  name_tr,
+  name_tr: null,
   body_parts,
   target_muscles,
   secondary_muscles,
@@ -56,6 +56,8 @@ const ex = (
         changes: ['translated to Turkish (machine)'],
       }
     : { text: { author: 'wger contributors', license: 'CC BY-SA 4.0', url: 'https://wger.de' }, media: null, changes: [] },
+  exercisedb_id: gif,
+  exercisedb_match: gif ? 'exact' : null,
   is_custom: false,
   user_id: null,
   created_at: '2026-10-25T00:00:00Z',
@@ -63,40 +65,17 @@ const ex = (
 })
 
 const EXERCISES: Exercise[] = [
-  ex('sample-bench', 'EIeI8Vf', 'barbell bench press', 'Halter Bench Press', ['chest'], ['pectorals'], ['triceps', 'deltoids', 'rotator cuff'], ['barbell'], 'bench-press'),
-  ex('sample-deadlift', 'ila4NZS', 'barbell deadlift', 'Halter Deadlift', ['upper legs'], ['glutes'], ['hamstrings', 'erector spinae'], ['barbell'], 'deadlift'),
-  ex('sample-squat', 'qXTaZnJ', 'barbell full squat', 'Halter Squat', ['upper legs'], ['glutes'], ['quadriceps', 'hamstrings', 'calves', 'core'], ['barbell']),
-  ex('sample-pushdown', '3ZflifB', 'cable pushdown', 'Kablo Triceps Pushdown', ['upper arms'], ['triceps'], ['forearms'], ['cable']),
-  ex('sample-row', 'A3P4O0R', 'cable seated row', 'Oturarak Kablo Row', ['back'], ['upper back'], ['biceps', 'forearms'], ['cable'], 'barbell-row'),
-  ex('sample-incline', 'ns0SIbU', 'dumbbell incline bench press', 'Incline Dambıl Bench Press', ['chest'], ['pectorals'], ['deltoids', 'triceps'], ['dumbbell']),
-  ex('sample-lateral', 'DsgkuIt', 'dumbbell lateral raise', 'Dambıl Yan Açış (Lateral Raise)', ['shoulders'], ['deltoids'], ['trapezius'], ['dumbbell']),
-  ex('sample-pullup', 'lBDjFxJ', 'pull-up', 'Barfiks', ['back'], ['latissimus dorsi'], ['biceps', 'forearms'], ['bodyweight']),
-  ex('sample-pushup', 'I4hDWkc', 'push-up', 'Şınav', ['chest'], ['pectorals'], ['triceps', 'deltoids', 'core'], ['bodyweight']),
+  ex('sample-bench', 'EIeI8Vf', 'barbell bench press', ['chest'], ['pectorals'], ['triceps', 'deltoids', 'rotator cuff'], ['barbell'], 'bench-press'),
+  ex('sample-deadlift', 'ila4NZS', 'barbell deadlift', ['upper legs'], ['glutes'], ['hamstrings', 'erector spinae'], ['barbell'], 'deadlift'),
+  ex('sample-squat', 'qXTaZnJ', 'barbell full squat', ['upper legs'], ['glutes'], ['quadriceps', 'hamstrings', 'calves', 'core'], ['barbell']),
+  ex('sample-pushdown', '3ZflifB', 'cable pushdown', ['upper arms'], ['triceps'], ['forearms'], ['cable']),
+  ex('sample-row', 'zzzzNOPE', 'cable seated row', ['back'], ['upper back'], ['biceps', 'forearms'], ['cable'], 'barbell-row'),
+  ex('sample-incline', null, 'dumbbell incline bench press', ['chest'], ['pectorals'], ['deltoids', 'triceps'], ['dumbbell']),
+  ex('sample-lateral', null, 'dumbbell lateral raise', ['shoulders'], ['deltoids'], ['trapezius'], ['dumbbell']),
+  ex('sample-pullup', 'lBDjFxJ', 'pull-up', ['back'], ['latissimus dorsi'], ['biceps', 'forearms'], ['bodyweight']),
+  ex('sample-pushup', null, 'push-up', ['chest'], ['pectorals'], ['triceps', 'deltoids', 'cardiovascular system'], ['bodyweight']),
+  ex('sample-legcurl', null, 'lever lying leg curl', ['upper legs'], ['hamstrings'], ['calves', 'glutes'], ['leverage machine']),
 ]
-
-const WGER: [number, string, boolean][] = [
-  [1, 'Biceps brachii', true], [2, 'Anterior deltoid', true], [3, 'Serratus anterior', true], [4, 'Pectoralis major', true],
-  [5, 'Triceps brachii', false], [6, 'Rectus abdominis', true], [7, 'Gastrocnemius', false], [8, 'Gluteus maximus', false],
-  [9, 'Trapezius', false], [10, 'Quadriceps femoris', true], [11, 'Biceps femoris', false], [12, 'Latissimus dorsi', false],
-  [13, 'Brachialis', true], [14, 'Obliquus externus abdominis', true], [15, 'Soleus', false],
-]
-const CATALOG: MuscleCatalog = {
-  muscles: WGER.map(([id, latin, front]) => ({
-    wger_id: id,
-    name_latin: latin,
-    name_en: latin,
-    name_tr: null,
-    is_front: front,
-    svg_main_path: `muscles/main/${id}.svg`,
-    svg_secondary_path: `muscles/secondary/${id}.svg`,
-  })),
-  aliases: {
-    abdominals: 6, abductors: 8, back: 12, biceps: 1, brachialis: 13, calves: 7, core: 6, deltoids: 2, forearms: 13,
-    glutes: 8, hamstrings: 11, 'hip flexors': 10, 'latissimus dorsi': 12, obliques: 14, pectorals: 4, quadriceps: 10,
-    'rear deltoids': 9, rhomboids: 9, 'serratus anterior': 3, soleus: 15, trapezius: 9, triceps: 5, 'upper back': 9,
-    'rotator cuff': null, 'erector spinae': null, adductors: null,
-  },
-}
 
 /** ~3 months of bench sessions, newest last; avg climbs with a deload dip. */
 function sampleProgress(now: Date): ProgressPoint[] {
@@ -142,6 +121,7 @@ function Seed({ children }: { children: ReactNode }) {
   const qc = useQueryClient()
   const [params] = useSearchParams()
   const empty = params.get('empty') === '1'
+  const sex = params.get('sex') === 'female' ? 'female' : 'male'
   // seed synchronously on first render so the real pages never fetch
   useState(() => {
     const now = new Date()
@@ -155,10 +135,8 @@ function Seed({ children }: { children: ReactNode }) {
       qc.setQueryData(exerciseKeys.one(e.id), e)
       for (const p of e.media_frames) qc.setQueryData(exerciseKeys.media(p), MEDIA_BASE + p)
     }
-    qc.setQueryData(exerciseKeys.muscles, CATALOG)
+    qc.setQueryData(profileKeys.private, { birth_year: 1994, height_cm: 172, sex, goal: 'build_muscle', target_weight_kg: null })
     for (const e of EXERCISES) {
-      const paths = muscleMapPaths(resolveMuscleMap(e.target_muscles, e.secondary_muscles, CATALOG))
-      for (const p of paths) qc.setQueryData(exerciseKeys.media(p), MEDIA_BASE + p)
       qc.setQueryData(exerciseKeys.progress(e.id), empty || e.id !== 'sample-bench' ? [] : sampleProgress(now))
       qc.setQueryData(exerciseKeys.recentSets(e.id, 10), empty || e.id !== 'sample-bench' ? [] : sampleSets(now))
     }

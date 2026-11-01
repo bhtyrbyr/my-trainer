@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Maximize2, Minimize2 } from 'lucide-react'
-import { exerciseMedia, Flipbook, MuscleGlyph, type Exercise } from '@/features/exercises'
+import { BodyGlyph, ExerciseGif, Flipbook, useExerciseMedia, type Exercise } from '@/features/exercises'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -11,13 +11,13 @@ type Props = {
 }
 
 /**
- * The movement of the current exercise while the set is done: its illustration frames as a flipbook,
- * a leftover legacy GIF, or the front and back muscle figures when there is no illustration.
+ * The movement of the current exercise while the set is done: the ExerciseDB GIF on the light plate,
+ * else its illustration frames as a flipbook, else the front and back body figures.
  * Compact: a 128px card beside the title. Expanded: a full-width stage (tap again to shrink).
  */
 export function ExerciseDemo({ exercise, name, expanded, onToggle }: Props) {
   const { t } = useTranslation('workouts')
-  const media = exerciseMedia(exercise)
+  const { media, onGifError } = useExerciseMedia(exercise)
   const label = t('session.demoAlt', { name })
 
   const Icon = expanded ? Minimize2 : Maximize2
@@ -28,16 +28,18 @@ export function ExerciseDemo({ exercise, name, expanded, onToggle }: Props) {
       aria-expanded={expanded}
       aria-label={expanded ? t('session.demoShrink') : t('session.demoEnlarge')}
       className={cn(
-        'group relative flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)]',
+        'group relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)]',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-volt',
-        'hairline bg-surface',
+        media.kind === 'gif' ? 'bg-plate' : 'hairline bg-surface',
         expanded ? 'h-[min(58vw,240px)] w-full' : 'size-32',
       )}
     >
-      {media.kind === 'frames' ? (
+      {media.kind === 'gif' ? (
+        <ExerciseGif url={media.url} label={label} onError={onGifError} className={expanded ? 'h-full' : 'size-full'} />
+      ) : media.kind === 'frames' ? (
         <Flipbook paths={media.paths} label={label} className={expanded ? 'aspect-square h-[92%]' : 'size-[88%]'} />
       ) : exercise ? (
-        <MuscleGlyph target={exercise.target_muscles} secondary={exercise.secondary_muscles} sides="both" className="h-[84%]" />
+        <BodyGlyph target={exercise.target_muscles} secondary={exercise.secondary_muscles} sides="both" gap="var(--color-surface)" className="h-[84%]" />
       ) : null}
       <span
         className="absolute bottom-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/55 text-white transition-opacity group-hover:opacity-100 sm:opacity-80"
@@ -48,4 +50,3 @@ export function ExerciseDemo({ exercise, name, expanded, onToggle }: Props) {
     </button>
   )
 }
-
