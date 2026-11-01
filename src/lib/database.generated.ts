@@ -598,6 +598,36 @@ export type Database = {
         }
         Relationships: []
       }
+      group_bans: {
+        Row: {
+          banned_by: string | null
+          created_at: string
+          group_id: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          banned_by?: string | null
+          created_at?: string
+          group_id: string
+          user_id: string
+        }
+        Update: {
+          banned_by?: string | null
+          created_at?: string
+          group_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'group_bans_group_id_fkey'
+            columns: ['group_id']
+            isOneToOne: false
+            referencedRelation: 'groups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       group_members: {
         Row: {
           created_at: string
@@ -1834,6 +1864,7 @@ export type Database = {
           locale: string
           social_push: boolean
           theme: string
+          tour_completed_at: string | null
           unit_length: string
           unit_weight: string
           updated_at: string
@@ -1851,6 +1882,7 @@ export type Database = {
           locale?: string
           social_push?: boolean
           theme?: string
+          tour_completed_at?: string | null
           unit_length?: string
           unit_weight?: string
           updated_at?: string
@@ -1867,6 +1899,7 @@ export type Database = {
           locale?: string
           social_push?: boolean
           theme?: string
+          tour_completed_at?: string | null
           unit_length?: string
           unit_weight?: string
           updated_at?: string
@@ -2244,6 +2277,17 @@ export type Database = {
         }[]
       }
       get_week_summary: { Args: { p_week_start?: string }; Returns: Json }
+      group_bans_list: {
+        Args: { p_group: string }
+        Returns: {
+          avatar_path: string
+          banned_at: string
+          banned_by: string
+          display_name: string
+          user_id: string
+          username: string
+        }[]
+      }
       group_create: {
         Args: { p_description?: string; p_name: string; p_visibility?: string }
         Returns: string
@@ -2253,10 +2297,11 @@ export type Database = {
       group_join: { Args: { p_group: string }; Returns: string }
       group_join_by_code: { Args: { p_code: string }; Returns: string }
       group_leave: { Args: { p_group: string }; Returns: undefined }
-      group_remove_member: { Args: { p_group: string; p_user: string }; Returns: undefined }
+      group_remove_member: { Args: { p_ban?: boolean; p_group: string; p_user: string }; Returns: undefined }
       group_respond: { Args: { p_accept: boolean; p_group: string; p_user?: string }; Returns: undefined }
       group_rotate_code: { Args: { p_group: string }; Returns: string }
       group_set_role: { Args: { p_group: string; p_role: string; p_user: string }; Returns: undefined }
+      group_unban: { Args: { p_group: string; p_user: string }; Returns: undefined }
       group_update: {
         Args: { p_description?: string; p_group: string; p_name?: string; p_visibility?: string }
         Returns: undefined

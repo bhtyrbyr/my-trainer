@@ -4,6 +4,22 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-01
+### Added
+- **Community (social, opt-in, 18+)**: a new leftmost tab with Feed (following / discover), Groups and Ranking. Follow people; private accounts (the default) approve follow requests; mutual follows are friends. Posts pick an audience (everyone in Community, followers, friends, a group) and are snapshots: workouts, programs (others can copy them to their templates), meals, photos, progress photos and before/after comparisons from the encrypted album (shared as an unencrypted, downscaled copy only after an explicit warning). Likes, notifications (in-app and push), profiles with a list / photo grid, blocking and reporting, an admin reports queue. Groups: open or closed, invite links and codes, join requests, roles, removal with a ban. Leaving Community deletes its data; pausing hides it. Separate KVKK consent; the privacy notice has a Community section.
+- **Profile editing** (`/me/edit`): name, username (every 30 days), photo, height, birth year, sex, goal, target weight.
+- **32 badges** (was 7): workout, streak, set, volume, record, cardio, early-bird, weekend, habit, to-do, water, sleep, weigh-in and photo milestones, in families; progress comes from the same server metric that awards them.
+- **First-run tour**: seven steps after onboarding that show what the app does; replay from Settings > About.
+- Operations: nightly encrypted database backup, daily health check with Storage clean-up, retention of growing logs.
+### Changed
+- **Navigation**: tabs are Community, Home, Workouts (centre), Track, Profile; the Ranking tab moved into Community.
+- **Profile, Settings and Admin** are separate screens (Profile hub with identity, stats and badges; grouped Settings; an Admin hub). The AI coach lives under Workouts. Home has one hero and a compact progress strip. Confirmations use in-app sheets; contrast raised; decorative glows removed.
+- AI quota for more users: 10 requests per person per day by default, 450 for the app.
+### Security
+- No API access without a completed profile; other users' profiles only through the public-profile and leaderboard RPCs; Storage quotas and file-name rules; consent and push-endpoint limits; RLS checks run once per query.
+- Production deploy only after CI for a push to this repository's main; actions pinned to commit SHAs; least-privilege workflow tokens.
+- Social: limits that survive deletes, upload caps, group bans, strict post payloads, 5-minute signed photo links; social data never cached on the device.
+
 ## [0.7.0] - 2026-11-01
 ### Added
 - **Program from the AI coach**: "Suggest a program" (optionally "3 days, dumbbells") returns a structured plan; exercises are matched to the catalog on the server and each day can be saved as a workout template in one tap. Unmatched names are listed, not guessed.

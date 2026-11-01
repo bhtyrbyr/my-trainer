@@ -1,0 +1,105 @@
+{
+  "label": "Uygulama tanıtımı",
+  "slide": "adım",
+  "stepOf": "Adım {{n}} / {{total}}",
+  "goTo": "{{n}}. adıma git",
+  "skip": "Geç",
+  "next": "İleri",
+  "back": "Geri",
+  "start": "Başlayalım",
+  "replay": "Tanıtımı tekrar izle",
+  "replayHint": "Uygulamada neler olduğunu baştan göster",
+  "steps": {
+    "welcome": {
+      "eyebrow": "Hoş geldin",
+      "title": "Antrenman, beslenme ve alışkanlıklar tek yerde.",
+      "body": "Beş sekme, tek bir günlük. Neler yapabileceğine bir dakikada bakalım."
+    },
+    "workouts": {
+      "eyebrow": "Antrenman",
+      "title": "Planla, rehberli çalış, ilerle.",
+      "body": "Haftanın günlerine plan kur. Seansta geçen seferki ağırlıklar ve dinlenme sayacı hazır; Yapay zekâ koçu sana program önerir."
+    },
+    "track": {
+      "eyebrow": "Takip",
+      "title": "Günün tamamı tek bir defterde.",
+      "body": "Kilo ve ölçüler, besin arama veya AI tahmini, uyku ve su, alışkanlıklar ve yapılacaklar. Fotoğrafların uçtan uca şifreli."
+    },
+    "progress": {
+      "eyebrow": "Özet ve puanlar",
+      "title": "Her kayıt puan, her gün seri.",
+      "body": "Özet bugününü ve haftanı gösterir. Puanlar günlük sınırlarla adil kalır; 32 rozet seni bekliyor."
+    },
+    "social": {
+      "eyebrow": "Topluluk",
+      "title": "İstersen birlikte, istersen tek başına.",
+      "body": "Topluluk isteğe bağlı ve varsayılan olarak kapalı. Açarsan akış, gruplar ve sıralama seni bekler."
+    },
+    "privacy": {
+      "eyebrow": "Gizlilik",
+      "title": "Verilerin yalnızca sana ait.",
+      "body": "Kayıtlarını başka kimse göremez. Ayarlar'dan verilerini indirebilir, hesabını silebilir ve onaylarını yönetebilirsin."
+    },
+    "install": {
+      "eyebrow": "Ana Ekran",
+      "title": "iPhone'unda Ana Ekrana ekle.",
+      "body": "Safari'de Paylaş'a, sonra Ana Ekrana Ekle'ye dokun. Hatırlatıcılar ve çevrimdışı kullanım böyle açılır."
+    }
+  },
+  "mock": {
+    "today": "Bugün",
+    "hello": "Merhaba, {{name}}",
+    "helloAnon": "Merhaba",
+    "level": "Seviye {{n}}",
+    "points": "{{n}} puan",
+    "todayWorkout": "Bugünün antrenmanı",
+    "push": "İtiş günü",
+    "pushMeta": "{{n}} hareket · ~{{min}} dk",
+    "startWorkout": "Başla",
+    "bench": "Bench press",
+    "lastTime": "Geçen sefer {{w}} × {{reps}}",
+    "set": "Set",
+    "reps": "Tekrar",
+    "rest": "Dinlenme",
+    "plus30": "+30 sn",
+    "coach": "Yapay zekâ koçu: 4 haftalık güç programı",
+    "weight": "Kilo",
+    "sleep": "Uyku",
+    "sleepValue": "{{h}} sa {{m}} dk",
+    "nutrition": "Beslenme",
+    "kcal": "{{v}} / {{goal}} kcal",
+    "foodSearch": "Besin ara",
+    "aiEstimate": "AI tahmini",
+    "water": "{{v}} ml",
+    "habitStretch": "10 dakika esneme",
+    "todoGroceries": "Market alışverişi",
+    "photosEncrypted": "İlerleme fotoğrafları cihazında şifrelenir",
+    "levelLabel": "Seviye",
+    "pointsLabel": "Puan",
+    "streakLabel": "Seri",
+    "toNext": "Seviye {{level}} için {{n}} puan",
+    "ptsWorkout": "Antrenman",
+    "ptsWater": "Su hedefi",
+    "ptsMeal": "Öğün kaydı",
+    "badges": "Rozetler · {{n}} / {{total}}",
+    "postAuthor": "Deniz K.",
+    "postTime": "2 sa önce",
+    "postText": "İtiş günü tamam, bench'te yeni rekor.",
+    "min": "dk",
+    "prs": "rekor",
+    "rank1": "Ece",
+    "you": "Sen",
+    "privateDefault": "Varsayılan: kapalı ve gizli",
+    "onlyYou": "Kayıtlarını görebilen",
+    "onlyYouValue": "Yalnızca sen",
+    "encryptedNote": "Fotoğraflar yüklenmeden önce şifrelenir; anahtar sende kalır.",
+    "copyLink": "Bağlantıyı kopyala",
+    "addToHome": "Ana Ekrana Ekle",
+    "reminders": "Hatırlatıcılar",
+    "offline": "Çevrimdışı",
+    "suggestWater": "Su hedefine {{v}} ml kaldı",
+    "aiReview": "AI haftalık değerlendirmen hazır",
+    "thisWeek": "Bu hafta · {{n}} antrenman",
+    "rank3": "Mert"
+  }
+}

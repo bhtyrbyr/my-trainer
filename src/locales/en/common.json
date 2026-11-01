@@ -9,7 +9,9 @@
     "leaderboard": "Ranking",
     "profile": "Profile",
     "pendingBadge": "{{n}} pending registration requests",
-    "settings": "Settings"
+    "settings": "Settings",
+    "social": "Community",
+    "unreadBadge": "{{n}} unread notifications"
   },
   "comingSoon": "This module arrives in the next phase.",
   "phase": "Phase {{n}}",
@@ -29,6 +31,12 @@
     "notFound": "That record was not found; it may have been deleted. Refresh and try again.",
     "tooLarge": "The file is too large. Choose a smaller photo or take a screenshot.",
     "rateLimited": "Too many requests. Wait a minute and try again.",
+    "socialRateLimited": "You reached today's limit for this. Try again tomorrow.",
+    "socialDisabled": "You need to join Community for this.",
+    "socialAudience": "Choose who can see the post.",
+    "socialNotGroupMember": "You are not a member of that group anymore.",
+    "socialBadPost": "The post could not be saved in this form. Shorten the text and try again.",
+    "imageUnreadable": "This photo could not be read. Try another one.",
     "timeout": "The operation timed out. Please try again.",
     "server": "Temporary problem on the server. Please try again shortly.",
     "usernameCooldown": "You can change your username only once every 30 days.",
@@ -79,7 +87,16 @@
     "coachQuota": "Today's AI requests are used up (shared by the coach and the food estimate). You can ask again tomorrow.",
     "coachUnavailable": "The coach cannot be reached right now. Try again shortly.",
     "coachRegion": "The AI coach is not available in your region.",
-    "title": "Something went wrong"
+    "title": "Something went wrong",
+    "socialUnderage": "Community is for people aged 18 and over.",
+    "socialBirthYear": "Add your birth year to your profile first to use Community.",
+    "groupFull": "The group is full (200 members at most).",
+    "groupLimit": "You can own at most 20 groups.",
+    "notGroupMember": "You need to be a member to post in this group.",
+    "badName": "The name must be 3 to 60 characters.",
+    "groupBanned": "You were removed from this group; an admin has to lift the ban before you can rejoin.",
+    "userBanned": "This person was removed from the group; lift the ban first.",
+    "groupCodeNotFound": "This invite code is invalid or has been renewed. Ask a group admin for a new link."
   },
   "update": {
     "title": "New version released",

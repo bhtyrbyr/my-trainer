@@ -13,6 +13,7 @@ import { WeekdayPicker } from '../components/WeekdayChips'
 import { useArchiveTemplate, useSaveTemplate, useTemplate } from '../hooks'
 import { DEFAULT_REST_SEC, estimateDurationSec, formatClock, normalizeWeekdays, roundMinutes } from '../logic'
 import { useIsPreview } from '../previewContext'
+import { ShareButton, templateProgramPayload } from '@/features/social/share'
 import { templateInput, type TemplateExerciseInput, type TemplateWithExercises } from '../schema'
 
 export function TemplateEditorPage() {
@@ -119,6 +120,20 @@ export function TemplateForm({ template }: { template: TemplateWithExercises | n
   return (
     <PageShell
       title={template ? t('editor.editTitle') : t('editor.newTitle')}
+      actions={
+        template && items.length > 0 ? (
+          <ShareButton
+            variant="icon"
+            source={{
+              kind: 'program',
+              payload: templateProgramPayload({ name: name.trim() || template.name, exercises: items }, (id) => {
+                const ex = byId.get(id)
+                return ex ? { name: exerciseName(ex, i18n.resolvedLanguage), isCustom: ex.is_custom } : undefined
+              }),
+            }}
+          />
+        ) : undefined
+      }
       leading={
         <div className="flex items-center gap-1">
           <Link to={backTo} aria-label={t('common.back')} className="-ml-2 flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink">

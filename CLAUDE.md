@@ -20,7 +20,7 @@ React 19 + Vite 7 + TypeScript + Tailwind v4 + shadcn-style UI, TanStack Query, 
 4. Third-party APIs (Gemini, OpenRouter, wger, Open Food Facts, GitHub raw for workout-guide) are called only from `supabase/functions/*` or `scripts/*`, never from the browser.
 5. Progress photos are encrypted client-side (`src/lib/crypto/`) before any upload; the service worker never caches the `progress-photos` bucket; plaintext never touches IndexedDB/localStorage.
 6. All UI text through `t()`; add TR **and** EN keys together; register new namespaces in `src/lib/i18n.ts`.
-7. Mobile first for **iPhone 16** (393x852, safe-area insets); desktop is a wider layout of the same screens. Five bottom tabs (Home, Track, Workouts in the centre as a raised volt disc, Ranking, Profile); Track is the day logbook (calendar) and absorbs habits/to-dos in Faz 3; no avatar/gear in page headers.
+7. Mobile first for **iPhone 16** (393x852, safe-area insets); desktop is a wider layout of the same screens. Five bottom tabs, left to right: Community (`/social`: feed, groups, ranking), Home, Workouts in the centre as a raised volt disc, Track, Profile (`/me`; Settings and Admin are pushed screens from it). Track is the day logbook (calendar) with habits/to-dos; no avatar/gear in page headers (a notifications bell is allowed).
 7b. **Every screen goes through the `design-director` skill** (`~/.claude/skills/design-director`): functional draft, interrogation, elevation, restraint, rendered verification at 393x852. Use the token system in `src/index.css` (`bg/surface/raised/line/ink/ink-muted/ink-faint/volt`, `display`/`eyebrow`/`hairline`/`inner-glow`/`bg-atmosphere`/`rise-in` utilities). No raw slate/indigo defaults, no four-identical-cards layouts, no drop-shadow boxes.
 8. New migrations only; never edit an applied migration. Functions in `public` are NOT executable by anon/authenticated by default (default privileges revoked in 20261026040000); every RPC needs an explicit `grant execute ... to authenticated`, and internal helpers (award_points, trigger functions) must never be granted. pgTAP enforces an allow-list.
 9. Git: develop on a feature branch; commit locally with Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`); **push / open PR only after the user approves**. CI runs on PR, production deploy runs after merge to `main`.
@@ -30,7 +30,7 @@ React 19 + Vite 7 + TypeScript + Tailwind v4 + shadcn-style UI, TanStack Query, 
 ## Layout
 ```
 src/app        router, providers, AppShell, BottomNav
-src/features   auth, profile (onboarding), leaderboard, workouts, exercises, track (body/nutrition/sleep-water/photos), today (habits/todos), dashboard, ai-coach, settings, admin
+src/features   auth, profile (onboarding, /me, edit), leaderboard, workouts, exercises, track (body/nutrition/sleep-water/photos), today (habits/todos), dashboard, coach, badges, social (+ share/), tour, settings, admin
 src/lib        supabase.ts, i18n.ts, image.ts, crypto/, units.ts, dates.ts, database.types.ts
 src/components ui/ (primitives), layout/ (PageShell, HeaderActions, ...)
 src/locales    tr/*.json, en/*.json (one namespace per feature)
@@ -50,4 +50,5 @@ The product owner (main session) coordinates; each phase ends with `qa-reviewer`
 - [x] Faz 2: body, nutrition (+ Gemini food lookup), sleep/water, encrypted progress photos, KVKK (v0.3.0)
 - [x] Faz 3: habits + todos (shared recurrence engine), push reminders (v0.4.0)
 - [x] Faz 4: units option, dashboard, AI coach (Edge Function, no health data), badges, admin panel, offline queue (v0.5.0)
-- [x] Faz 5: hardening for private use (v0.6.0) (public launch cancelled 2026-10-31; owner + invited people, invite-only access)
+- [x] Faz 5: hardening for private use (v0.6.0); v0.7.0 coach programs, E2E, maintenance
+- [x] v0.8.0: full security/scale audit, Profile/Settings/Admin redesign, profile edit, 32 badges, Community (social, docs/social-spec.md), first-run tour (public launch cancelled 2026-10-31; owner + invited people, invite-only access)

@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next'
-import { Bug, DoorOpen, Gauge, Sparkles, UserCheck, Users } from 'lucide-react'
+import { Bug, DoorOpen, Flag, Gauge, Sparkles, UserCheck, Users } from 'lucide-react'
 import { BackTitle } from '@/components/layout/BackTitle'
 import { PageShell } from '@/components/layout/PageShell'
 import { GroupedList, ListRow } from '@/components/ui/GroupedList'
+import { useAdminReports } from '@/features/social/hooks'
 import { useAdminConfig, useAiLive, useErrorReports, usePendingCount } from '../hooks'
 
 /** Admin hub (/admin): one grouped list of the admin screens, with live counts where they matter. */
 export function AdminHubPage() {
-  const { t } = useTranslation(['admin', 'profile'])
+  const { t } = useTranslation(['admin', 'profile', 'social'])
+  const socialReports = useAdminReports('open')
   const pending = usePendingCount()
   const openReports = useErrorReports('open')
   const access = useAdminConfig()
@@ -26,6 +28,7 @@ export function AdminHubPage() {
             value={access.data ? (access.data.access_mode === 'invite' ? t('admin:access.linkInvite') : t('admin:access.linkOpen')) : undefined}
           />
           <ListRow icon={Users} label={t('admin:users.link')} to="/admin/users" />
+          <ListRow icon={Flag} label={t('social:admin.title')} to="/admin/social-reports" badge={socialReports.data?.length ?? 0} badgeTone="danger" />
         </GroupedList>
         <GroupedList title={t('admin:hub.system')}>
           <ListRow icon={Bug} label={t('admin:reports.link')} to="/admin/error-reports" badge={openReports.data?.length ?? 0} badgeTone="danger" />

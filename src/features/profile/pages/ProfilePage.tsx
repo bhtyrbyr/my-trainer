@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Pencil, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { ChevronRight, Newspaper, Pencil, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { GroupedList, ListRow } from '@/components/ui/GroupedList'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -10,6 +10,7 @@ import { StreakAvatar } from '@/features/gamification/StreakAvatar'
 import { StreakFlame } from '@/features/gamification/StreakFlame'
 import { effectiveStreak } from '@/features/gamification/streak'
 import { useLeaderboard } from '@/features/leaderboard/hooks'
+import { useSocialEnabled, useSocialProfile } from '@/features/social/hooks'
 import { avatarUrl } from '../api'
 
 /**
@@ -18,7 +19,7 @@ import { avatarUrl } from '../api'
  * badge shelf, and only then the doors to Settings and, for admins, the admin hub.
  */
 export function ProfilePage() {
-  const { t, i18n } = useTranslation(['profile', 'common'])
+  const { t, i18n } = useTranslation(['profile', 'common', 'social'])
   const { profile } = useAuth()
   const isAdmin = profile?.role === 'admin'
   const pending = usePendingCount()
@@ -29,6 +30,8 @@ export function ProfilePage() {
   const streak = effectiveStreak(profile?.current_streak, profile?.last_active_on)
   const me = (week.data ?? []).find((r) => r.user_id === profile?.user_id)
   const adminCount = (pending.data ?? 0) + (openReports.data?.length ?? 0)
+  const socialOn = useSocialEnabled()
+  const social = useSocialProfile(profile?.user_id ?? '', socialOn).data
 
   return (
     <PageShell title={t('profile:title')} bare className="pt-6">
@@ -63,7 +66,7 @@ export function ProfilePage() {
           </Link>
 
           <Link
-            to="/leaderboard"
+            to="/social?tab=ranking"
             aria-label={t('profile:stats.open')}
             className="hairline group grid grid-cols-[1fr_1fr_1fr_auto] items-stretch overflow-hidden rounded-[var(--radius-card)] bg-surface transition-colors hover:bg-raised/40"
           >
@@ -80,6 +83,20 @@ export function ProfilePage() {
           <BadgeShelf />
 
           <GroupedList>
+            {socialOn && profile && (
+              <ListRow
+                icon={Newspaper}
+                label={t('social:me.posts')}
+                hint={
+                  social ? (
+                    <span className="tabular">
+                      {t('social:me.counts', { posts: social.posts_count ?? 0, followers: social.followers_count ?? 0, following: social.following_count ?? 0 })}
+                    </span>
+                  ) : undefined
+                }
+                to={`/social/u/${profile.user_id}`}
+              />
+            )}
             <ListRow icon={SlidersHorizontal} label={t('profile:rows.settings')} to="/settings" />
             {isAdmin && (
               <ListRow

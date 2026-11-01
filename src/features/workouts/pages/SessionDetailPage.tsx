@@ -13,6 +13,7 @@ import { useDateLocale, useDeleteSession, useSessionBundle, useWeightUnit } from
 import { formatClock, isWorkingSet, paceSecPerKm, sessionVolumeKg } from '../logic'
 import { EnergyLine } from '../components/EnergyLine'
 import { useIsPreview } from '../previewContext'
+import { ShareButton, workoutPayload } from '@/features/social/share'
 
 export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
   const params = useParams()
@@ -63,8 +64,27 @@ export function SessionDetailPage({ sessionId }: { sessionId?: string }) {
   const cardio = data.cardio[0]
   const durationSec = s.duration_sec ?? cardio?.duration_sec ?? 0
 
+  const share = s.ended_at ? (
+    <ShareButton
+      variant="icon"
+      source={{
+        kind: 'workout',
+        payload: workoutPayload({
+          startedAt: s.started_at,
+          durationSec: durationSec,
+          volumeKg: Number(s.total_volume_kg),
+          totalSets: s.total_sets,
+          exercises: withSets.map((e) => {
+            const meta = byId.get(e.exercise_id)
+            return { name: meta ? exerciseName(meta, i18n.resolvedLanguage) : '?', sets: e.sets }
+          }),
+        }),
+      }}
+    />
+  ) : undefined
+
   return (
-    <PageShell title={title} leading={header}>
+    <PageShell title={title} leading={header} actions={share}>
       <div className="mx-auto max-w-2xl">
         <p className="eyebrow">{format(started, 'EEEE, d MMMM yyyy · HH:mm', { locale })}</p>
         <h1 className="display mt-2 text-[32px]">{title}</h1>

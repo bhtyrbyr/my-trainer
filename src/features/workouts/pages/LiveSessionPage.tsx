@@ -28,6 +28,7 @@ import {
   localFinishSummary,
 } from '../hooks'
 import { SyncInline } from '@/lib/offline/OfflineStatus'
+import { ShareButton, workoutPayload } from '@/features/social/share'
 import {
   DEFAULT_REST_SEC,
   clamp,
@@ -94,6 +95,23 @@ export function LiveSession({ sessionId }: { sessionId: string }) {
           exerciseLabel={label}
           onDone={() => navigate(home)}
           onHistory={preview ? undefined : () => navigate(`/workouts/history/${sessionId}`)}
+          share={
+            !summary.queued && bundle.data ? (
+              <ShareButton
+                size="lg"
+                source={{
+                  kind: 'workout',
+                  payload: workoutPayload({
+                    startedAt: bundle.data.session.started_at,
+                    durationSec: summary.value.duration_sec,
+                    volumeKg: summary.value.total_volume_kg,
+                    totalSets: summary.value.total_sets,
+                    exercises: bundle.data.exercises.map((e) => ({ name: label(e.exercise_id), sets: e.sets })),
+                  }),
+                }}
+              />
+            ) : undefined
+          }
         />
       </Layer>
     )

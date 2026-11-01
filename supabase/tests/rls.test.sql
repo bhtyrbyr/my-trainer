@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(627);
+select plan(662);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -53,7 +53,9 @@ select is(
         'social_unread_count', 'social_mark_read', 'group_create', 'group_update', 'group_join', 'group_join_by_code',
         'group_invite', 'group_respond', 'group_set_role', 'group_remove_member', 'group_leave', 'group_rotate_code',
         'group_delete', 'social_my_groups', 'social_group', 'social_search_groups', 'social_group_members',
-        'social_report', 'admin_list_reports', 'admin_resolve_report', 'admin_remove_post')),
+        'social_report', 'admin_list_reports', 'admin_resolve_report', 'admin_remove_post',
+        -- social hardening (20261160000000)
+        'group_unban', 'group_bans_list')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -471,6 +473,13 @@ select throws_ok(
 );
 update public.user_settings set ai_daily_limit = 1000 where user_id = :'ub';
 select is((select ai_daily_limit from public.user_settings where user_id = :'ub'), 10, 'ai: users cannot raise their own AI limit');
+update public.user_settings set tour_completed_at = null where user_id = :'ub';
+update public.user_settings set tour_completed_at = now() where user_id = :'ub';
+update public.user_settings set tour_completed_at = now() where user_id = :'ua';
+select isnt((select tour_completed_at from public.user_settings where user_id = :'ub'), null::timestamptz, 'tour: the owner can mark the tour as seen');
+reset role;
+select is((select tour_completed_at from public.user_settings where user_id = :'ua'), null::timestamptz, 'tour: nobody can write another user''s tour state');
+set local role authenticated;
 reset role;
 update public.user_settings set ai_daily_limit = 1 where user_id = :'ub';
 set local role authenticated;
@@ -2133,7 +2142,7 @@ select invite_code as gccode from public.groups where id = :'gc' \gset
 set local role authenticated;
 set local request.jwt.claims = :'j8';
 select is(public.group_join_by_code(lower(:'gccode')), :'gc'::uuid, 'groups: the invite code joins a closed group');
-select throws_ok($$ select public.group_join_by_code('AAAAAAAAAA') $$, 'P0001', 'NOT_FOUND', 'groups: a wrong code is refused');
+select is(public.group_join_by_code('AAAAAAAAAA'), null::uuid, 'groups: a wrong code joins nothing (null)');
 set local request.jwt.claims = :'j3';
 select is(public.group_join(:'go'), 'active', 'groups: an open group is joined at once');
 set local request.jwt.claims = :'j7';
@@ -2326,7 +2335,7 @@ select is((select count(*)::int from public.social_notifications where user_id =
 -- Payload validation ---------------------------------------------------------------------------
 set local role authenticated;
 set local request.jwt.claims = :'j3';
-select lives_ok($$ select public.social_create_post('workout', 'leg day', '{"date":"2026-11-01","duration_sec":3600,"volume_kg":5000,"sets":20,"exercises":[{"name":"Squat","best":"100x5"}]}', 'public') $$,
+select lives_ok($$ select public.social_create_post('workout', 'leg day', '{"date":"2026-11-01","duration_sec":3600,"volume_kg":5000,"sets":20,"exercises":[{"name":"Squat","best":{"reps":5,"weight_kg":100}}]}', 'public') $$,
   'payload: a valid workout snapshot');
 select lives_ok($$ select public.social_create_post('program', null, '{"name":"PPL","days":[{"name":"Push","exercises":[{"name":"Bench","exercise_id":"abc","sets":3,"reps_low":8,"reps_high":12}]}]}', 'public') $$,
   'payload: a valid program snapshot');
@@ -2464,6 +2473,154 @@ select is((select owner_id from public.groups where id = :'gc'), :'s8'::uuid, 'a
 select count(*) as claimed from public.ops_claim_storage_garbage(1000) \gset
 select ok(:claimed >= 6 and not exists (select 1 from private.storage_garbage),
   'ops_claim_storage_garbage returns and deletes the queue');
+
+-- =============================================================================
+-- Social hardening (20261160000000). State: sam left, pia deleted, fred under 18; go owned by sid
+-- (members sid, fay; bart removed + banned when sam blocked him), gc owned by gus.
+-- =============================================================================
+reset role;
+select ok(has_function_privilege('authenticated', 'public.group_unban(uuid, uuid)', 'execute')
+  and has_function_privilege('authenticated', 'public.group_bans_list(uuid)', 'execute')
+  and has_function_privilege('authenticated', 'public.group_remove_member(uuid, uuid, boolean)', 'execute')
+  and to_regprocedure('public.group_remove_member(uuid, uuid)') is null
+  and not has_function_privilege('authenticated', 'private.social_activity_bump(uuid, text, timestamptz)', 'execute')
+  and not has_function_privilege('authenticated', 'private.social_activity_count(uuid, text, timestamptz)', 'execute')
+  and not has_function_privilege('authenticated', 'private.social_log_post()', 'execute')
+  and not has_function_privilege('authenticated', 'private.social_log_like()', 'execute')
+  and not has_function_privilege('authenticated', 'private.group_banned(uuid, uuid)', 'execute')
+  and not has_table_privilege('authenticated', 'private.social_activity', 'select')
+  and not has_table_privilege('authenticated', 'public.group_bans', 'select')
+  and (select relrowsecurity from pg_class where oid = 'public.group_bans'::regclass),
+  'hardening: new RPCs granted, helpers and tables internal, group_bans has RLS');
+select ok(exists (select 1 from public.group_bans where group_id = :'go' and user_id = :'s7')
+          and not exists (select 1 from public.group_members where group_id = :'go' and user_id = :'s7'),
+  'hardening: blocking removed and banned the blocked user from the blocker''s group');
+
+-- 4. Payload validation
+create function pg_temp.hw(ex jsonb) returns jsonb language sql as $f$
+  select jsonb_build_object('date', '2026-11-01', 'duration_sec', 1, 'volume_kg', 1, 'sets', 1, 'exercises', ex)
+$f$;
+select is(
+  (select coalesce(array_agg(x.label order by x.label), '{}') from (values
+     ('best string', 'workout', pg_temp.hw('[{"name":"x","best":"100x5"}]'::jsonb)),
+     ('best extra key', 'workout', pg_temp.hw('[{"name":"x","best":{"reps":1,"weight_kg":1,"rpe":9}}]'::jsonb)),
+     ('best no weight', 'workout', pg_temp.hw('[{"name":"x","best":{"reps":1}}]'::jsonb)),
+     ('best reps 1001', 'workout', pg_temp.hw('[{"name":"x","best":{"reps":1001,"weight_kg":1}}]'::jsonb)),
+     ('best weight 2001', 'workout', pg_temp.hw('[{"name":"x","best":{"reps":1,"weight_kg":2001}}]'::jsonb)),
+     ('best reps text', 'workout', pg_temp.hw('[{"name":"x","best":{"reps":"5","weight_kg":1}}]'::jsonb)),
+     ('best null', 'workout', pg_temp.hw('[{"name":"x","best":null}]'::jsonb)),
+     ('duration text', 'workout', pg_temp.hw('[]'::jsonb) || '{"duration_sec":"60"}'::jsonb),
+     ('ex name 121', 'workout', pg_temp.hw(jsonb_build_array(jsonb_build_object('name', repeat('x', 121))))),
+     ('ex 31', 'workout', pg_temp.hw((select jsonb_agg(jsonb_build_object('name', 'e' || i)) from generate_series(1, 31) i))),
+     ('ok ex 30', 'workout', pg_temp.hw((select jsonb_agg(jsonb_build_object('name', 'e' || i, 'best', jsonb_build_object('reps', 5, 'weight_kg', 2000)))
+                                           from generate_series(1, 30) i))),
+     ('days 8', 'program', jsonb_build_object('name', 'P', 'days', (select jsonb_agg(jsonb_build_object('name', 'd', 'exercises', '[]'::jsonb)) from generate_series(1, 8)))),
+     ('ok days 7', 'program', jsonb_build_object('name', 'P', 'days', (select jsonb_agg(jsonb_build_object('name', 'd', 'exercises', '[]'::jsonb)) from generate_series(1, 7)))),
+     ('day ex 31', 'program', jsonb_build_object('name', 'P', 'days', jsonb_build_array(jsonb_build_object('name', 'd', 'exercises',
+        (select jsonb_agg(jsonb_build_object('name', 'e', 'sets', 3, 'reps_low', 8, 'reps_high', 12)) from generate_series(1, 31)))))),
+     ('program sets text', 'program', '{"name":"P","days":[{"name":"d","exercises":[{"name":"e","sets":"3","reps_low":8,"reps_high":12}]}]}'::jsonb),
+     ('meal kcal 50001', 'meal', '{"kcal":50001,"protein_g":1,"carb_g":1,"fat_g":1}'::jsonb),
+     ('meal name 121', 'meal', jsonb_build_object('kcal', 1, 'protein_g', 1, 'carb_g', 1, 'fat_g', 1, 'name', repeat('x', 121)))
+   ) x(label, kind, p) where private.social_payload_valid(x.kind, x.p)),
+  array['ok days 7', 'ok ex 30'], 'payload: types, bounds and array lengths are enforced (best = {reps, weight_kg})');
+set local role authenticated;
+set local request.jwt.claims = :'j8';
+select lives_ok($$ select public.social_create_post('workout', null, '{"date":"2026-11-01","duration_sec":60,"volume_kg":0,"sets":1,"exercises":[{"name":"Pull-up","best":{"reps":8,"weight_kg":null}}]}', 'public') $$,
+  'payload: best with a null weight (bodyweight)');
+select throws_ok($$ select public.social_create_post('workout', null, '{"date":"2026-11-01","duration_sec":60,"volume_kg":0,"sets":1,"exercises":[{"name":"Squat","best":"100x5"}]}', 'public') $$,
+  '22023', 'BAD_PAYLOAD', 'payload: a free-form best is refused');
+
+-- 2. Group posts of private accounts reach members only; member lists only for members
+select public.group_join(:'go');
+select public.social_update_settings(false);
+select public.social_create_post('text', 'gus open group', null, 'group', :'go') as h_pub \gset
+set local request.jwt.claims = :'j5';
+select public.social_create_post('text', 'fay open group', null, 'group', :'go') as h_priv \gset
+set local request.jwt.claims = :'j4';
+select is(pg_temp.vis(array['priv', 'pub'], array[:'h_priv', :'h_pub']::uuid[]), array['pub'], 'groups: a non-member sees only public accounts'' open-group posts');
+select is((select count(*)::int from public.social_group_members(:'go')), 0, 'groups: open-group member lists are hidden from non-members');
+select is((select member_count from public.social_group(:'go')), 3, 'groups: non-members still see the member count');
+set local request.jwt.claims = :'j3';
+select is(pg_temp.vis(array['priv', 'pub'], array[:'h_priv', :'h_pub']::uuid[]), array['priv', 'pub'], 'groups: members see private accounts'' group posts');
+select is((select count(*)::int from public.social_group_members(:'go')), 3, 'groups: members see the member list');
+
+-- 3. Bans
+reset role;
+select invite_code as h_code from public.groups where id = :'gc' \gset
+set local role authenticated;
+set local request.jwt.claims = :'j4';
+select is(public.group_join_by_code(:'h_code'), :'gc'::uuid, 'bans: pen joins the closed group by code');
+set local request.jwt.claims = :'j5';
+select public.group_join_by_code(:'h_code');
+select throws_ok(format('select * from public.group_bans_list(%L)', :'gc'), '42501', 'FORBIDDEN', 'bans: members cannot list bans');
+set local request.jwt.claims = :'j8';
+select lives_ok(format('select public.group_remove_member(%L, %L)', :'gc', :'s4'), 'bans: removing a member bans by default');
+select lives_ok(format('select public.group_remove_member(%L, %L, false)', :'gc', :'s5'), 'bans: removing without a ban');
+select is((select array_agg(user_id) from public.group_bans_list(:'gc')), array[:'s4'::uuid], 'bans: admins list bans');
+select throws_ok(format('select public.group_invite(%L, %L)', :'gc', :'s4'), 'P0001', 'USER_BANNED', 'bans: a banned user cannot be invited');
+set local request.jwt.claims = :'j4';
+select throws_ok(format('select public.group_join_by_code(%L)', :'h_code'), 'P0001', 'GROUP_BANNED', 'bans: the old code no longer works');
+select throws_ok(format('select public.group_join(%L)', :'gc'), 'P0001', 'GROUP_BANNED', 'bans: no join request either');
+select throws_ok(format('select public.group_unban(%L, %L)', :'gc', :'s4'), '42501', 'FORBIDDEN', 'bans: only admins unban');
+set local request.jwt.claims = :'j5';
+select is(public.group_join_by_code(:'h_code'), :'gc'::uuid, 'bans: a member removed without a ban can rejoin');
+set local request.jwt.claims = :'j8';
+select lives_ok(format('select public.group_unban(%L, %L)', :'gc', :'s4'), 'bans: the owner unbans');
+set local request.jwt.claims = :'j4';
+select is(public.group_join_by_code(:'h_code'), :'gc'::uuid, 'bans: after unbanning the code works again');
+
+-- 5. join-by-code attempt limit
+set local request.jwt.claims = :'j5';
+select is((select count(*)::int from generate_series(1, 20) i where public.group_join_by_code('ZZZZZZZZZZ') is null), 20,
+  'join code: a wrong code returns null and is logged');
+select throws_ok(format('select public.group_join_by_code(%L)', :'h_code'), 'P0001', 'RATE_LIMITED', 'join code: 20 failed attempts per hour');
+
+-- 6. Like/unlike repeats count against the daily cap
+set local request.jwt.claims = :'j4';
+select is((select count(*)::int from (select public.social_like(:'h_pub') l, public.social_unlike(:'h_pub') u from generate_series(1, 200)) s
+            where l >= 0 and u >= 0), 200, 'likes: 200 like/unlike cycles');
+select throws_ok(format('select public.social_like(%L)', :'h_pub'), 'P0001', 'RATE_LIMITED', 'rate: unliking does not reset 200 likes a day');
+
+-- 1. Deleted posts still count; daily upload cap per owner
+do $$ begin for i in 1..20 loop perform public.social_delete_post(public.social_create_post('text', 'temp ' || i)); end loop; end $$;
+select is((select count(*)::int from public.posts), 0, 'rate: the deleted posts are gone');
+select throws_ok($$ select public.social_create_post('text', 'again') $$, 'P0001', 'RATE_LIMITED', 'rate: deleting posts does not reset 20 posts a day');
+reset role;
+insert into storage.objects (bucket_id, name, owner_id, metadata)
+select 'social-media', :'s8' || '/' || gen_random_uuid() || '/' || gen_random_uuid() || '.jpg', :'s8', '{"size": 1000}'::jsonb
+  from generate_series(1, 40);
+insert into storage.objects (bucket_id, name, owner_id, metadata)
+values ('social-media', :'s7' || '/' || gen_random_uuid() || '/' || gen_random_uuid() || '.jpg', :'s7', '{"size": 20971520}'::jsonb);
+set local role authenticated;
+set local request.jwt.claims = :'j8';
+select public.social_create_post('photo', null, null, 'public') as h_ph8 \gset
+select throws_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media',
+  :'s8' || '/' || :'h_ph8' || '/cccccccc-0000-4000-8000-000000000001.jpg', :'s8'), '42501', null, 'storage: at most 40 uploads per user per day');
+set local request.jwt.claims = :'j7';
+select public.social_create_post('photo', null, null, 'public') as h_ph7 \gset
+select throws_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media',
+  :'s7' || '/' || :'h_ph7' || '/cccccccc-0000-4000-8000-000000000002.jpg', :'s7'), '42501', null, 'storage: at most 20 MB of uploads per user per day');
+set local request.jwt.claims = :'j5';
+select public.social_create_post('photo', null, null, 'public') as h_ph5 \gset
+select lives_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media',
+  :'s5' || '/' || :'h_ph5' || '/cccccccc-0000-4000-8000-000000000003.jpg', :'s5'), 'storage: uploads under the daily cap still work');
+
+-- 7. Blocking removes and bans from groups the blocker owns (anyone but self) or administers (plain members)
+set local request.jwt.claims = :'j3';
+select public.group_set_role(:'go', :'s5', 'admin');
+set local request.jwt.claims = :'j4';
+select public.group_join(:'go');
+set local request.jwt.claims = :'j5';
+select public.social_block(:'s4');
+select public.social_block(:'s3');
+set local request.jwt.claims = :'j3';
+select public.social_block(:'s5');
+set local request.jwt.claims = :'j4';
+select throws_ok(format('select public.group_join(%L)', :'go'), 'P0001', 'GROUP_BANNED', 'block: an admin''s block bans a plain member');
+reset role;
+select ok((select array_agg(user_id order by user_id) from public.group_members where group_id = :'go') = array[:'s3', :'s8']::uuid[]
+          and (select count(*) from public.group_bans where group_id = :'go' and user_id in (:'s4', :'s5')) = 2,
+  'block: the owner''s block removes an admin; an admin''s block never removes the owner');
 
 reset role;
 select * from finish();

@@ -1,0 +1,146 @@
+{
+  "button": "Share",
+  "buttonLabel": "Share to the community",
+  "kinds": {
+    "text": "Post",
+    "workout": "Workout",
+    "program": "Program",
+    "meal": "Meal",
+    "photo": "Photo",
+    "progress": "Progress",
+    "compare": "Before / after"
+  },
+  "audience": {
+    "label": "Who can see this",
+    "public": "Everyone",
+    "followers": "Followers",
+    "friends": "Friends",
+    "group": "Group",
+    "publicHint": "Everyone on the app's social side. If your account is private, only your followers.",
+    "followersHint": "People who follow you.",
+    "friendsHint": "People you follow who follow you back.",
+    "groupHint": "Members of one group.",
+    "pickGroup": "Choose a group",
+    "noGroups": "You are not in a group yet. Join or create one in Community."
+  },
+  "time": {
+    "now": "now",
+    "m": "{{count}} min",
+    "h": "{{count}} h",
+    "d": "{{count}} d"
+  },
+  "card": {
+    "like": "Like",
+    "unlike": "Remove like",
+    "likes_one": "{{count}} like",
+    "likes_other": "{{count}} likes",
+    "menu": "Post options",
+    "inGroup": "in {{group}}",
+    "audienceIs": "Visible to: {{audience}}",
+    "mediaAlt": "Photo {{n}} of {{total}}",
+    "mediaFailed": "Photo could not be loaded",
+    "openMedia": "Open photo {{n}} of {{total}}"
+  },
+  "workout": {
+    "duration": "Time",
+    "sets": "Sets",
+    "volume": "Volume {{unit}}",
+    "reps_one": "{{count}} rep",
+    "reps_other": "{{count}} reps",
+    "more": "+{{count}} more"
+  },
+  "program": {
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "exercises_one": "{{count}} exercise",
+    "exercises_other": "{{count}} exercises",
+    "setsReps": "{{sets}} × {{reps}}",
+    "copy": "Copy to my templates",
+    "copied_one": "{{count}} template added to Workouts.",
+    "copied_other": "{{count}} templates added to Workouts.",
+    "skipped": "Not in the catalog, skipped: {{names}}",
+    "nothing": "None of these exercises are in the catalog, so nothing was copied.",
+    "moreDays_one": "+{{count}} more day",
+    "moreDays_other": "+{{count}} more days"
+  },
+  "meal": {
+    "kcal": "kcal",
+    "protein": "Protein",
+    "carb": "Carbs",
+    "fat": "Fat",
+    "grams": "{{value}} g"
+  },
+  "menu": {
+    "audience": "Change audience",
+    "delete": "Delete post",
+    "report": "Report post"
+  },
+  "delete": {
+    "title": "Delete this post?",
+    "body": "The post, its likes and any shared photo copy are removed for everyone.",
+    "confirm": "Delete"
+  },
+  "audienceSheet": {
+    "title": "Change audience",
+    "save": "Save"
+  },
+  "report": {
+    "title": "Report post",
+    "body": "An admin reviews the report. The author is not told who reported it.",
+    "reason": "Reason (optional)",
+    "placeholder": "Spam, offensive, not fitness related…",
+    "send": "Send report",
+    "sent": "Thanks. The report was sent."
+  },
+  "composer": {
+    "titles": {
+      "text": "New post",
+      "workout": "Share workout",
+      "program": "Share program",
+      "meal": "Share meal",
+      "photo": "Share a photo",
+      "progress": "Share progress photo",
+      "compare": "Share comparison"
+    },
+    "close": "Close",
+    "body": "Text",
+    "placeholder": "Say something…",
+    "count": "{{count}} / {{max}}",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "photosHint_one": "One photo. Location and camera details are removed on your phone.",
+    "photosHint_other": "Up to {{count}} photos. Location and camera details are removed on your phone.",
+    "removePhoto": "Remove photo {{n}}",
+    "preparing": "Preparing photo",
+    "photoFailed": "This photo could not be read. Try another one.",
+    "previewAlt": "Photo to share",
+    "unencrypted": "Unencrypted copy. Deleting the post deletes it.",
+    "needText": "Write something or add a photo.",
+    "needPhoto": "Add at least one photo.",
+    "publish": "Share",
+    "publishing": "Sharing"
+  },
+  "warning": {
+    "progressTitle": "Share a progress photo?",
+    "compareTitle": "Share a comparison?",
+    "copy": "Your album stays encrypted. Sharing makes a separate, smaller copy that is not encrypted.",
+    "who": "Who sees it: the audience you choose next (everyone, followers, friends or one group).",
+    "remove": "To remove it, delete the post. The copy is deleted with it.",
+    "confirm": "Continue"
+  },
+  "viewer": {
+    "title": "Photo",
+    "close": "Close",
+    "prev": "Previous photo",
+    "next": "Next photo",
+    "count": "{{n}} / {{total}}"
+  },
+  "grid": {
+    "empty": "No posts with photos yet."
+  },
+  "layout": {
+    "label": "Post layout",
+    "list": "List",
+    "grid": "Grid"
+  }
+}

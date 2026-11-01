@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CloudOff, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,8 @@ type Props = {
   onHistory?: () => void
   /** finished offline: saved on the device, the server adds points and records when the queue syncs */
   queued?: boolean
+  /** share action (social), shown under the primary button */
+  share?: ReactNode
 }
 
 /**
@@ -21,7 +24,7 @@ type Props = {
  * three-figure scoreboard; new PRs are listed with a trophy. The celebration is the staggered rise and
  * the ambient glow, nothing more.
  */
-export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistory, queued = false }: Props) {
+export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistory, queued = false, share }: Props) {
   const { t } = useTranslation('workouts')
   const w = useWeightUnit()
   const stagger = (i: number) => ({ ['--i' as string]: i })
@@ -88,6 +91,7 @@ export function SessionSummary({ title, summary, exerciseLabel, onDone, onHistor
           <Button size="lg" onClick={onDone}>
             {t('common.done')}
           </Button>
+          {share}
           {onHistory && !queued && (
             <Button size="lg" variant="ghost" onClick={onHistory}>
               {t('summary.viewDetail')}
