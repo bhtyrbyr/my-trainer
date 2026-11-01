@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { exerciseName, exerciseSteps, sanitizeSearch, vocabKey } from './name'
 
 describe('exerciseName', () => {
-  it('prefers the Turkish name in Turkish', () => {
-    expect(exerciseName({ name_en: 'barbell bench press', name_tr: 'Barbell bench press (düz)' }, 'tr')).toBe('Barbell bench press (düz)')
+  it('is always the capitalised English name, whatever the UI language', () => {
+    expect(exerciseName({ name_en: 'barbell bench press' })).toBe('Barbell bench press')
+    expect(exerciseName({ name_en: '  pull-up ' })).toBe('Pull-up')
   })
-  it('falls back to a capitalised English name', () => {
-    expect(exerciseName({ name_en: 'barbell bench press', name_tr: null }, 'tr')).toBe('Barbell bench press')
-    expect(exerciseName({ name_en: 'barbell bench press', name_tr: 'Göğüs' }, 'en')).toBe('Barbell bench press')
+  it('ignores a Turkish name, also on custom rows', () => {
+    const custom = { name_en: 'my cable fly', name_tr: 'Benim kablo fly' }
+    expect(exerciseName(custom)).toBe('My cable fly')
   })
 })
 

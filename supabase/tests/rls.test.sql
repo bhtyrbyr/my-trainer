@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(748);
+select plan(759);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -1229,6 +1229,49 @@ update public.exercises set media_frames = '{frames/cable-row/2.svg}' where id =
 select is((select cardinality(media_frames) from public.exercises where id = :'cv_cus'), 0, 'catalog v2: a custom exercise cannot be pointed at catalog frames later');
 update public.exercises set media_frames = '{}' where id = :'cv_wg';
 select is((select cardinality(media_frames) from public.exercises where id = :'cv_wg'), 2, 'catalog v2: clients cannot edit catalog frames');
+
+-- ExerciseDB media ids (20261200000000): written by service_role only, validated by checks
+reset role;
+set local request.jwt.claims = '';
+select has_column('public', 'exercises', 'exercisedb_id', 'exercisedb: exercises.exercisedb_id exists');
+select has_column('public', 'exercises', 'exercisedb_match', 'exercisedb: exercises.exercisedb_match exists');
+select has_index('public', 'exercises', 'exercises_exercisedb_unmatched_idx', 'exercisedb: the unmatched-list index exists');
+select lives_ok(
+  $$ update public.exercises set exercisedb_id = '0br45wL', exercisedb_match = 'exact' where id = '00000000-0000-0000-0000-00000000cc03' $$,
+  'exercisedb: service role sets an id with its match kind'
+);
+select throws_ok(
+  $$ update public.exercises set exercisedb_id = 'bad-id!', exercisedb_match = 'manual' where id = '00000000-0000-0000-0000-00000000cc02' $$,
+  '23514', null, 'exercisedb: an id with non-alphanumeric characters is rejected'
+);
+select throws_ok(
+  $$ update public.exercises set exercisedb_id = 'abc', exercisedb_match = 'manual' where id = '00000000-0000-0000-0000-00000000cc02' $$,
+  '23514', null, 'exercisedb: an id shorter than 4 characters is rejected'
+);
+select throws_ok(
+  $$ update public.exercises set exercisedb_id = 'abcd1234', exercisedb_match = 'guess' where id = '00000000-0000-0000-0000-00000000cc02' $$,
+  '23514', null, 'exercisedb: an unknown match kind is rejected'
+);
+select throws_ok(
+  $$ update public.exercises set exercisedb_id = 'abcd1234' where id = '00000000-0000-0000-0000-00000000cc02' $$,
+  '23514', null, 'exercisedb: an id without a match kind is rejected'
+);
+select throws_ok(
+  $$ update public.exercises set exercisedb_match = 'manual' where id = '00000000-0000-0000-0000-00000000cc02' $$,
+  '23514', null, 'exercisedb: a match kind without an id is rejected'
+);
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+update public.exercises set exercisedb_id = 'HACKED99', exercisedb_match = 'manual' where id = :'cv_wg';
+select is(
+  (select exercisedb_id || ':' || exercisedb_match from public.exercises where id = :'cv_wg'),
+  '0br45wL:exact', 'exercisedb: an authenticated user cannot change exercisedb_id on a catalog row'
+);
+update public.exercises set exercisedb_id = 'abcd1234', exercisedb_match = 'manual' where id = :'cv_cus';
+select is(
+  (select coalesce(exercisedb_id, 'null') || ':' || coalesce(exercisedb_match, 'null') from public.exercises where id = :'cv_cus'),
+  'null:null', 'exercisedb: a custom exercise cannot be pointed at ExerciseDB media'
+);
 
 -- Both RPCs are service_role only
 select ok(

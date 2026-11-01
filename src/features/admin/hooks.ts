@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/AuthProvider'
 import type { RegistrationStatus } from '@/lib/database.types'
 import {
@@ -8,10 +8,12 @@ import {
   aiModelLimits,
   aiUsage,
   deleteRejectedUser,
+  exerciseDbMatchCounts,
   fetchAdminConfig,
   listAllowedEmails,
   listErrorReports,
   listRegistrations,
+  listUnmatchedExercises,
   listUsers,
   pendingCount,
   removeAllowedEmail,
@@ -50,6 +52,8 @@ export const adminKeys = {
   allowed: ['admin', 'allowed'] as const,
   users: (query: string) => ['admin', 'users', query] as const,
   usage: ['admin', 'usage'] as const,
+  exercisedbUnmatched: (query: string) => ['admin', 'exercisedb', 'unmatched', query] as const,
+  exercisedbCounts: ['admin', 'exercisedb', 'counts'] as const,
 }
 
 export function useIsAdmin() {
@@ -255,4 +259,24 @@ export function useSetUserAiLimit() {
 export function useUsageSummary() {
   const isAdmin = useIsAdmin()
   return useQuery({ queryKey: adminKeys.usage, queryFn: usageSummary, enabled: isAdmin, staleTime: 5 * 60_000 })
+}
+
+/** Catalog exercises without an ExerciseDB animation, by name, a page at a time ("load more"). */
+export function useUnmatchedExercises(query: string) {
+  const isAdmin = useIsAdmin()
+  return useInfiniteQuery({
+    queryKey: adminKeys.exercisedbUnmatched(query),
+    queryFn: ({ pageParam }) => listUnmatchedExercises(query, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (last, all) => (all.reduce((n, p) => n + p.rows.length, 0) < last.total && last.rows.length > 0 ? all.length : undefined),
+    enabled: isAdmin,
+    placeholderData: (prev) => prev,
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** Catalog rows per match kind (exact / fuzzy / ai / manual / unmatched). */
+export function useExerciseDbMatchCounts() {
+  const isAdmin = useIsAdmin()
+  return useQuery({ queryKey: adminKeys.exercisedbCounts, queryFn: exerciseDbMatchCounts, enabled: isAdmin, staleTime: 5 * 60_000 })
 }

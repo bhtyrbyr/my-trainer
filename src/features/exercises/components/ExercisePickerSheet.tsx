@@ -20,7 +20,7 @@ type Props = {
 
 /** Full-screen search sheet used by templates and the live session to add an exercise. */
 export function ExercisePickerSheet({ open, onClose, onPick, selectedIds = [], title }: Props) {
-  const { t, i18n } = useTranslation('exercises')
+  const { t } = useTranslation('exercises')
   const vocab = useVocab()
   const [input, setInput] = useState('')
   const [q, setQ] = useState('')
@@ -78,7 +78,7 @@ export function ExercisePickerSheet({ open, onClose, onPick, selectedIds = [], t
                 >
                   <ExerciseThumb exercise={ex} size={48} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">{exerciseName(ex, i18n.resolvedLanguage)}</span>
+                    <span className="block truncate text-[15px] font-medium">{exerciseName(ex)}</span>
                     <span className="block truncate text-xs text-ink-faint">
                       {[...ex.target_muscles.map(vocab.muscle), ...ex.equipment.map(vocab.equipment)].join(' · ')}
                     </span>

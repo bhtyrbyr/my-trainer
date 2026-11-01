@@ -201,5 +201,30 @@
   "hub": {
     "people": "People and access",
     "system": "System"
+  },
+  "exercisedb": {
+    "link": "ExerciseDB animations",
+    "linkUnmatched_one": "{{count}} unmatched",
+    "linkUnmatched_other": "{{count}} unmatched",
+    "title": "ExerciseDB animations",
+    "eyebrow": "Without an animation",
+    "ofTotal": "of {{total}} catalog exercises, {{coverage}} matched",
+    "barLabel": "Match breakdown: {{detail}}",
+    "kind": {
+      "exact": "Exact",
+      "fuzzy": "Similar name",
+      "ai": "AI",
+      "manual": "Manual",
+      "unmatched": "Unmatched"
+    },
+    "search": "Search exercise name",
+    "found_one": "{{count}} match",
+    "found_other": "{{count}} matches",
+    "count_one": "{{count}} exercise without an animation",
+    "count_other": "{{count}} exercises without an animation",
+    "empty": "Every catalog exercise has an animation.",
+    "emptySearch": "No unmatched exercise matches this search.",
+    "more": "Show more ({{count}} left)",
+    "note": "Matched by scripts/sync-catalog.mjs. Unmatched exercises show their illustration or the body map."
   }
 }

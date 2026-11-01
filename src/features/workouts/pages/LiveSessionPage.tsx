@@ -77,7 +77,7 @@ export function LiveSession({ sessionId }: { sessionId: string }) {
   const label = useCallback(
     (exerciseId: string) => {
       const ex = byId.get(exerciseId)
-      return ex ? exerciseName(ex, i18n.resolvedLanguage) : '…'
+      return ex ? exerciseName(ex) : '…'
     },
     [byId, i18n.resolvedLanguage],
   )

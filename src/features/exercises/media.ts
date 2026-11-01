@@ -3,20 +3,42 @@ import type { CreditPart, Exercise, ExerciseAttribution } from './types'
 /** Flipbook pace: one illustration frame per 700 ms. */
 export const FRAME_MS = 700
 
+/**
+ * ExerciseDB animations are hot-linked from their CDN: never copied to our storage, never cached by our
+ * service worker (vite.config.ts NetworkOnly rule), requested without a referrer.
+ */
+export const EXERCISEDB_MEDIA_ORIGIN = 'https://static.exercisedb.dev'
+
+/** Same shape as the DB check (exercises_exercisedb_id_chk), so no other path can be built from a row. */
+const EXERCISEDB_ID = /^[A-Za-z0-9]{4,16}$/
+
+export function exerciseDbGifUrl(id: string | null | undefined): string | null {
+  const v = id?.trim()
+  return v && EXERCISEDB_ID.test(v) ? `${EXERCISEDB_MEDIA_ORIGIN}/media/${v}.gif` : null
+}
+
 export type ExerciseMedia =
+  | { kind: 'gif'; url: string }
   | { kind: 'frames'; paths: string[] }
   | { kind: 'none' }
 
-/** What to show for an exercise: its illustration frames, else nothing (the muscle map). */
-export function exerciseMedia(ex: Pick<Exercise, 'media_frames'> | null | undefined): ExerciseMedia {
+type MediaSource = Partial<Pick<Exercise, 'media_frames' | 'exercisedb_id'>>
+
+/**
+ * What to show for an exercise, in order: the ExerciseDB GIF, else its illustration frames, else
+ * nothing (the body map). `gifFailed` skips a GIF that did not load.
+ */
+export function exerciseMedia(ex: MediaSource | null | undefined, opts: { gifFailed?: boolean } = {}): ExerciseMedia {
+  const gif = opts.gifFailed ? null : exerciseDbGifUrl(ex?.exercisedb_id)
+  if (gif) return { kind: 'gif', url: gif }
   const frames = (ex?.media_frames ?? []).filter(Boolean)
   if (frames.length) return { kind: 'frames', paths: frames }
   return { kind: 'none' }
 }
 
-/** The single path a still thumbnail needs (the first frame). */
-export function thumbPath(ex: Pick<Exercise, 'media_frames'> | null | undefined): string | null {
-  const m = exerciseMedia(ex)
+/** The single storage path a still thumbnail needs when there is no GIF (the first frame). */
+export function thumbPath(ex: MediaSource | null | undefined): string | null {
+  const m = exerciseMedia(ex, { gifFailed: true })
   return m.kind === 'frames' ? m.paths[0] : null
 }
 

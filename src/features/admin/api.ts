@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { parseAdminConfig, type AdminConfig, type AdminConfigKey } from './adminLogic'
 import { parseUsageSummary, type UsageSummary } from './usageLogic'
+import { MATCH_KINDS, type MatchCounts, type MatchKind } from './exercisedbLogic'
+import { sanitizeSearch } from '@/features/exercises'
 import type { Database, RegistrationRow, RegistrationStatus } from '@/lib/database.types'
 
 export async function listRegistrations(status: RegistrationStatus | 'all' = 'pending'): Promise<RegistrationRow[]> {
@@ -161,4 +163,41 @@ export async function usageSummary(): Promise<UsageSummary> {
   const { data, error } = await supabase.rpc('admin_usage_summary')
   if (error) throw error
   return parseUsageSummary(data)
+}
+
+/** Catalog sources the ExerciseDB matcher runs over (custom and retired legacy rows are not matched). */
+export const MATCHED_SOURCES = ['wger', 'workout-guide'] as const
+export const UNMATCHED_PAGE = 40
+
+export type UnmatchedExercise = { id: string; name_en: string; body_parts: string[]; equipment: string[]; source: string }
+
+/**
+ * One page of catalog exercises without an ExerciseDB animation, by name. Plain select: catalog rows are
+ * readable by every signed-in user (RLS "exercises_read"); the route itself is admin-only.
+ */
+export async function listUnmatchedExercises(q: string, page: number): Promise<{ rows: UnmatchedExercise[]; total: number }> {
+  let query = supabase
+    .from('exercises')
+    .select('id, name_en, body_parts, equipment, source', { count: 'exact' })
+    .in('source', [...MATCHED_SOURCES])
+    .is('exercisedb_id', null)
+    .order('name_en', { ascending: true })
+  const term = sanitizeSearch(q)
+  if (term) query = query.ilike('name_en', `%${term}%`)
+  const from = page * UNMATCHED_PAGE
+  const { data, error, count } = await query.range(from, from + UNMATCHED_PAGE - 1)
+  if (error) throw error
+  return { rows: data ?? [], total: count ?? 0 }
+}
+
+/** Catalog rows per ExerciseDB match kind (head-only counts, no rows transferred). */
+export async function exerciseDbMatchCounts(): Promise<MatchCounts> {
+  const count = async (kind: MatchKind) => {
+    let query = supabase.from('exercises').select('id', { count: 'exact', head: true }).in('source', [...MATCHED_SOURCES])
+    query = kind === 'unmatched' ? query.is('exercisedb_id', null) : query.eq('exercisedb_match', kind)
+    const { count: n, error } = await query
+    if (error) throw error
+    return [kind, n ?? 0] as const
+  }
+  return Object.fromEntries(await Promise.all(MATCH_KINDS.map(count))) as MatchCounts
 }

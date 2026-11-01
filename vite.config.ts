@@ -70,6 +70,12 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/auth\/callback/],
         runtimeCaching: [
           {
+            // ExerciseDB animations are hot-linked (src/features/exercises/media.ts): their terms forbid caching
+            // or mirroring, so the service worker passes them straight to the network and never stores them.
+            urlPattern: ({ url }) => url.hostname === 'static.exercisedb.dev',
+            handler: 'NetworkOnly',
+          },
+          {
             // Never from a cache, never stored on the device. Photo vault and photo rows: a stale "no vault
             // yet" answer could lead to a second vault; rows carry IVs and wrapped data. Coach chats, private
             // profile and consents stay off the device (src/lib/offline/policy.ts). Must precede the rule below.

@@ -7,7 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { addDays, addMonths, format, startOfMonth, subMinutes } from 'date-fns'
 import { AppShell } from '@/app/AppShell'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
-import { exerciseKeys, type Exercise } from '@/features/exercises'
+import { exerciseKeys, exerciseName, type Exercise } from '@/features/exercises'
+import { profileKeys } from '@/features/profile/hooks'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { settingsKeys } from '@/features/settings/hooks'
 import { toLocalDateISO } from '@/lib/dates'
@@ -25,12 +26,12 @@ import { SessionSummary } from '../components/SessionSummary'
 const NOW = new Date()
 const iso = (d: Date) => d.toISOString()
 
-const ex = (id: string, en: string, tr: string | null, target: string, equipment: string): Exercise => ({
+const ex = (id: string, en: string, gif: string | null, target: string, equipment: string): Exercise => ({
   id,
   external_id: null,
   source: 'workout-guide',
   name_en: en,
-  name_tr: tr,
+  name_tr: null,
   body_parts: ['chest'],
   target_muscles: [target],
   secondary_muscles: [],
@@ -39,6 +40,9 @@ const ex = (id: string, en: string, tr: string | null, target: string, equipment
   instructions_tr: null,
   media_frames: [],
   attribution: null,
+  // real ExerciseDB ids, hot-linked from static.exercisedb.dev like in the app
+  exercisedb_id: gif,
+  exercisedb_match: gif ? 'exact' : null,
   is_custom: false,
   user_id: null,
   created_at: iso(NOW),
@@ -46,14 +50,14 @@ const ex = (id: string, en: string, tr: string | null, target: string, equipment
 })
 
 const EX = {
-  bench: ex('00000000-0000-4000-8000-000000000001', 'barbell bench press', 'Barbell bench press', 'pectorals', 'barbell'),
-  incline: ex('00000000-0000-4000-8000-000000000002', 'dumbbell incline bench press', 'Eğimli dambıl press', 'pectorals', 'dumbbell'),
-  ohp: ex('00000000-0000-4000-8000-000000000003', 'barbell standing military press', 'Ayakta askeri press', 'delts', 'barbell'),
-  lateral: ex('00000000-0000-4000-8000-000000000004', 'dumbbell lateral raise', 'Yana dambıl kaldırma', 'delts', 'dumbbell'),
-  pushdown: ex('00000000-0000-4000-8000-000000000005', 'cable pushdown', 'Kablo triceps itiş', 'triceps', 'cable'),
-  row: ex('00000000-0000-4000-8000-000000000006', 'barbell bent over row', 'Barbell eğilerek çekiş', 'upper back', 'barbell'),
-  pullup: ex('00000000-0000-4000-8000-000000000007', 'pull-up', 'Barfiks', 'lats', 'body weight'),
-  squat: ex('00000000-0000-4000-8000-000000000008', 'barbell full squat', 'Barbell squat', 'glutes', 'barbell'),
+  bench: ex('00000000-0000-4000-8000-000000000001', 'barbell bench press', 'EIeI8Vf', 'pectorals', 'barbell'),
+  incline: ex('00000000-0000-4000-8000-000000000002', 'dumbbell incline bench press', null, 'pectorals', 'dumbbell'),
+  ohp: ex('00000000-0000-4000-8000-000000000003', 'barbell standing military press', null, 'delts', 'barbell'),
+  lateral: ex('00000000-0000-4000-8000-000000000004', 'dumbbell lateral raise', null, 'delts', 'dumbbell'),
+  pushdown: ex('00000000-0000-4000-8000-000000000005', 'cable pushdown', '3ZflifB', 'triceps', 'cable'),
+  row: ex('00000000-0000-4000-8000-000000000006', 'barbell bent over row', null, 'upper back', 'barbell'),
+  pullup: ex('00000000-0000-4000-8000-000000000007', 'pull-up', 'lBDjFxJ', 'lats', 'body weight'),
+  squat: ex('00000000-0000-4000-8000-000000000008', 'barbell full squat', 'qXTaZnJ', 'glutes', 'barbell'),
 }
 
 function tplEx(templateId: string, e: Exercise, position: number, sets: number, low: number, high: number, rest: number) {
@@ -205,6 +209,7 @@ function seed(todayMode: string): QueryClient {
     for (const p of e.media_frames) qc.setQueryData(exerciseKeys.media(p), '/dev-media.local/' + p)
   }
   qc.setQueryData(workoutKeys.templates, templates)
+  qc.setQueryData(profileKeys.private, { birth_year: 1994, height_cm: 180, sex: 'male', goal: 'build_muscle', target_weight_kg: null })
   qc.setQueryData(
     workoutKeys.today(today, toLocalDateISO()),
     templates.filter((t) => t.weekdays.includes(today)),
@@ -300,7 +305,7 @@ export function DevLiveSession() {
   })
   if (!ready) return null
   if (state === 'summary') {
-    const names = new Map(Object.values(EX).map((e) => [e.id, e.name_tr ?? e.name_en]))
+    const names = new Map(Object.values(EX).map((e) => [e.id, exerciseName(e)]))
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-bg">
         <SessionSummary title="İtiş: göğüs, omuz" summary={SAMPLE_SUMMARY} exerciseLabel={(id) => names.get(id) ?? id} onDone={() => history.back()} />

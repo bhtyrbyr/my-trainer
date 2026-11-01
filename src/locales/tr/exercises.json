@@ -56,8 +56,10 @@
       "label": "Kaynaklar",
       "text": "Metin",
       "media": "Çizim",
-      "translation": "Türkçe: makine çevirisi"
-    }
+      "translation": "Türkçe: makine çevirisi",
+      "gif": "Animasyon: ExerciseDB"
+    },
+    "gifLabel": "{{name}}, hareketin animasyonu"
   },
   "progress": {
     "title": "Gelişim",

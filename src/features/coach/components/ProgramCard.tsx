@@ -16,7 +16,7 @@ import { ShareButton, programPayload } from '@/features/social/share'
  * rest. Saved days stay marked for this session.
  */
 export function ProgramCard({ data }: { data: ProgramCardData }) {
-  const { t, i18n } = useTranslation('coach')
+  const { t } = useTranslation('coach')
   const base = useCoachBase()
   const save = useSaveProgramDays()
   const [saved, setSaved] = useState<Set<number>>(() => new Set())
@@ -87,7 +87,7 @@ export function ProgramCard({ data }: { data: ProgramCardData }) {
               <ul className="pb-1 pl-10">
                 {day.exercises.map((ex) => (
                   <li key={ex.exercise_id} className="flex items-baseline gap-3 py-1 text-[14px]">
-                    <span className="min-w-0 flex-1 text-ink-muted">{exerciseName(ex, i18n.resolvedLanguage)}</span>
+                    <span className="min-w-0 flex-1 text-ink-muted">{exerciseName(ex)}</span>
                     <span className="tabular shrink-0 font-semibold text-ink">{t('program.setsReps', { sets: ex.sets, reps: ex.reps })}</span>
                     <span className="tabular w-10 shrink-0 text-right text-[12px] text-ink-faint">{t('program.rest', { sec: ex.rest_sec })}</span>
                   </li>
@@ -111,7 +111,7 @@ export function ProgramCard({ data }: { data: ProgramCardData }) {
               program.days.map((d) => ({
                 name: d.name,
                 exercises: d.exercises.map((e) => ({
-                  name: exerciseName(e, i18n.resolvedLanguage),
+                  name: exerciseName(e),
                   exercise_id: e.exercise_id,
                   sets: e.sets,
                   reps_low: e.reps,

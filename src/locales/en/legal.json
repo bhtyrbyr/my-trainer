@@ -49,6 +49,7 @@
           "Other users only see your username, display name, profile photo, points, level and streak; you can hide yourself from the leaderboard.",
           "Your data is never sold or used for advertising.",
           "The service uses providers abroad: Supabase (database, files, sign-in; servers in London, United Kingdom), Vercel (hosting; US-based), Google (Google sign-in and Gemini nutrition estimates; US), OpenRouter (fallback nutrition estimates, text only; US).",
+          "Exercise animations load directly from ExerciseDB's servers (static.exercisedb.dev), which therefore receive your device's IP address and standard request data (such as browser type and the requested file), as with any image a website loads. No referrer and no account data are sent.",
           "These transfers are made under KVKK art. 9; processing health data on these servers is covered by your separate explicit consent.",
           "Reminder notifications are delivered through your browser's push service (Apple, Google or Mozilla); their content is end-to-end encrypted and those services cannot read it.",
           "Progress photos are encrypted on your device; the server and providers only hold unreadable ciphertext."

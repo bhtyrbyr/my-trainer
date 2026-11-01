@@ -4,18 +4,21 @@ import { Dumbbell, SearchX } from 'lucide-react'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
 import { useExercise } from '../hooks'
-import { exerciseCredits, exerciseMedia, type Credit } from '../media'
+import { exerciseCredits, type Credit, type ExerciseMedia } from '../media'
 import { exerciseName, exerciseSteps } from '../name'
 import type { Exercise } from '../types'
+import { useExerciseMedia } from '../useExerciseMedia'
 import { useVocab } from '../vocab'
 import { BackButton } from '../components/BackButton'
-import { MuscleMap } from '../components/MuscleMap'
+import { BodyMap } from '../components/BodyMap'
+import { ExerciseGif } from '../components/ExerciseGif'
 import { Flipbook } from '../components/Flipbook'
 import { ExerciseProgress } from '../components/ExerciseProgress'
 
 /**
- * Point of view: a coach's card. The movement (illustration flipbook on a quiet plate) and a large display
- * name lead; without an illustration the name leads and the body map right under it is the picture.
+ * Point of view: a coach's card. The movement (ExerciseDB animation on a light plate, else the illustration
+ * flipbook on a quiet plate) and a large display name lead; without either the name leads and the body
+ * map right under it is the picture.
  * The user's own numbers follow; one faint credit line closes the page. Mobile is one column;
  * desktop puts progress in a second column next to the how-to.
  */
@@ -24,6 +27,7 @@ export function ExerciseDetailPage() {
   const { t, i18n } = useTranslation('exercises')
   const query = useExercise(id)
   const ex = query.data
+  const { media, onGifError } = useExerciseMedia(ex)
 
   return (
     <div className="flex min-h-dvh flex-col pt-safe">
@@ -38,13 +42,13 @@ export function ExerciseDetailPage() {
           <DetailSkeleton />
         ) : ex ? (
           <div className="flex flex-col gap-9 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-10">
-            <Hero ex={ex} lang={i18n.resolvedLanguage} className="lg:col-start-1 lg:row-start-1" />
+            <Hero ex={ex} media={media} onGifError={onGifError} className="lg:col-start-1 lg:row-start-1" />
 
             <section aria-labelledby="muscles-title" className="lg:col-start-1 lg:row-start-2">
               <h2 id="muscles-title" className="display mb-3 text-[22px]">
                 {t('detail.muscles.title')}
               </h2>
-              <MuscleMap target={ex.target_muscles} secondary={ex.secondary_muscles} />
+              <BodyMap target={ex.target_muscles} secondary={ex.secondary_muscles} />
             </section>
 
             <div className="lg:col-start-2 lg:row-span-3 lg:row-start-1">
@@ -53,7 +57,10 @@ export function ExerciseDetailPage() {
 
             <div className="lg:col-start-1 lg:row-start-3">
               <Steps steps={exerciseSteps(ex, i18n.resolvedLanguage)} />
-              <Credits credits={exerciseCredits(ex.attribution, i18n.resolvedLanguage)} />
+              {/* attribution.media credits the illustration frames; they are not shown while the GIF is */}
+              <Credits
+                credits={exerciseCredits(ex.attribution, i18n.resolvedLanguage).filter((c) => media.kind !== 'gif' || c.role !== 'media')}
+              />
             </div>
           </div>
         ) : (
@@ -64,13 +71,21 @@ export function ExerciseDetailPage() {
   )
 }
 
-function Hero({ ex, lang, className }: { ex: Exercise; lang: string | undefined; className?: string }) {
+function Hero({ ex, media, onGifError, className }: { ex: Exercise; media: ExerciseMedia; onGifError: () => void; className?: string }) {
   const { t } = useTranslation('exercises')
   const vocab = useVocab()
-  const name = exerciseName(ex, lang)
-  const media = exerciseMedia(ex)
+  const name = exerciseName(ex)
   return (
     <header className={cn('rise-in', className)}>
+      {media.kind === 'gif' && (
+        <figure className="mb-6">
+          {/* 180 px source GIFs: shown at most ~1.4x so the drawing stays crisp; the plate carries the width */}
+          <div className="isolate flex h-[268px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-plate">
+            <ExerciseGif url={media.url} label={t('detail.gifLabel', { name })} onError={onGifError} className="h-[252px]" />
+          </div>
+          <figcaption className="mt-2 text-[12px] text-ink-faint">{t('detail.credit.gif')}</figcaption>
+        </figure>
+      )}
       {media.kind === 'frames' && (
         <div className="hairline mb-6 flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-surface">
           <Flipbook paths={media.paths} label={t('detail.mediaLabel', { name })} className="aspect-square h-[88%]" />

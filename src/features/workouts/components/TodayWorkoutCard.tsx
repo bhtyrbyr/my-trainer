@@ -172,11 +172,10 @@ function Figure({ value, label }: { value: number | string; label: string }) {
 }
 
 function ExerciseLine({ ids }: { ids: string[] }) {
-  const { i18n } = useTranslation()
   const { data } = useExercisesByIds(ids)
   if (!ids.length || !data?.length) return null
   const byId = new Map(data.map((e) => [e.id, e]))
-  const names = ids.map((id) => byId.get(id)).filter(Boolean).map((e) => exerciseName(e!, i18n.resolvedLanguage))
+  const names = ids.map((id) => byId.get(id)).filter(Boolean).map((e) => exerciseName(e!))
   return <p className={cn('mt-5 line-clamp-2 text-[13px] leading-relaxed text-ink-muted')}>{names.join(' · ')}</p>
 }
 
