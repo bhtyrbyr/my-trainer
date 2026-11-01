@@ -68,13 +68,10 @@ export default defineConfig(({ mode }) => ({
         // reminder notifications (push + notificationclick); public/push-sw.js
         importScripts: ['push-sw.js'],
         navigateFallbackDenylist: [/^\/auth\/callback/],
+        // ExerciseDB animations (static.exercisedb.dev, hot-linked by src/features/exercises/media.ts) deliberately
+        // have NO route here: their terms forbid caching, and a route would make the service worker fetch them,
+        // which CSP connect-src blocks. Unrouted, the browser loads them as plain <img> under img-src.
         runtimeCaching: [
-          {
-            // ExerciseDB animations are hot-linked (src/features/exercises/media.ts): their terms forbid caching
-            // or mirroring, so the service worker passes them straight to the network and never stores them.
-            urlPattern: ({ url }) => url.hostname === 'static.exercisedb.dev',
-            handler: 'NetworkOnly',
-          },
           {
             // Never from a cache, never stored on the device. Photo vault and photo rows: a stale "no vault
             // yet" answer could lead to a second vault; rows carry IVs and wrapped data. Coach chats, private
