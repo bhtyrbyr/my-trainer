@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { BadgeCounts, EarnedBadge } from './logic'
+import { BADGES, type BadgeCounts, type EarnedBadge } from './logic'
 
 /** The caller's own badges (RLS: owner read). */
 export async function fetchMyBadges(): Promise<EarnedBadge[]> {
@@ -22,27 +22,12 @@ export async function fetchUserBadges(userId: string): Promise<EarnedBadge[]> {
 }
 
 /**
- * Totals behind the locked badges' progress, from the caller's own rows (RLS). Streak comes from the
- * profile. Photos are health data: without consent RLS returns none and the count is simply 0.
+ * Totals behind the locked badges' progress for the caller (my_badge_progress: the same metric function
+ * the server awards with, so the shelf and the award always agree). Unknown metrics read as 0.
  */
-export async function fetchBadgeCounts(streak: number): Promise<BadgeCounts> {
-  const [workouts, sets, photos, habits, todos] = await Promise.all([
-    supabase
-      .from('workout_sessions')
-      .select('id', { count: 'exact', head: true })
-      .not('ended_at', 'is', null),
-    supabase.from('workout_sessions').select('total_sets').not('ended_at', 'is', null),
-    supabase.from('progress_photos').select('id', { count: 'exact', head: true }),
-    supabase.from('habit_logs').select('count, habits!inner(target_count)'),
-    supabase.from('todo_completions').select('id', { count: 'exact', head: true }),
-  ])
-  for (const r of [workouts, sets, photos, habits, todos]) if (r.error) throw r.error
-  return {
-    workouts: workouts.count ?? 0,
-    sets: (sets.data ?? []).reduce((s, r) => s + (r.total_sets ?? 0), 0),
-    streak,
-    photos: photos.count ?? 0,
-    habitDays: (habits.data ?? []).filter((l) => l.count >= (l.habits?.target_count ?? Infinity)).length,
-    todos: todos.count ?? 0,
-  }
+export async function fetchBadgeCounts(): Promise<BadgeCounts> {
+  const { data, error } = await supabase.rpc('my_badge_progress')
+  if (error) throw error
+  const raw = (data && typeof data === 'object' && !Array.isArray(data) ? data : {}) as Record<string, unknown>
+  return Object.fromEntries(BADGES.map((b) => [b.metric, Number(raw[b.metric]) || 0])) as BadgeCounts
 }

@@ -32,7 +32,8 @@
       "off": "{{day}}",
       "future": "{{day}}",
       "before": "{{day}}"
-    }
+    },
+    "deleteTitle": "Delete habit?"
   },
   "todos": {
     "title": "To-dos",
@@ -55,7 +56,8 @@
     "stop": "Stop repeating",
     "delete": "Delete",
     "deleteConfirm": "Delete this to-do? Points from completing it are revoked.",
-    "points": "Each completed to-do earns 5 points (at most 30 a day)."
+    "points": "Each completed to-do earns 5 points (at most 30 a day).",
+    "deleteTitle": "Delete to-do?"
   },
   "day": {
     "empty": "No habits or to-dos for this day.",

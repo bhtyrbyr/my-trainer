@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
@@ -5,6 +6,7 @@ import { enUS, tr } from 'date-fns/locale'
 import { ArrowLeft, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { useAiAvailability } from '@/features/nutrition'
 import { useConsents } from '@/features/privacy/hooks'
@@ -23,6 +25,7 @@ export function CoachPage() {
   const availability = useAiAvailability()
   const conversations = useConversations()
   const del = useDeleteConversation()
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const locale = i18n.resolvedLanguage === 'en' ? enUS : tr
 
   const consentOk = !consents.isLoading && consents.ai
@@ -41,7 +44,7 @@ export function CoachPage() {
       leading={
         <div className="flex items-center gap-1">
           <Link
-            to={`${base}/settings`}
+            to={`${base}/workouts`}
             aria-label={t('coach:back')}
             className="-ml-2 flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink"
           >
@@ -111,7 +114,7 @@ export function CoachPage() {
                       type="button"
                       aria-label={`${t('coach:list.delete')}: ${title}`}
                       disabled={del.isPending}
-                      onClick={() => window.confirm(t('coach:list.deleteConfirm')) && del.mutate(c.id)}
+                      onClick={() => setPendingDelete(c.id)}
                       className="flex size-11 shrink-0 items-center justify-center text-ink-faint transition-colors hover:text-danger disabled:opacity-40"
                     >
                       <Trash2 className="size-4" aria-hidden />
@@ -125,6 +128,17 @@ export function CoachPage() {
           <p className="px-1 text-[12px] leading-snug text-ink-faint">{t('coach:privacy')}</p>
         </section>
       </div>
+      <ConfirmSheet
+        open={pendingDelete !== null}
+        title={t('coach:list.deleteTitle')}
+        body={t('coach:list.deleteConfirm')}
+        confirmLabel={t('coach:list.delete')}
+        tone="danger"
+        pending={del.isPending}
+        error={del.error}
+        onConfirm={() => pendingDelete && del.mutate(pendingDelete, { onSuccess: () => setPendingDelete(null) })}
+        onCancel={() => setPendingDelete(null)}
+      />
     </PageShell>
   )
 }

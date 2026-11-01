@@ -1,6 +1,6 @@
 # Security model: "only your own data"
 
-The product rule: **a user can read or write only rows that belong to them**. Other users are visible only through the public profile fields and the leaderboard RPC. Changing a user id in a URL, query string, request body or Storage path must never return someone else's data.
+The product rule: **a user can read or write only rows that belong to them**. Other users are visible only through the `get_public_profile` and leaderboard RPCs (see "Hardening 2026-11-01"). Changing a user id in a URL, query string, request body or Storage path must never return someone else's data.
 
 ## Where the rule is enforced (server side, never trusting the client)
 
@@ -90,3 +90,14 @@ The product rule: **a user can read or write only rows that belong to them**. Ot
 - Age: the app is open to all ages; AI is 18+. The AI consent includes an 18+ confirmation (`adult`); `record_consent` refuses it and `ai_reserve()` refuses every request (`AI_UNDERAGE`) when the stored birth year is under 18.
 - Explicit AI consent (`ai_processing`): required by `ai_reserve()` (raises `AI_CONSENT_REQUIRED`), withdrawable via `withdraw_ai_consent()`; `ai_consent_of()` is internal.
 - The ai-coach function sends only the meal text or the EXIF-stripped photo and the UI language, never user ids, names or e-mails; requests whose edge country header is in the EEA, UK or Switzerland get `AI_REGION` (451).
+
+## Hardening 2026-11-01 (full audit; migration 20261120000000_security_hardening.sql)
+- `can_access()` is false without a profile. Onboarding uses `can_onboard()` (signed in, not blocked, no profile or own pending one) only for the profile / profile_private insert, the avatar upload and `record_consent('privacy_notice')`.
+- `profiles` is readable by its owner and admins only. Other users are seen through `get_public_profile(uuid)` (same filter as the leaderboard: approved, onboarded, not blocked, on the leaderboard) and `get_leaderboard`; `is_username_available(text)` answers the uniqueness check.
+- Storage: avatar names are `^<uid>/avatar\.(jpg|webp)$`; progress photos have a 2 MB object limit and a 150 MB per-user cap (`progress_photo_bytes()`).
+- `record_consent` skips unchanged repeats and allows 20 rows a day; `register_push` accepts only FCM, Apple, Mozilla and Windows push hosts; the profile guard also keeps `created_at` and `username_changed_at`.
+- AI quota: per-user default 10 a day, app budget 450; `ai_reserve` serialises on an advisory lock and counts reservations (`private.ai_reservations`) for the per-minute and daily checks.
+- RLS policies call `(select auth.uid())`, `(select public.can_access())` and `(select public.is_admin())` so they run once per query (InitPlan).
+- Retention: `nightly-retention` cron deletes resolved error reports after 90 days, the AI usage log after 180 days and cron run details after 14 days. User content is never deleted by it.
+- CI: production deploy runs only after CI for a push to this repository's `main` (no fork PRs); actions are pinned to commit SHAs; workflows default to `contents: read`; the Vercel CLI version is pinned.
+- Operations: nightly encrypted database backup (`backup.yml`, `BACKUP_PASSPHRASE`), daily `health.yml` (service-role `ops_health()`), monthly `ai-models.yml`.

@@ -36,7 +36,7 @@ export function useBadgeCounts() {
   )
   return useQuery({
     queryKey: [...badgeKeys.counts, streak],
-    queryFn: () => fetchBadgeCounts(streak),
+    queryFn: fetchBadgeCounts, // streak in the key: refetch when the profile streak moves
     enabled: Boolean(user) && !preview,
     staleTime: 60_000,
   })

@@ -22,6 +22,14 @@
     "sleepNone": "Not logged",
     "sleepLog": "Log"
   },
+  "strip": {
+    "label": "Today's progress",
+    "kcal": "kcal eaten",
+    "water": "water",
+    "sleep": "sleep",
+    "habits": "habits",
+    "todos": "to-dos"
+  },
   "week": {
     "title": "This week",
     "range": "{{from}} – {{to}}",

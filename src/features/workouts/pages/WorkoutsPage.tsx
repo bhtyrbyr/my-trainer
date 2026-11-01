@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { BookOpen, CalendarDays, HeartPulse, Plus } from 'lucide-react'
+import { BookOpen, CalendarDays, HeartPulse, Plus, Sparkles } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { GroupedList, ListRow } from '@/components/ui/GroupedList'
 import { CardioSheet } from '../components/CardioSheet'
 import { PlanSchedule } from '../components/PlanSchedule'
 import { TodayWorkoutCard } from '../components/TodayWorkoutCard'
@@ -17,7 +18,7 @@ import { useIsPreview } from '../previewContext'
  * Desktop: today + quick actions on the left, the weekly schedule on the right.
  */
 export function WorkoutsPage() {
-  const { t } = useTranslation(['workouts', 'common'])
+  const { t } = useTranslation(['workouts', 'common', 'coach'])
   const navigate = useNavigate()
   const preview = useIsPreview()
   const templates = useTemplates()
@@ -70,6 +71,9 @@ export function WorkoutsPage() {
               {t('workouts:history.title')}
             </Link>
           </div>
+          <GroupedList className="rise-in">
+            <ListRow icon={Sparkles} label={t('coach:settings.link')} hint={t('coach:settings.hint')} to={preview ? '/__dev/coach' : '/coach'} />
+          </GroupedList>
         </div>
 
         <section className="rise-in mt-9 lg:mt-0" style={{ ['--i' as string]: 2 }} aria-labelledby="plans-heading">

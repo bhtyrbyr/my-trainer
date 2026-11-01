@@ -24,7 +24,7 @@ export function ErrorReportsPage() {
       title={t('reports.title')}
       leading={
         <div className="flex items-center gap-1">
-          <Link to="/settings" aria-label={t('reports.back')} className="-ml-2 flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink">
+          <Link to="/admin" aria-label={t('reports.back')} className="-ml-2 flex size-11 items-center justify-center rounded-full text-ink-muted hover:bg-raised hover:text-ink">
             <ArrowLeft className="size-5" aria-hidden />
           </Link>
           <span className="text-lg font-bold tracking-tight">{t('reports.title')}</span>

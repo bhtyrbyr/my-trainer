@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, RotateCcw, Sparkles, Trash2 } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { useAiAvailability } from '@/features/nutrition'
 import { useConsents } from '@/features/privacy/hooks'
@@ -50,6 +51,7 @@ export function ChatPage() {
   const program = useProgram()
   const replyState = useReplyState(id)
   const del = useDeleteConversation()
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const consentOk = !consents.isLoading && consents.ai
   const blocked = availability.data && !availability.data.available ? availability.data : null
@@ -152,13 +154,24 @@ export function ChatPage() {
             aria-label={t('coach:list.delete')}
             title={t('coach:list.delete')}
             disabled={del.isPending}
-            onClick={() => window.confirm(t('coach:list.deleteConfirm')) && del.mutate(id, { onSuccess: () => navigate(`${base}/coach`, { replace: true }) })}
+            onClick={() => setConfirmDelete(true)}
           >
             <Trash2 className="size-5" aria-hidden />
           </Button>
         ) : undefined
       }
     >
+      <ConfirmSheet
+        open={confirmDelete && Boolean(id)}
+        title={t('coach:list.deleteTitle')}
+        body={t('coach:list.deleteConfirm')}
+        confirmLabel={t('coach:list.delete')}
+        tone="danger"
+        pending={del.isPending}
+        error={del.error}
+        onConfirm={() => id && del.mutate(id, { onSuccess: () => navigate(`${base}/coach`, { replace: true }) })}
+        onCancel={() => setConfirmDelete(false)}
+      />
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
         <ErrorNote error={messages.error ?? conversations.error ?? del.error} className="mb-3" />
 

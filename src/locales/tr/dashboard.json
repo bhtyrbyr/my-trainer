@@ -22,6 +22,14 @@
     "sleepNone": "Kayıt yok",
     "sleepLog": "Gir"
   },
+  "strip": {
+    "label": "Bugünkü ilerleme",
+    "kcal": "kcal alındı",
+    "water": "su",
+    "sleep": "uyku",
+    "habits": "alışkanlık",
+    "todos": "yapılacak"
+  },
   "week": {
     "title": "Bu hafta",
     "range": "{{from}} – {{to}}",

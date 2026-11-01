@@ -103,10 +103,15 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         ],
       },
       {
-        // Profile with a sample badge shelf: ?fresh=1, ?celebrate=sets_100
+        // Profile hub with a sample badge shelf: ?fresh=1, ?celebrate=sets_100; /settings and /admin hubs
         path: '/__dev/profile',
         lazy: devProfile('DevProfileLayout'),
-        children: [{ index: true, lazy: devProfile('DevProfile') }],
+        children: [
+          { index: true, lazy: devProfile('DevProfile') },
+          { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
+          { path: 'edit', lazy: page(() => import('@/features/profile/pages/ProfileEditPage'), 'ProfileEditPage') },
+          { path: 'admin', lazy: page(() => import('@/features/admin/pages/AdminHubPage'), 'AdminHubPage') },
+        ],
       },
       {
         // admin Access and Users with sample data: ?mode=invite
@@ -206,6 +211,8 @@ export const router = createBrowserRouter([
       { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
       { path: 'coach', lazy: coach.list },
       { path: 'coach/:id', lazy: coach.chat },
+      { path: 'me', lazy: page(() => import('@/features/profile/pages/ProfilePage'), 'ProfilePage') },
+      { path: 'me/edit', lazy: page(() => import('@/features/profile/pages/ProfileEditPage'), 'ProfileEditPage') },
       { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
       { path: 'settings/licenses', lazy: page(() => import('@/features/settings/pages/LicensesPage'), 'LicensesPage') },
       {
@@ -234,6 +241,7 @@ export const router = createBrowserRouter([
           }
         },
       },
+      { path: 'admin', lazy: adminPage(() => import('@/features/admin/pages/AdminHubPage'), 'AdminHubPage') },
       { path: 'admin/access', lazy: adminPage(() => import('@/features/admin/pages/AccessPage'), 'AccessPage') },
       { path: 'admin/users', lazy: adminPage(() => import('@/features/admin/pages/UsersPage'), 'UsersPage') },
       { path: 'admin/usage', lazy: adminPage(() => import('@/features/admin/pages/UsagePage'), 'UsagePage') },

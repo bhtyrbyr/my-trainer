@@ -1,5 +1,5 @@
 {
-  "title": "Profile",
+  "title": "Settings",
   "language": "Language",
   "languages": {
     "tr": "Türkçe",
@@ -35,5 +35,18 @@
     "hint": "Values are always stored in kg and cm; this only changes how they are shown and entered."
   },
   "signOutUnsynced_one": "{{count}} entry has not been sent yet and will be lost if you sign out. Sign out anyway?",
-  "signOutUnsynced_other": "{{count}} entries have not been sent yet and will be lost if you sign out. Sign out anyway?"
+  "signOutUnsynced_other": "{{count}} entries have not been sent yet and will be lost if you sign out. Sign out anyway?",
+  "groups": {
+    "preferences": "Preferences"
+  },
+  "email": "E-mail",
+  "versionLabel": "Version",
+  "leaderboard": {
+    "label": "Show me on the leaderboard",
+    "hint": "Others see your name, avatar and points"
+  },
+  "signOut": {
+    "title": "Sign out?",
+    "body": "You can sign back in with Google at any time."
+  }
 }

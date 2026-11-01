@@ -193,19 +193,41 @@ export type Database = {
       badges: {
         Row: {
           code: string
+          metric: string
           sort: number
           threshold: number
         }
         ComputedFields: never
         Insert: {
           code: string
+          metric: string
           sort?: number
           threshold: number
         }
         Update: {
           code?: string
+          metric?: string
           sort?: number
           threshold?: number
+        }
+        Relationships: []
+      }
+      blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -450,6 +472,31 @@ export type Database = {
         }
         Relationships: []
       }
+      follows: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          followee_id: string
+          follower_id: string
+          status: string
+        }
+        ComputedFields: never
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          followee_id: string
+          follower_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       food_catalog: {
         Row: {
           carb_100g: number
@@ -548,6 +595,76 @@ export type Database = {
           updated_at?: string
           use_count?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          invited_by: string | null
+          role: string
+          status: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          group_id: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'group_members_group_id_fkey'
+            columns: ['group_id']
+            isOneToOne: false
+            referencedRelation: 'groups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          invite_code: string
+          name: string
+          owner_id: string
+          updated_at: string
+          visibility: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invite_code: string
+          name: string
+          owner_id: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invite_code?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+          visibility?: string
         }
         Relationships: []
       }
@@ -934,6 +1051,123 @@ export type Database = {
         }
         Relationships: []
       }
+      post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'post_likes_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      post_media: {
+        Row: {
+          author_id: string
+          created_at: string
+          height: number
+          id: string
+          path: string
+          position: number
+          post_id: string
+          width: number
+        }
+        ComputedFields: never
+        Insert: {
+          author_id: string
+          created_at?: string
+          height: number
+          id?: string
+          path: string
+          position: number
+          post_id: string
+          width: number
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          height?: number
+          id?: string
+          path?: string
+          position?: number
+          post_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'post_media_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          audience: string
+          author_id: string
+          body: string | null
+          created_at: string
+          group_id: string | null
+          id: string
+          kind: string
+          like_count: number
+          payload: NonNullable<Json>
+          updated_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          audience?: string
+          author_id: string
+          body?: string | null
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          kind: string
+          like_count?: number
+          payload?: NonNullable<Json>
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          author_id?: string
+          body?: string | null
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          like_count?: number
+          payload?: NonNullable<Json>
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'posts_group_id_fkey'
+            columns: ['group_id']
+            isOneToOne: false
+            referencedRelation: 'groups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       profile_private: {
         Row: {
           birth_year: number | null
@@ -1118,6 +1352,43 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string | null
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          target_id: string
+          target_kind: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id: string
+          target_kind: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id?: string
+          target_kind?: string
+        }
+        Relationships: []
+      }
       session_exercises: {
         Row: {
           created_at: string
@@ -1265,6 +1536,92 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wake_at?: string
+        }
+        Relationships: []
+      }
+      social_notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          group_id: string | null
+          id: string
+          kind: string
+          post_id: string | null
+          pushed_at: string | null
+          read_at: string | null
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          kind: string
+          post_id?: string | null
+          pushed_at?: string | null
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          post_id?: string | null
+          pushed_at?: string | null
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'social_notifications_group_id_fkey'
+            columns: ['group_id']
+            isOneToOne: false
+            referencedRelation: 'groups'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'social_notifications_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      social_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          discoverable: boolean
+          enabled: boolean
+          enabled_at: string | null
+          is_private: boolean
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          discoverable?: boolean
+          enabled?: boolean
+          enabled_at?: string | null
+          is_private?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          discoverable?: boolean
+          enabled?: boolean
+          enabled_at?: string | null
+          is_private?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1475,6 +1832,7 @@ export type Database = {
           daily_protein_g: number | null
           daily_water_ml: number
           locale: string
+          social_push: boolean
           theme: string
           unit_length: string
           unit_weight: string
@@ -1491,6 +1849,7 @@ export type Database = {
           daily_protein_g?: number | null
           daily_water_ml?: number
           locale?: string
+          social_push?: boolean
           theme?: string
           unit_length?: string
           unit_weight?: string
@@ -1506,6 +1865,7 @@ export type Database = {
           daily_protein_g?: number | null
           daily_water_ml?: number
           locale?: string
+          social_push?: boolean
           theme?: string
           unit_length?: string
           unit_weight?: string
@@ -1729,6 +2089,21 @@ export type Database = {
           username: string
         }[]
       }
+      admin_list_reports: {
+        Args: { p_status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          reason: string
+          reporter_id: string
+          reporter_username: string
+          resolved_at: string
+          status: string
+          target: Json
+          target_id: string
+          target_kind: string
+        }[]
+      }
       admin_list_users: {
         Args: { p_limit?: number; p_query?: string }
         Returns: {
@@ -1747,6 +2122,8 @@ export type Database = {
       }
       admin_pending_count: { Args: Record<PropertyKey, never>; Returns: number }
       admin_remove_allowed_email: { Args: { p_email: string }; Returns: boolean }
+      admin_remove_post: { Args: { p_post: string }; Returns: undefined }
+      admin_resolve_report: { Args: { p_id: string }; Returns: undefined }
       admin_set_ai_limit: { Args: { p_limit: number; p_user: string }; Returns: undefined }
       admin_set_blocked: { Args: { p_blocked: boolean; p_user: string }; Returns: undefined }
       admin_set_config: { Args: { p_key: string; p_value: Json }; Returns: undefined }
@@ -1797,8 +2174,12 @@ export type Database = {
         }
         Returns: number
       }
+      badge_metric_value: { Args: { p_metric: string; p_user: string }; Returns: number }
       body_weight_for: { Args: { p_on: string; p_user: string }; Returns: number }
       can_access: { Args: Record<PropertyKey, never>; Returns: boolean }
+      can_onboard: { Args: Record<PropertyKey, never>; Returns: boolean }
+      can_view_post: { Args: { p_post: string }; Returns: boolean }
+      can_view_profile: { Args: { p_user: string }; Returns: boolean }
       cardio_met: { Args: { p_activity: string; p_speed_kmh: number }; Returns: number }
       check_badges: { Args: { p_codes?: string[]; p_user: string }; Returns: string[] }
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined }
@@ -1843,6 +2224,18 @@ export type Database = {
           username: string
         }[]
       }
+      get_public_profile: {
+        Args: { p_user: string }
+        Returns: {
+          avatar_path: string
+          created_at: string
+          current_streak: number
+          display_name: string
+          level: number
+          total_points: number
+          username: string
+        }[]
+      }
       get_user_badges: {
         Args: { p_user: string }
         Returns: {
@@ -1851,6 +2244,23 @@ export type Database = {
         }[]
       }
       get_week_summary: { Args: { p_week_start?: string }; Returns: Json }
+      group_create: {
+        Args: { p_description?: string; p_name: string; p_visibility?: string }
+        Returns: string
+      }
+      group_delete: { Args: { p_group: string }; Returns: undefined }
+      group_invite: { Args: { p_group: string; p_user: string }; Returns: undefined }
+      group_join: { Args: { p_group: string }; Returns: string }
+      group_join_by_code: { Args: { p_code: string }; Returns: string }
+      group_leave: { Args: { p_group: string }; Returns: undefined }
+      group_remove_member: { Args: { p_group: string; p_user: string }; Returns: undefined }
+      group_respond: { Args: { p_accept: boolean; p_group: string; p_user?: string }; Returns: undefined }
+      group_rotate_code: { Args: { p_group: string }; Returns: string }
+      group_set_role: { Args: { p_group: string; p_role: string; p_user: string }; Returns: undefined }
+      group_update: {
+        Args: { p_description?: string; p_group: string; p_name?: string; p_visibility?: string }
+        Returns: undefined
+      }
       habit_due_done: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -1862,6 +2272,7 @@ export type Database = {
       has_onboarded: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_internal: { Args: Record<PropertyKey, never>; Returns: boolean }
+      is_username_available: { Args: { p_username: string }; Returns: boolean }
       jwt_email: { Args: Record<PropertyKey, never>; Returns: string }
       last_sets_for_exercise: {
         Args: { p_exercise: string; p_limit?: number }
@@ -1878,6 +2289,16 @@ export type Database = {
           weight_kg: number
         }[]
       }
+      my_badge_progress: { Args: Record<PropertyKey, never>; Returns: Json }
+      ops_claim_storage_garbage: {
+        Args: { p_limit?: number }
+        Returns: {
+          bucket: string
+          path: string
+        }[]
+      }
+      ops_health: { Args: Record<PropertyKey, never>; Returns: Json }
+      progress_photo_bytes: { Args: Record<PropertyKey, never>; Returns: number }
       progress_photo_object_count: { Args: Record<PropertyKey, never>; Returns: number }
       prune_push_subscriptions: { Args: { p_endpoints: string[]; p_secret: string }; Returns: number }
       recompute_streak: { Args: { p_user: string }; Returns: undefined }
@@ -1918,6 +2339,226 @@ export type Database = {
         }
       }
       set_push_config: { Args: { p_secret: string; p_url: string }; Returns: undefined }
+      social_block: { Args: { p_user: string }; Returns: undefined }
+      social_blocked_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_path: string
+          created_at: string
+          display_name: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_create_post: {
+        Args: { p_audience?: string; p_body?: string; p_group?: string; p_kind: string; p_payload?: Json }
+        Returns: string
+      }
+      social_delete_post: { Args: { p_post: string }; Returns: undefined }
+      social_disable: { Args: { p_delete?: boolean }; Returns: undefined }
+      social_discover: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      social_enable: { Args: { p_consent_version: string }; Returns: undefined }
+      social_feed: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      social_follow: { Args: { p_user: string }; Returns: string }
+      social_follow_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar_path: string
+          created_at: string
+          display_name: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_followers: {
+        Args: { p_user: string }
+        Returns: {
+          avatar_path: string
+          display_name: string
+          since: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_following: {
+        Args: { p_user: string }
+        Returns: {
+          avatar_path: string
+          display_name: string
+          since: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_group: {
+        Args: { p_group: string }
+        Returns: {
+          can_view_posts: boolean
+          created_at: string
+          description: string
+          group_id: string
+          invite_code: string
+          member_count: number
+          my_role: string
+          my_status: string
+          name: string
+          owner_id: string
+          visibility: string
+        }[]
+      }
+      social_group_members: {
+        Args: { p_group: string }
+        Returns: {
+          avatar_path: string
+          display_name: string
+          joined_at: string
+          role: string
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_group_posts: {
+        Args: { p_before?: string; p_group: string; p_limit?: number }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      social_like: { Args: { p_post: string }; Returns: number }
+      social_mark_read: { Args: { p_ids?: string[] }; Returns: number }
+      social_media_attach_ok: { Args: { p_path: string; p_post: string }; Returns: boolean }
+      social_media_readable: { Args: { p_name: string }; Returns: boolean }
+      social_media_upload_ok: { Args: { p_name: string }; Returns: boolean }
+      social_my_groups: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          description: string
+          group_id: string
+          invite_code: string
+          member_count: number
+          name: string
+          owner_id: string
+          role: string
+          status: string
+          visibility: string
+        }[]
+      }
+      social_notifications_list: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: {
+          actor_avatar_path: string
+          actor_display_name: string
+          actor_id: string
+          actor_username: string
+          created_at: string
+          group_id: string
+          group_name: string
+          id: string
+          kind: string
+          post_id: string
+          read_at: string
+        }[]
+      }
+      social_post: {
+        Args: { p_post: string }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      social_profile: {
+        Args: { p_user: string }
+        Returns: {
+          avatar_path: string
+          badges: string[]
+          bio: string
+          can_view: boolean
+          display_name: string
+          followers_count: number
+          following_count: number
+          follows_me: boolean
+          incoming_request: boolean
+          is_private: boolean
+          level: number
+          posts_count: number
+          relation: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_remove_follower: { Args: { p_user: string }; Returns: undefined }
+      social_report: { Args: { p_kind: string; p_reason?: string; p_target: string }; Returns: undefined }
+      social_respond_follow: { Args: { p_accept: boolean; p_follower: string }; Returns: undefined }
+      social_search_groups: {
+        Args: { p_query: string }
+        Returns: {
+          description: string
+          group_id: string
+          member_count: number
+          my_status: string
+          name: string
+          visibility: string
+        }[]
+      }
+      social_search_users: {
+        Args: { p_query: string }
+        Returns: {
+          avatar_path: string
+          display_name: string
+          is_private: boolean
+          relation: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_set_audience: {
+        Args: { p_audience: string; p_group?: string; p_post: string }
+        Returns: undefined
+      }
+      social_unblock: { Args: { p_user: string }; Returns: undefined }
+      social_unfollow: { Args: { p_user: string }; Returns: undefined }
+      social_unlike: { Args: { p_post: string }; Returns: number }
+      social_unread_count: { Args: Record<PropertyKey, never>; Returns: number }
+      social_update_settings: {
+        Args: { p_bio?: string; p_discoverable?: boolean; p_is_private?: boolean }
+        Returns: undefined
+      }
+      social_user_posts: {
+        Args: { p_before?: string; p_limit?: number; p_user: string }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       strength_met: { Args: { p_avg_rpe: number }; Returns: number }
       sync_protein_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
       sync_water_goal: { Args: { p_day: string; p_user: string }; Returns: undefined }
@@ -1950,7 +2591,23 @@ export type Database = {
       [_ in never]: never
     }
     CompositeTypes: {
-      [_ in never]: never
+      social_post_item: {
+        id: string | null
+        author_id: string | null
+        author_username: string | null
+        author_display_name: string | null
+        author_avatar_path: string | null
+        kind: string | null
+        body: string | null
+        payload: Json | null
+        audience: string | null
+        group_id: string | null
+        group_name: string | null
+        like_count: number | null
+        liked_by_me: boolean | null
+        media: Json | null
+        created_at: string | null
+      }
     }
   }
 }

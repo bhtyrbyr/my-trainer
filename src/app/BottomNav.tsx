@@ -14,13 +14,13 @@ const tabs = [
   { to: '/track', key: 'track', icon: LineChart },
   { to: '/workouts', key: 'workouts', icon: Dumbbell, featured: true },
   { to: '/leaderboard', key: 'leaderboard', icon: Trophy },
-  { to: '/settings', key: 'profile', icon: UserRound },
+  { to: '/me', key: 'profile', icon: UserRound },
 ] as const
 
 /** Extra path prefixes that belong to a tab (e.g. the exercise library lives under the Workouts tab). */
 const ALSO_ACTIVE: Partial<Record<(typeof tabs)[number]['key'], string[]>> = {
-  workouts: ['/exercises'],
-  profile: ['/admin', '/coach'],
+  workouts: ['/exercises', '/coach'],
+  profile: ['/settings', '/admin'],
 }
 
 export function BottomNav() {
@@ -49,8 +49,9 @@ export function BottomNav() {
                 className={({ isActive }) => {
                   const active = isActive || Boolean(ALSO_ACTIVE[key]?.some((p) => pathname.startsWith(p)))
                   return cn(
-                    'group touch-target flex h-full flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium transition-colors',
-                    'lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-lg lg:px-3 lg:text-sm',
+                    // every label sits on one baseline: content is bottom-aligned, the centre disc overflows upward
+                    'group touch-target flex h-full flex-col items-center justify-end gap-1 pb-2 text-[10.5px] font-medium leading-[14px] transition-colors',
+                    'lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-lg lg:px-3 lg:pb-0 lg:text-sm lg:leading-normal',
                     featured ? (active ? 'text-ink lg:text-volt' : 'text-ink-muted hover:text-ink lg:text-ink') : active ? 'text-volt' : 'text-ink-muted hover:text-ink',
                   )
                 }}
@@ -60,14 +61,16 @@ export function BottomNav() {
                   return (
                     <>
                       {featured ? (
-                        <span
-                          className={cn(
-                            'inner-glow -mt-5 flex size-14 items-center justify-center rounded-full bg-volt text-volt-ink ring-4 ring-bg transition-transform duration-150 group-active:scale-95',
-                            'lg:mt-0 lg:size-auto lg:bg-transparent lg:text-current lg:ring-0 lg:[box-shadow:none]',
-                            active && 'scale-105 lg:scale-100',
-                          )}
-                        >
-                          <Icon className="size-7 lg:size-5" strokeWidth={2.25} aria-hidden />
+                        <span className="relative h-6 w-14 lg:static lg:h-auto lg:w-auto" aria-hidden>
+                          <span
+                            className={cn(
+                              'inner-glow absolute bottom-0 left-0 flex size-14 items-center justify-center rounded-full bg-volt text-volt-ink ring-4 ring-bg transition-transform duration-150 group-active:scale-95',
+                              'lg:static lg:size-auto lg:bg-transparent lg:text-current lg:ring-0 lg:[box-shadow:none]',
+                              active && 'scale-105 lg:scale-100',
+                            )}
+                          >
+                            <Icon className="size-7 lg:size-5" strokeWidth={2.25} aria-hidden />
+                          </span>
                         </span>
                       ) : (
                         <span className="relative">

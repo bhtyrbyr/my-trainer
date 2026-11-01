@@ -11,7 +11,8 @@
     "empty": "Henüz sohbet yok. Yukarıdan bir soru seç ya da yeni bir sohbet aç.",
     "delete": "Sohbeti sil",
     "deleteConfirm": "Bu sohbet ve bütün mesajları silinsin mi?",
-    "untitled": "Adsız sohbet"
+    "untitled": "Adsız sohbet",
+    "deleteTitle": "Sohbet silinsin mi?"
   },
   "chat": {
     "heading": "Ne sormak istersin?",

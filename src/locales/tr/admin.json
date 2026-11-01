@@ -29,7 +29,7 @@
     "link": "Yapay zekâ kullanımı",
     "linkToday": "bugün {{count}} istek",
     "title": "Yapay zekâ kullanımı",
-    "back": "Profil",
+    "back": "Yönetim",
     "quota": {
       "title": "Google kotası · bugün",
       "reset": "Günlük haklar her gün {{time}}'da yenilenir (Pasifik gece yarısı) · {{in}} sonra",
@@ -88,7 +88,7 @@
   "reports": {
     "link": "Hata bildirimleri",
     "title": "Hata bildirimleri",
-    "back": "Profil",
+    "back": "Yönetim",
     "tabs": {
       "open": "Açık",
       "resolved": "Çözüldü",
@@ -110,7 +110,7 @@
     "unknownUser": "Profili olmayan hesap",
     "note": "Not"
   },
-  "back": "Profil",
+  "back": "Yönetim",
   "access": {
     "link": "Erişim",
     "linkOpen": "Açık",
@@ -197,5 +197,9 @@
     "active_one": "Son 7 günde {{count}} kişi aktif",
     "active_other": "Son 7 günde {{count}} kişi aktif",
     "footer": "Limitler Supabase Free planına göre (31.10.2026): 500 MB veritabanı, 1 GB depolama, ayda 500 bin Edge Function çağrısı. Yüzde %80'i geçince çubuk kırmızıya döner. Yapay zekâ kotası Yapay zekâ kullanımı sayfasında."
+  },
+  "hub": {
+    "people": "Kişiler ve erişim",
+    "system": "Sistem"
   }
 }

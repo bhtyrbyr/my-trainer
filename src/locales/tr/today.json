@@ -32,7 +32,8 @@
       "off": "{{day}}",
       "future": "{{day}}",
       "before": "{{day}}"
-    }
+    },
+    "deleteTitle": "Alışkanlık silinsin mi?"
   },
   "todos": {
     "title": "Görevler",
@@ -55,7 +56,8 @@
     "stop": "Tekrarı durdur",
     "delete": "Sil",
     "deleteConfirm": "Bu görev silinsin mi? Tamamlama puanları geri alınır.",
-    "points": "Tamamlanan her görev 5 puan (günde en fazla 30)."
+    "points": "Tamamlanan her görev 5 puan (günde en fazla 30).",
+    "deleteTitle": "Yapılacak silinsin mi?"
   },
   "day": {
     "empty": "Bu gün için alışkanlık ya da görev yok.",
