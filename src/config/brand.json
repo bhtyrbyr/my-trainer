@@ -1,10 +1,10 @@
 {
-  "appName": "My Trainer",
-  "shortName": "My Trainer",
+  "appName": "Ironmorrow",
+  "shortName": "Ironmorrow",
   "legal": {
-    "controller": "My-Trainer-app dev team",
+    "controller": "Ironmorrow dev team",
     "contactEmail": "kvkk@mytrainer-test.com",
-    "noticeVersion": "2026-11-01",
+    "noticeVersion": "2026-11-01.2",
     "healthConsentVersion": "2026-10-30",
     "aiConsentVersion": "2026-10-31",
     "socialConsentVersion": "2026-11-01"
