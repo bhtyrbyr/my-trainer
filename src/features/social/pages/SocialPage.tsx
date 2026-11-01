@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Compass, Lock, Plus, Search, Users } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { GroupedList, ListRow, Segmented } from '@/components/ui/GroupedList'
+import { GroupedList, ListRow } from '@/components/ui/GroupedList'
 import { LeaderboardContent } from '@/features/leaderboard/pages/LeaderboardPage'
 import { cn } from '@/lib/utils'
 import { useFeed, useMyGroups, useSearchGroups, useSearchUsers, useSocialAction, useSocialMe } from '../hooks'
@@ -27,7 +27,7 @@ const TABS: Tab[] = ['feed', 'groups', 'ranking']
 
 /**
  * Community tab (/social). Point of view: the posts are the page. Chrome is one title, the bell, and one
- * segmented control; the feed has a quieter second switch (Following / Discover) and one floating volt
+ * row of text tabs; the feed has a quieter second switch (Following / Discover) and one floating volt
  * action. The Ranking segment works without joining.
  */
 export function SocialPage() {
@@ -42,12 +42,11 @@ export function SocialPage() {
   return (
     <PageShell title={t('social:title')} actions={enabled ? <BellButton /> : undefined}>
       <div className="mx-auto max-w-xl">
-        <Segmented
+        <SectionTabs
           label={t('social:sections')}
           value={tab}
           onChange={(v) => setParams(v === 'feed' ? {} : { tab: v }, { replace: true })}
-          options={TABS.map((v) => ({ value: v, label: t(`social:tabs.${v}`) }))}
-          className="mb-5"
+          labelOf={(v) => t(`social:tabs.${v}`)}
         />
         {tab === 'ranking' ? (
           <LeaderboardContent
@@ -68,6 +67,58 @@ export function SocialPage() {
         )}
       </div>
     </PageShell>
+  )
+}
+
+/**
+ * Section switch: plain words split by hairline bars, no box. The active word lifts a little and sits on
+ * a volt dot; the others stay faint.
+ */
+function SectionTabs({
+  label,
+  value,
+  onChange,
+  labelOf,
+}: {
+  label: string
+  value: Tab
+  onChange: (v: Tab) => void
+  labelOf: (v: Tab) => string
+}) {
+  return (
+    <div role="tablist" aria-label={label} className="mb-5 flex items-center">
+      {TABS.map((v, i) => {
+        const active = v === value
+        return (
+          <div key={v} className="flex flex-1 items-center">
+            {i > 0 && <span aria-hidden className="h-4 w-px bg-line-strong" />}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(v)}
+              className="relative flex h-12 flex-1 flex-col items-center justify-center"
+            >
+              <span
+                className={cn(
+                  'text-[15px] font-semibold transition-[color,transform] duration-200 ease-out',
+                  active ? '-translate-y-1 text-ink' : 'text-ink-faint hover:text-ink-muted',
+                )}
+              >
+                {labelOf(v)}
+              </span>
+              <span
+                aria-hidden
+                className={cn(
+                  'absolute bottom-2 size-1.5 rounded-full bg-volt transition-[opacity,transform] duration-200 ease-out',
+                  active ? 'scale-100 opacity-100' : 'scale-0 opacity-0',
+                )}
+              />
+            </button>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
