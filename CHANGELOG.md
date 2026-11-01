@@ -3,11 +3,16 @@
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH`; `0.x` while pre-launch, each phase bumps MINOR).
 
 ## [Unreleased]
+
+## [0.7.0] - 2026-11-01
 ### Added
 - **Program from the AI coach**: "Suggest a program" (optionally "3 days, dumbbells") returns a structured plan; exercises are matched to the catalog on the server and each day can be saved as a workout template in one tap. Unmatched names are listed, not guessed.
 - **Admin > Free tier**: database and storage size, an estimate of this month's Edge Function calls (AI requests and reminders) against the Supabase Free limits, and registered / active people.
 - **End-to-end tests** (Playwright, iPhone-sized Chromium) for a workout session, habits, water and offline sync; they run in CI against a local Supabase stack.
 - **Maintenance automation**: monthly Dependabot PRs (npm and GitHub Actions, grouped) and a monthly check that the Gemini models in use still exist (a failure e-mails the owner).
+### Changed
+- Dependencies: GitHub Actions (checkout/setup-node v7, Supabase setup-cli v3), TanStack Query 5.105, React Router 7.18, Playwright 1.64, lucide-react 1.x, jest-dom 7 and other minor updates (first Dependabot round).
+- CI: the database + E2E job runs on Ubuntu 24.04.
 ### Changed
 - Faster start: the home page loads as its own chunk and rarely changing libraries are split into long-cached chunks (main script 449 KB -> 243 KB).
 ### Fixed
