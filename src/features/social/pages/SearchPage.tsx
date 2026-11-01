@@ -17,8 +17,8 @@ import {
 } from '../hooks'
 import { GroupCreateSheet } from '../components/GroupSheets'
 import { JoinIntro } from '../components/JoinIntro'
-import { BackLink, ListSkeleton, PersonRow, RowButton } from '../components/parts'
-import { SectionTabs } from '../components/SectionTabs'
+import { BackLink, PersonRow, RowButton } from '../components/parts'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 
 type Segment = 'people' | 'groups' | 'tags'
 const SEGMENTS: readonly Segment[] = ['people', 'groups', 'tags']
@@ -85,7 +85,11 @@ export function SearchPage() {
     <PageShell title={t('search.title')} leading={<BackLink title={t('search.title')} />}>
       <div className="mx-auto max-w-xl pb-6">
         {me.isLoading ? (
-          <ListSkeleton />
+          <GroupedList>
+            <RowSkeleton />
+            <RowSkeleton />
+            <RowSkeleton />
+          </GroupedList>
         ) : me.error ? (
           <ErrorNote error={me.error} />
         ) : !enabled ? (
@@ -150,7 +154,16 @@ function Hint({ children }: { children: ReactNode }) {
   return <p className="max-w-[36ch] px-1 pt-1 text-[14px] leading-relaxed text-ink-muted">{children}</p>
 }
 
-const RowSkeleton = () => <div className="h-14 bg-surface motion-safe:animate-pulse" aria-busy="true" />
+/** Placeholder row for the flat lists: an icon dot and two text lines on the page, no box. */
+const RowSkeleton = () => (
+  <div className="flex h-14 items-center gap-3 px-4 motion-safe:animate-pulse" aria-busy="true">
+    <span className="size-8 shrink-0 rounded-full bg-raised" />
+    <span className="flex-1 space-y-1.5">
+      <span className="block h-3 w-2/5 rounded-full bg-raised" />
+      <span className="block h-2.5 w-1/4 rounded-full bg-raised/70" />
+    </span>
+  </div>
+)
 
 function PeopleResults({ query }: { query: string }) {
   const { t } = useTranslation('social')
@@ -229,7 +242,10 @@ function GroupResults({ query }: { query: string }) {
       </GroupedList>
 
       {mine.isLoading ? (
-        <ListSkeleton rows={2} />
+        <GroupedList>
+          <RowSkeleton />
+          <RowSkeleton />
+        </GroupedList>
       ) : (
         <>
           <ErrorNote error={mine.error ?? respond.error} />

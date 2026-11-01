@@ -62,6 +62,8 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ ...base, kind: 'group_request' })).toBe('/social/g/g?view=members')
     expect(notificationTarget({ ...base, kind: 'follow_request' })).toBe('/social/u/a')
     expect(notificationTarget({ ...base, kind: 'like', post_id: null })).toBeNull()
+    expect(notificationTarget({ ...base, kind: 'mention' })).toBe('/social/p/p')
+    expect(notificationTarget({ ...base, kind: 'mention', post_id: null })).toBeNull()
   })
 })
 

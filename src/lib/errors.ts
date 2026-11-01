@@ -62,6 +62,10 @@ export function classifyError(err: unknown): AppError {
   if (/GROUP_LIMIT/.test(message)) return { key: 'errors.groupLimit', code }
   if (/NOT_GROUP_MEMBER/.test(message)) return { key: 'errors.notGroupMember', code }
   if (/BAD_NAME/.test(message)) return { key: 'errors.badName', code }
+  // Mentions (social_create_post); POST_RATE_LIMITED is RATE_LIMITED re-tagged by the share api (daily limit)
+  if (/MENTION_NOT_ALLOWED/.test(message)) return { key: 'errors.mentionNotAllowed', code }
+  if (/TOO_MANY_MENTIONS/.test(message)) return { key: 'errors.tooManyMentions', code }
+  if (/POST_RATE_LIMITED/.test(message)) return { key: 'errors.postRateLimited', code }
   if (/RATE_LIMITED/.test(message)) return { key: 'errors.rateLimited', code }
   // Codes returned by the ai-coach Edge Function
   if (/UNDERAGE/.test(message)) return { key: 'errors.underage', code } // UNDERAGE and AI_UNDERAGE

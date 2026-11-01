@@ -3,8 +3,8 @@
   "shortName": "Ironmorrow",
   "legal": {
     "controller": "Ironmorrow dev team",
-    "contactEmail": "kvkk@mytrainer-test.com",
-    "noticeVersion": "2026-11-01.2",
+    "contactEmail": "kvkk@ironmorrow-test.com",
+    "noticeVersion": "2026-11-01.3",
     "healthConsentVersion": "2026-10-30",
     "aiConsentVersion": "2026-10-31",
     "socialConsentVersion": "2026-11-01"

@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import * as api from './api'
 import { nextCursor } from './logic'
@@ -14,6 +15,8 @@ export const socialKeys = {
   userPosts: (id: string) => ['social', 'posts', 'user', id] as const,
   groupPosts: (id: string) => ['social', 'posts', 'group', id] as const,
   tagPosts: (tag: string) => ['social', 'posts', 'tag', tag] as const,
+  /** posts the caller is tagged in (Profile > Tagged) */
+  mentioned: ['social', 'posts', 'mentioned'] as const,
   post: (id: string) => ['social', 'post', id] as const,
   profile: (id: string) => ['social', 'profile', id] as const,
   followers: (id: string) => ['social', 'followers', id] as const,
@@ -62,6 +65,8 @@ export const useGroupPosts = (id: string, enabled: boolean) =>
 
 export const useTagPosts = (tag: string, enabled: boolean) =>
   usePosts(socialKeys.tagPosts(tag), (b) => api.fetchTagPosts(tag, b), enabled && tag.length > 0)
+
+export const useMentionedPosts = (enabled: boolean) => usePosts(socialKeys.mentioned, api.fetchMentionedPosts, enabled)
 
 export const usePost = (id: string) =>
   useQuery({ queryKey: socialKeys.post(id), queryFn: () => api.fetchPost(id) })
@@ -163,4 +168,9 @@ export function useSocialAction<A, R = unknown>(
       onDone?.(r, args)
     },
   })
+}
+
+/** A person's posts as a list or a photo grid, from `?view=grid` (list by default). */
+export function usePostLayout(): 'list' | 'grid' {
+  return useSearchParams()[0].get('view') === 'grid' ? 'grid' : 'list'
 }

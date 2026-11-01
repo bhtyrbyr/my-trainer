@@ -5,6 +5,7 @@ import { enUS, tr } from 'date-fns/locale'
 import { Loader2, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { PLAIN_LIST } from '@/components/ui/GroupedList'
 import { cn } from '@/lib/utils'
 import { AdminFrame, Switch } from '../components/AdminFrame'
 import { LIMITS, normalizeEmail, type AccessMode } from '../adminLogic'
@@ -42,7 +43,7 @@ export function AccessPage() {
           <div
             role="radiogroup"
             aria-labelledby="mode-title"
-            className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface"
+            className={PLAIN_LIST}
           >
             {MODES.map((m) => {
               const active = mode === m
@@ -83,7 +84,7 @@ export function AccessPage() {
             })}
           </div>
 
-          <div className="hairline flex items-center gap-3 rounded-[var(--radius-card)] bg-surface py-2 pl-4 pr-2">
+          <div className="-mx-4 -mt-3 flex items-center gap-3 border-b border-line px-4 py-2 lg:mx-0">
             <span className="min-w-0 flex-1 py-2">
               <span className="block text-[15px] font-semibold">{t('access.approval.title')}</span>
               <span className="mt-0.5 block text-[13px] leading-snug text-ink-faint">
@@ -213,7 +214,7 @@ function InviteList({ enforced }: { enforced: boolean }) {
           {t('access.invite.empty')}
         </p>
       ) : (
-        <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
+        <ul className={PLAIN_LIST}>
           {rows.map((r) => {
             const busy = remove.isPending && remove.variables === r.email
             const meta = [

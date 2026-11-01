@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(697);
+select plan(748);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -57,7 +57,9 @@ select is(
         -- social hardening (20261160000000)
         'group_unban', 'group_bans_list',
         -- hashtags (20261170000000)
-        'social_tag_posts', 'social_search_tags')),
+        'social_tag_posts', 'social_search_tags',
+        -- mentions (20261180000000)
+        'social_remove_mention', 'social_mention_candidates', 'social_mentioned_posts')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -1634,6 +1636,11 @@ create function pg_temp.coach_sig(c uuid, t text) returns text language sql as $
   select encode(extensions.hmac(c::text || ':' || t, encode(extensions.hmac('coach-reply-v1', 'coach-test-secret', 'sha256'), 'hex'), 'sha256'), 'hex')
 $f$;
 grant execute on function pg_temp.coach_sig(uuid, text) to authenticated;
+-- replies with a payload (20261190000000): v2 key over "<id>:<content bytes>:<content>:<payload text>"
+create function pg_temp.coach_sig2(c uuid, t text, p text) returns text language sql as $f$
+  select encode(extensions.hmac(c::text || ':' || octet_length(t)::text || ':' || t || ':' || p, encode(extensions.hmac('coach-reply-v2', 'coach-test-secret', 'sha256'), 'hex'), 'sha256'), 'hex')
+$f$;
+grant execute on function pg_temp.coach_sig2(uuid, text, text) to authenticated;
 set local role authenticated;
 set local request.jwt.claims = :'jwt_c';
 select public.record_consent('health_data', 'test');
@@ -1682,7 +1689,51 @@ set local request.jwt.claims = :'jwt_c';
 select ok(public.ai_add_assistant_message(:'conv1', 'Harika gidiyorsun', pg_temp.coach_sig(:'conv1', 'Harika gidiyorsun')) is not null, 'coach: one assistant reply per reserved request is stored');
 select throws_like($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', 'ikinci', pg_temp.coach_sig('00000000-0000-0000-0000-000000000541', 'ikinci')) $$, '%NO_RESERVATION%', 'coach: a second reply needs a second reservation');
 select throws_ok($$ select public.ai_add_assistant_message('00000000-0000-0000-0000-000000000541', repeat('x', 4001), 'x') $$, '22023', 'BAD_CONTENT', 'coach: assistant replies are length-checked');
-select is((select string_agg(role, ',' order by role) from public.ai_messages where conversation_id = :'conv1'), 'assistant,user', 'coach: the conversation holds the question and the reply');
+
+-- program payload (20261190000000): signed together with the content, stored as jsonb
+reset role;
+select ok(
+  to_regprocedure('public.ai_add_assistant_message(uuid, text, text)') is null
+  and (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ai_add_assistant_message') = 1
+  and has_function_privilege('authenticated', 'public.ai_add_assistant_message(uuid, text, text, text)', 'execute')
+  and not has_function_privilege('anon', 'public.ai_add_assistant_message(uuid, text, text, text)', 'execute'),
+  'coach payload: one ai_add_assistant_message (uuid, text, text, text), no ambiguous overload; authenticated only'
+);
+update public.ai_usage set request_count = 2 where user_id = :'uc' and day = current_date;
+set local role authenticated;
+set local request.jwt.claims = :'jwt_c';
+\set cpay '{"program":{"name":"Tüm vücut","notes":null,"days":[{"name":"Gün 1","exercises":[{"exercise_id":"e1","name_en":"Goblet Squat","name_tr":null,"sets":3,"reps":10,"rest_sec":90}]}]},"unmatched":["Cable Crossover"]}'
+select throws_like(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'Program özeti', pg_temp.coach_sig2(:'conv1', 'Program özeti', :'cpay'), replace(:'cpay', '"sets":3', '"sets":30')),
+  '%BAD_SIGNATURE%', 'coach payload: a tampered payload is refused');
+select throws_like(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'Program özeti!', pg_temp.coach_sig2(:'conv1', 'Program özeti', :'cpay'), :'cpay'),
+  '%BAD_SIGNATURE%', 'coach payload: tampered content with a payload is refused');
+select throws_like(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'Program özeti', pg_temp.coach_sig(:'conv1', 'Program özeti'), :'cpay'),
+  '%BAD_SIGNATURE%', 'coach payload: a content-only (v1) signature does not cover an added payload');
+select throws_like(
+  format('select public.ai_add_assistant_message(%L, %L, %L)', :'conv1', 'Program özeti', pg_temp.coach_sig2(:'conv1', 'Program özeti', :'cpay')),
+  '%BAD_SIGNATURE%', 'coach payload: a payload signature cannot store the content without its payload');
+select throws_ok(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'Big', pg_temp.coach_sig2(:'conv1', 'Big', '{"x":"' || repeat('x', 32768) || '"}'), '{"x":"' || repeat('x', 32768) || '"}'),
+  '22023', 'BAD_PAYLOAD', 'coach payload: payloads over 32 KB are refused');
+select throws_ok(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'Liste', pg_temp.coach_sig2(:'conv1', 'Liste', '[1,2]'), '[1,2]'),
+  '22023', 'BAD_PAYLOAD', 'coach payload: the payload must be a JSON object');
+select throws_ok(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'Bozuk', pg_temp.coach_sig2(:'conv1', 'Bozuk', '{nope'), '{nope'),
+  '22023', 'BAD_PAYLOAD', 'coach payload: malformed JSON is refused even when signed');
+select ok(public.ai_add_assistant_message(:'conv1', 'Program özeti', pg_temp.coach_sig2(:'conv1', 'Program özeti', :'cpay'), :'cpay') is not null,
+  'coach payload: a reply with a correctly signed payload is stored');
+select is((select payload from public.ai_messages where conversation_id = :'conv1' and content = 'Program özeti'), :'cpay'::jsonb,
+  'coach payload: the owner reads the stored program back');
+select is((select count(*)::int from public.ai_messages where conversation_id = :'conv1' and payload is null and role = 'assistant'), 1,
+  'coach payload: the earlier reply stored without a payload (old-style call) keeps payload null');
+select throws_ok(
+  format('insert into public.ai_messages (conversation_id, user_id, role, content, payload) values (%L, %L, %L, %L, %L)', :'conv1', :'uc', 'user', 'kart', :'cpay'),
+  '23514', null, 'coach payload: clients cannot attach a payload to their own messages');
+select is((select string_agg(role, ',' order by role) from public.ai_messages where conversation_id = :'conv1'), 'assistant,assistant,user', 'coach: the conversation holds the question and the replies');
 update public.ai_messages set content = 'edited';
 select is((select count(*)::int from public.ai_messages where content = 'edited'), 0, 'coach: messages are immutable');
 update public.ai_conversations set user_id = :'ub' where id = :'conv1';
@@ -1690,6 +1741,10 @@ select is((select user_id from public.ai_conversations where id = :'conv1'), :'u
 
 set local request.jwt.claims = :'jwt_b';
 select is((select count(*)::int from public.ai_conversations) + (select count(*)::int from public.ai_messages), 0, 'coach IDOR: bob reads none of carol''s conversations or messages');
+select is((select count(*)::int from public.ai_messages where payload is not null), 0, 'coach payload IDOR: bob reads no stored program payload');
+select throws_ok(
+  format('select public.ai_add_assistant_message(%L, %L, %L, %L)', :'conv1', 'x', pg_temp.coach_sig2(:'conv1', 'x', '{}'), '{}'),
+  '42501', 'FORBIDDEN', 'coach payload IDOR: bob cannot add a reply with a payload to carol''s conversation');
 select throws_ok(
   $$ insert into public.ai_messages (conversation_id, user_id, role, content) values ('00000000-0000-0000-0000-000000000541', '00000000-0000-0000-0000-00000000000b', 'user', 'hi') $$,
   '42501', 'FORBIDDEN', 'coach IDOR: bob cannot post into carol''s conversation'
@@ -1703,7 +1758,7 @@ select is(
   'coach context IDOR: bob''s context counts only his own sessions'
 );
 set local request.jwt.claims = :'jwt_c';
-select is((select count(*)::int from public.ai_messages where conversation_id = :'conv1'), 2, 'coach IDOR: bob''s deletes left carol''s conversation untouched');
+select is((select count(*)::int from public.ai_messages where conversation_id = :'conv1'), 3, 'coach IDOR: bob''s deletes left carol''s conversation untouched');
 
 select ok(
   (select (c #>> '{workouts,sessions}')::int = 2 and (c #>> '{workouts,sets}')::int = 4
@@ -2766,6 +2821,191 @@ set local role authenticated;
 set local request.jwt.claims = :'k2';
 select is((select array_agg(row(tag, post_count)::text) from public.social_search_tags('leg')), array['(legday,2)'],
   'tag search: counts follow edits (hp1 lost #legday; hans and halil remain)');
+
+-- =============================================================================
+-- Mentions (20261180000000). Fresh public users: mia (author), max (follows mia), mel (mia's friend,
+-- shown as "İlker Mel"), moe (mia follows moe), mae (stranger), mik (blocked by mia), mur (blocks mia),
+-- mona (follows mia, mentions off). Closed group mg (owner mel; members mia, max, mik, mur).
+-- =============================================================================
+reset role;
+set local request.jwt.claims = '';
+\set n1 '00000000-0000-0000-0000-000000000301'
+\set n2 '00000000-0000-0000-0000-000000000302'
+\set n3 '00000000-0000-0000-0000-000000000303'
+\set n4 '00000000-0000-0000-0000-000000000304'
+\set n5 '00000000-0000-0000-0000-000000000305'
+\set n6 '00000000-0000-0000-0000-000000000306'
+\set n7 '00000000-0000-0000-0000-000000000307'
+\set n8 '00000000-0000-0000-0000-000000000308'
+\set q1 '{"sub":"00000000-0000-0000-0000-000000000301","role":"authenticated"}'
+\set q2 '{"sub":"00000000-0000-0000-0000-000000000302","role":"authenticated"}'
+\set q3 '{"sub":"00000000-0000-0000-0000-000000000303","role":"authenticated"}'
+\set q4 '{"sub":"00000000-0000-0000-0000-000000000304","role":"authenticated"}'
+\set q5 '{"sub":"00000000-0000-0000-0000-000000000305","role":"authenticated"}'
+\set q6 '{"sub":"00000000-0000-0000-0000-000000000306","role":"authenticated"}'
+\set q7 '{"sub":"00000000-0000-0000-0000-000000000307","role":"authenticated"}'
+\set q8 '{"sub":"00000000-0000-0000-0000-000000000308","role":"authenticated"}'
+
+select ok(has_function_privilege('authenticated', 'public.social_create_post(text, text, jsonb, text, uuid, uuid[])', 'execute')
+  and has_function_privilege('authenticated', 'public.social_update_settings(boolean, boolean, text, boolean)', 'execute')
+  and has_function_privilege('authenticated', 'public.social_remove_mention(uuid)', 'execute')
+  and has_function_privilege('authenticated', 'public.social_mention_candidates(text, text, uuid)', 'execute')
+  and has_function_privilege('authenticated', 'public.social_mentioned_posts(timestamptz, integer)', 'execute')
+  and not has_function_privilege('anon', 'public.social_create_post(text, text, jsonb, text, uuid, uuid[])', 'execute')
+  and not has_function_privilege('anon', 'public.social_mention_candidates(text, text, uuid)', 'execute')
+  and not has_function_privilege('anon', 'public.social_mentioned_posts(timestamptz, integer)', 'execute')
+  and to_regprocedure('public.social_create_post(text, text, jsonb, text, uuid)') is null
+  and to_regprocedure('public.social_update_settings(boolean, boolean, text)') is null
+  and not has_function_privilege('authenticated', 'private.mention_ok(uuid, uuid, boolean, text, uuid, text)', 'execute')
+  and not has_function_privilege('authenticated', 'private.post_audience_ok(uuid, uuid, boolean, text, uuid, text)', 'execute')
+  and not has_function_privilege('authenticated', 'private.post_mentions_after()', 'execute')
+  and not has_function_privilege('authenticated', 'private.post_mentions_revalidate()', 'execute')
+  and not has_function_privilege('authenticated', 'private.blocks_drop_mentions()', 'execute')
+  and not has_table_privilege('authenticated', 'public.post_mentions', 'select')
+  and not has_table_privilege('anon', 'public.post_mentions', 'select')
+  and (select relrowsecurity from pg_class where oid = 'public.post_mentions'::regclass),
+  'mentions: RPCs granted (old signatures dropped), helpers and table internal, post_mentions has RLS');
+
+update public.app_config set value = 'false'::jsonb where key = 'require_approval';
+insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+select u.id::uuid, u.n || '@example.com', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now()
+  from (values (:'n1', 'mia'), (:'n2', 'max'), (:'n3', 'mel'), (:'n4', 'moe'), (:'n5', 'mae'), (:'n6', 'mik'),
+               (:'n7', 'mur'), (:'n8', 'mona')) u(id, n);
+insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
+select u.id::uuid, u.n || '_m', initcap(u.n), u.id || '/avatar.jpg', now()
+  from (values (:'n1', 'mia'), (:'n2', 'max'), (:'n3', 'mel'), (:'n4', 'moe'), (:'n5', 'mae'), (:'n6', 'mik'),
+               (:'n7', 'mur'), (:'n8', 'mona')) u(id, n);
+update public.profiles set display_name = 'İlker Mel' where user_id = :'n3';
+insert into public.profile_private (user_id, birth_year)
+select u.id::uuid, 1990 from (values (:'n1'), (:'n2'), (:'n3'), (:'n4'), (:'n5'), (:'n6'), (:'n7'), (:'n8')) u(id);
+update public.app_config set value = 'true'::jsonb where key = 'require_approval';
+
+set local role authenticated;
+set local request.jwt.claims = :'q1'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+set local request.jwt.claims = :'q2'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+select public.social_follow(:'n1');
+set local request.jwt.claims = :'q3'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+select public.social_follow(:'n1');
+select public.group_create('Mention Crew', null, 'closed') as mg \gset
+set local request.jwt.claims = :'q4'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+set local request.jwt.claims = :'q5'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+set local request.jwt.claims = :'q6'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+select public.social_follow(:'n1');
+set local request.jwt.claims = :'q7'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+set local request.jwt.claims = :'q8'; select public.social_enable('2026-11-01'); select public.social_update_settings(false);
+select public.social_follow(:'n1');
+select is((select allow_mentions from public.social_profiles), true, 'mentions: allow_mentions defaults to on');
+select public.social_update_settings(null, null, null, false);
+select is((select allow_mentions from public.social_profiles), false, 'mentions: allow_mentions is set through social_update_settings');
+reset role;
+select invite_code as mgcode from public.groups where id = :'mg' \gset
+set local role authenticated;
+set local request.jwt.claims = :'q1'; select public.group_join_by_code(:'mgcode');
+select public.social_follow(:'n3'); select public.social_follow(:'n4');
+set local request.jwt.claims = :'q2'; select public.group_join_by_code(:'mgcode');
+set local request.jwt.claims = :'q6'; select public.group_join_by_code(:'mgcode');
+set local request.jwt.claims = :'q7'; select public.group_join_by_code(:'mgcode');
+select public.social_block(:'n1');
+set local request.jwt.claims = :'q1';
+select public.social_block(:'n6');
+
+-- Candidates (rules a-c per audience)
+select is(array(select user_id from public.social_mention_candidates('', 'followers') order by user_id), array[:'n2', :'n3']::uuid[],
+  'candidates: followers post -> my accepted followers only (moe, blocked, mentions-off excluded)');
+select is(array(select user_id from public.social_mention_candidates('', 'friends') order by user_id), array[:'n3']::uuid[],
+  'candidates: friends post -> mutual follows only');
+select is(array(select user_id from public.social_mention_candidates('', 'public') order by user_id), array[:'n2', :'n3', :'n4']::uuid[],
+  'candidates: public post -> follows in either direction (blocked and mentions-off excluded)');
+select is(array(select user_id from public.social_mention_candidates('', 'group', :'mg') order by user_id), array[:'n2', :'n3']::uuid[],
+  'candidates: group post -> active members only, blocked either way excluded');
+select is(array(select user_id from public.social_mention_candidates('@İLK', 'public')), array[:'n3']::uuid[],
+  'candidates: Turkish-safe prefix of a display-name word, leading @ ignored');
+select is(array(select user_id from public.social_mention_candidates('MO', 'public')), array[:'n4']::uuid[],
+  'candidates: case-insensitive username prefix (mona has mentions off)');
+select ok((select count(*) from public.social_mention_candidates('', 'group')) = 0
+          and (select count(*) from public.social_mention_candidates('', 'bogus')) = 0,
+  'candidates: an invalid audience/group returns nothing');
+
+-- Creating posts with mentions
+select public.social_create_post('text', 'hi @max_m', null, 'followers', null, array[:'n2']::uuid[]) as mp_fol \gset
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'followers', array[:'n4']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: followers-only post refuses someone who does not follow me');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'friends', array[:'n2']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: friends post refuses a one-way follower');
+select public.social_create_post('text', 'friends @mel_m', null, 'friends', null, array[:'n3']::uuid[]) as mp_fr \gset
+select public.social_create_post('text', 'public @moe_m', null, 'public', null, array[:'n4']::uuid[]) as mp_pub \gset
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'public', array[:'n5']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: a stranger cannot be tagged, even on a public post');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, %L, %L::uuid[])', 'text', 'x', 'group', :'mg', array[:'n6']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: someone I blocked cannot be tagged');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, %L, %L::uuid[])', 'text', 'x', 'group', :'mg', array[:'n7']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: someone who blocked me cannot be tagged');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'followers', array[:'n8']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: a user with mentions off cannot be tagged');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'public', array[:'n1']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: the author cannot tag themselves');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, %L, %L::uuid[])', 'text', 'x', 'group', :'mg', array[:'n4']),
+  'P0001', 'MENTION_NOT_ALLOWED', 'mentions: a closed group post refuses non-members (even ones I follow)');
+select public.social_create_post('text', 'crew @max_m', null, 'group', :'mg', array[:'n2', :'n2']::uuid[]) as mp_grp \gset
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'public',
+                        (select array_agg(gen_random_uuid()) from generate_series(1, 11))),
+  '22023', 'TOO_MANY_MENTIONS', 'mentions: at most 10 per post');
+select throws_ok('select * from public.post_mentions', '42501', null, 'mentions: no direct select on post_mentions');
+reset role;
+select ok((select count(*) from public.post_mentions where post_id = :'mp_grp') = 1
+          and (select count(*) from public.posts where author_id = :'n1') = 4,
+  'mentions: duplicates collapse; refused posts are not created');
+select is((select count(*)::int from public.social_notifications where user_id = :'n2' and kind = 'mention' and actor_id = :'n1'), 2,
+  'mentions: each tag notifies the tagged user (kind mention)');
+
+-- Post rows carry mentions
+set local role authenticated;
+set local request.jwt.claims = :'q2';
+select is((select mentions from public.social_post(:'mp_fol')),
+  jsonb_build_array(jsonb_build_object('user_id', :'n2', 'username', 'max_m', 'display_name', 'Max')),
+  'mentions: post rows carry [{user_id, username, display_name}]');
+select is((select mentions -> 0 ->> 'username' from public.social_feed() where id = :'mp_pub'), 'moe_m', 'mentions: feed rows carry mentions');
+select is(array(select id from public.social_mentioned_posts() order by id),
+  array(select unnest(array[:'mp_fol', :'mp_grp']::uuid[]) order by 1), 'mentioned posts: the posts I am tagged in');
+select public.social_block(:'n4');
+select is((select mentions from public.social_feed() where id = :'mp_pub'), '[]'::jsonb, 'mentions: a mention disappears for a viewer who blocked the tagged user');
+set local request.jwt.claims = :'q3';
+select is((select jsonb_array_length(mentions) from public.social_post(:'mp_pub')), 1, 'mentions: other viewers still see it');
+select is(array(select id from public.social_mentioned_posts()), array[:'mp_fr']::uuid[], 'mentioned posts: only my own mentions');
+
+-- Untag
+select is(public.social_remove_mention(:'mp_fol'), false, 'untag: another user cannot remove someone else''s mention');
+set local request.jwt.claims = :'q2';
+select is(public.social_remove_mention(:'mp_fol'), true, 'untag: the tagged user removes themselves');
+reset role;
+select ok(not exists (select 1 from public.post_mentions where post_id = :'mp_fol')
+          and not exists (select 1 from public.social_notifications where user_id = :'n2' and post_id = :'mp_fol' and kind = 'mention'),
+  'untag: the mention and its notification are gone');
+set local role authenticated;
+set local request.jwt.claims = :'q2';
+select is(array(select id from public.social_mentioned_posts()), array[:'mp_grp']::uuid[], 'mentioned posts: an untagged post disappears');
+select public.group_leave(:'mg');
+select is((select count(*)::int from public.social_mentioned_posts()), 0, 'mentioned posts: a post I can no longer view is not returned');
+
+-- Blocks and audience changes
+set local request.jwt.claims = :'q3';
+select public.social_block(:'n1');
+select is((select count(*)::int from public.social_mentioned_posts()), 0, 'mentioned posts: a blocked author''s posts are hidden');
+reset role;
+select is((select count(*)::int from public.post_mentions where post_id = :'mp_fr'), 0, 'mentions: a block removes the mentions between the two users');
+set local role authenticated;
+set local request.jwt.claims = :'q1';
+select public.social_create_post('text', 'two tags', null, 'public', null, array[:'n2', :'n4']::uuid[]) as mp_two \gset
+select public.social_set_audience(:'mp_two', 'followers');
+reset role;
+select is(array(select user_id from public.post_mentions where post_id = :'mp_two'), array[:'n2']::uuid[],
+  'mentions: changing the audience drops mentions that no longer qualify');
+insert into private.social_activity (user_id, kind, period_start, count) values (:'n1', 'mention', private.social_today(), 49)
+on conflict (user_id, kind, period_start) do update set count = 49;
+set local role authenticated;
+set local request.jwt.claims = :'q1';
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, null, %L::uuid[])', 'text', 'x', 'public', array[:'n2', :'n4']),
+  'P0001', 'RATE_LIMITED', 'mentions: at most 50 mentions per author per day');
 
 reset role;
 select * from finish();

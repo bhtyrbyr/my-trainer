@@ -66,6 +66,7 @@ type NotificationLike = {
 export function notificationTarget(n: NotificationLike): string | null {
   switch (n.kind) {
     case 'like':
+    case 'mention':
       return n.post_id ? `/social/p/${n.post_id}` : null
     case 'group_invite':
     case 'group_accepted':

@@ -15,6 +15,9 @@ import type { PostItem, ShareSource } from '../types'
 
 const ME = '00000000-0000-4000-8000-000000000001'
 const OTHER = '00000000-0000-4000-8000-000000000002'
+const ELIF = '00000000-0000-4000-8000-000000000003'
+const MERT = '00000000-0000-4000-8000-000000000004'
+const CAN = '00000000-0000-4000-8000-000000000005'
 const ago = (min: number) => new Date(Date.now() - min * 60_000).toISOString()
 
 function sampleSvg(hue: number, label: string, w = 960, h = 1200): string {
@@ -89,11 +92,24 @@ const post = (p: Partial<PostItem> & Pick<PostItem, 'id' | 'kind'>): PostItem =>
   liked_by_me: false,
   media: [],
   created_at: ago(5),
+  mentions: [],
   ...p,
 })
 
 const POSTS: PostItem[] = [
-  post({ id: 'p1', kind: 'workout', body: 'Bench PR finally. 85 for 5.', payload: workout, like_count: 12, liked_by_me: true, created_at: ago(42) }),
+  post({
+    id: 'p1',
+    kind: 'workout',
+    body: 'Bench PR finally. 85 for 5. Thanks @elif_runs for the spot and @ben_me for the plan #PR (cc @nobody)',
+    payload: workout,
+    like_count: 12,
+    liked_by_me: true,
+    created_at: ago(42),
+    mentions: [
+      { user_id: ELIF, username: 'elif_runs', display_name: 'Elif Demir' },
+      { user_id: ME, username: 'ben_me', display_name: 'Ben' },
+    ],
+  }),
   post({ id: 'p2', kind: 'program', author_id: ME, author_username: 'me', author_display_name: 'Ben', payload: program, audience: 'group', group_id: 'g1', group_name: 'Sabah Koşucuları', created_at: ago(180) }),
   post({ id: 'p3', kind: 'meal', payload: meal, media: [{ path: 'm/2.jpg', width: 1200, height: 900, position: 0 }], audience: 'public', like_count: 3, created_at: ago(60 * 26) }),
   post({
@@ -135,6 +151,13 @@ const PREVIEW: SharePreview = {
   groups: [
     { id: 'g1', name: 'Sabah Koşucuları' },
     { id: 'g2', name: 'Powerlifting TR' },
+  ],
+  // Deniz: mutual follow, both groups; Elif: follows me, group 1; Mert: I follow him; Can: group 2 only
+  people: [
+    { user_id: OTHER, username: 'deniz_k', display_name: 'Deniz Kaya', avatar_path: null, allowed: () => true },
+    { user_id: ELIF, username: 'elif_runs', display_name: 'Elif Demir', avatar_path: null, allowed: (t) => t.audience !== 'friends' && (t.audience !== 'group' || t.groupId === 'g1') },
+    { user_id: MERT, username: 'mert_lifts', display_name: 'Mert Aydın', avatar_path: null, allowed: (t) => t.audience === 'public' },
+    { user_id: CAN, username: 'can_ozt', display_name: 'Can Öztürk', avatar_path: null, allowed: (t) => t.audience === 'group' && t.groupId === 'g2' },
   ],
 }
 

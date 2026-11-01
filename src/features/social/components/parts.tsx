@@ -1,12 +1,12 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell, Loader2, Plus, type LucideIcon } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Bell, Grid3x3, List, Loader2, Plus, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { cn } from '@/lib/utils'
 import type { PostsQuery } from '../hooks'
-import { useUnreadCount } from '../hooks'
+import { usePostLayout, useUnreadCount } from '../hooks'
 import { Avatar } from './Avatar'
 import { PostCard, PostGrid } from './shareBridge'
 
@@ -263,5 +263,47 @@ export function RowButton({
         {children}
       </span>
     </button>
+  )
+}
+
+/** List | grid switch for a person's posts; writes `?view=` and keeps the other search params. */
+export function LayoutToggle({ className }: { className?: string }) {
+  const { t } = useTranslation('share')
+  const layout = usePostLayout()
+  const [, setParams] = useSearchParams()
+  const pick = (v: 'list' | 'grid') =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (v === 'grid') next.set('view', 'grid')
+        else next.delete('view')
+        return next
+      },
+      { replace: true },
+    )
+  return (
+    <div role="radiogroup" aria-label={t('layout.label')} className={cn('-mr-2 flex', className)}>
+      {(
+        [
+          ['list', List],
+          ['grid', Grid3x3],
+        ] as const
+      ).map(([v, Icon]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={layout === v}
+          aria-label={t(`layout.${v}`)}
+          onClick={() => pick(v)}
+          className={cn(
+            'flex size-11 items-center justify-center rounded-full transition-colors',
+            layout === v ? 'text-ink' : 'text-ink-faint hover:text-ink-muted',
+          )}
+        >
+          <Icon className="size-5" aria-hidden />
+        </button>
+      ))}
+    </div>
   )
 }

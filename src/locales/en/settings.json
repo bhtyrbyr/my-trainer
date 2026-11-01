@@ -48,5 +48,7 @@
   "signOut": {
     "title": "Sign out?",
     "body": "You can sign back in with Google at any time."
-  }
+  },
+  "adminBadge_one": "Admin, {{count}} item waiting",
+  "adminBadge_other": "Admin, {{count}} items waiting"
 }

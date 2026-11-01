@@ -32,7 +32,7 @@ export async function listConversations(): Promise<Conversation[]> {
 export async function listMessages(conversationId: string): Promise<CoachMessage[]> {
   const { data, error } = await supabase
     .from('ai_messages')
-    .select('id, role, content, created_at')
+    .select('id, role, content, created_at, payload')
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: true })
     .limit(400)

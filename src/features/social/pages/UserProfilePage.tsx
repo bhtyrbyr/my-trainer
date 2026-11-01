@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Flag, Grid3x3, List, Lock, MoreHorizontal, ShieldOff, UserX } from 'lucide-react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Flag, Lock, MoreHorizontal, ShieldOff, UserX } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
@@ -16,10 +16,10 @@ import { BADGES, isBadgeCode, type BadgeCode } from '@/features/badges/logic'
 import { cn } from '@/lib/utils'
 import * as api from '../api'
 import { compactCount, followAction, followLabel } from '../logic'
-import { useSocialAction, useSocialEnabled, useSocialProfile, useUserPosts } from '../hooks'
+import { usePostLayout, useSocialAction, useSocialEnabled, useSocialProfile, useUserPosts } from '../hooks'
 import type { SocialProfile } from '../schema'
 import { Avatar } from '../components/Avatar'
-import { BackLink, EmptyState, ListSkeleton, PostList, RowButton } from '../components/parts'
+import { BackLink, EmptyState, LayoutToggle, ListSkeleton, PostList, RowButton } from '../components/parts'
 import { ReportSheet } from '../components/ReportSheet'
 
 type FallbackPerson = { display_name: string; username: string; avatar_path: string | null; level: number }
@@ -67,8 +67,7 @@ function ProfileBody({ p }: { p: SocialProfile }) {
   const earned = earnedCodes([...(badges.data ?? []).map((b) => b.badge_code), ...(p.badges ?? [])])
   const respond = useSocialAction((accept: boolean) => api.respondFollow(p.user_id!, accept))
   const self = p.relation === 'self'
-  const [params, setParams] = useSearchParams()
-  const layout = params.get('view') === 'grid' ? 'grid' : 'list'
+  const layout = usePostLayout()
 
   return (
     <div className="space-y-6">
@@ -148,28 +147,7 @@ function ProfileBody({ p }: { p: SocialProfile }) {
           <h3 id="pp-posts" className="section-title px-1">
             {t('social:posts')}
           </h3>
-          {p.can_view && (
-            <div role="radiogroup" aria-label={t('share:layout.label')} className="-mr-2 flex">
-              {(
-                [
-                  ['list', List],
-                  ['grid', Grid3x3],
-                ] as const
-              ).map(([v, Icon]) => (
-                <button
-                  key={v}
-                  type="button"
-                  role="radio"
-                  aria-checked={layout === v}
-                  aria-label={t(`share:layout.${v}`)}
-                  onClick={() => setParams(v === 'grid' ? { view: 'grid' } : {}, { replace: true })}
-                  className={cn('flex size-11 items-center justify-center rounded-full transition-colors', layout === v ? 'text-ink' : 'text-ink-faint hover:text-ink-muted')}
-                >
-                  <Icon className="size-5" aria-hidden />
-                </button>
-              ))}
-            </div>
-          )}
+          {p.can_view && <LayoutToggle />}
         </div>
         {p.can_view ? (
           <PostList
@@ -286,7 +264,7 @@ function ProfileMenu({ profile: p }: { profile: SocialProfile }) {
             onClose={() => setSheet(null)}
           >
             <div className="space-y-4 pb-5">
-              <GroupedList>
+              <GroupedList inset>
                 <ListRow
                   icon={Flag}
                   label={t('social:report.title.user')}

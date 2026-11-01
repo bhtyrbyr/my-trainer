@@ -73,7 +73,8 @@
   "menu": {
     "audience": "Change audience",
     "delete": "Delete post",
-    "report": "Report post"
+    "report": "Report post",
+    "untag": "Remove my tag"
   },
   "delete": {
     "title": "Delete this post?",
@@ -142,5 +143,27 @@
     "label": "Post layout",
     "list": "List",
     "grid": "Grid"
+  },
+  "untag": {
+    "title": "Remove your tag?",
+    "body": "Your name is removed from the tags on this post; the post stays. The author is not notified.",
+    "confirm": "Remove tag"
+  },
+  "mentions": {
+    "hint": "Type @ to tag someone",
+    "suggestions": "People you can tag",
+    "none": "No match. You can tag people you follow or who follow you.",
+    "noneFriends": "No match. With the Friends audience only mutual follows can be tagged.",
+    "noneGroup": "No match. In a group post only members of that group can be tagged.",
+    "full": "You can tag at most {{count}} people.",
+    "tagged": "Tagged",
+    "of": "{{n}}/{{max}}",
+    "remove": "Remove tag @{{name}}",
+    "notAllowed": {
+      "public": "{{names}} can't be tagged in this post and won't be tagged when you share.",
+      "followers": "{{names}} can't see a followers-only post, so won't be tagged when you share.",
+      "friends": "{{names}} is not a friend (mutual follow), so won't be tagged when you share.",
+      "group": "{{names}} is not a member of this group, so won't be tagged when you share."
+    }
   }
 }

@@ -6,7 +6,8 @@ import { saveTemplate } from '@/features/workouts/api'
 import * as api from './api'
 import { programExerciseIds, programToTemplates } from './payload'
 import { useSharePreview } from './previewContext'
-import type { AudienceChoice, ProgramPayload } from './types'
+import { audienceReady } from './audience'
+import type { AudienceChoice, MentionCandidate, ProgramPayload } from './types'
 
 export const shareKeys = {
   all: ['share'] as const,
@@ -73,6 +74,57 @@ export function useSetAudience() {
   const refresh = useRefreshFeeds()
   return useMutation({
     mutationFn: ({ postId, target }: { postId: string; target: AudienceChoice }) => (preview ? sleep(300) : api.setAudience(postId, target)),
+    onSuccess: () => void refresh(),
+  })
+}
+
+/** Debounced elsewhere; `query` without the `@`. Keys live under the non-persisted 'social' root. */
+export function useMentionCandidates(query: string | null, target: AudienceChoice) {
+  const preview = useSharePreview()
+  const q = useQuery({
+    queryKey: ['social', 'mention-candidates', target.audience, target.groupId, query ?? ''] as const,
+    queryFn: async (): Promise<MentionCandidate[]> => {
+      if (preview) {
+        const needle = (query ?? '').toLocaleLowerCase('tr')
+        return (preview.people ?? [])
+          .filter((p) => p.allowed(target))
+          .filter((p) => !needle || p.username.startsWith(needle) || p.display_name.toLocaleLowerCase('tr').split(/\s+/).some((w) => w.startsWith(needle)))
+          .slice(0, 8)
+      }
+      return api.mentionCandidates(query ?? '', target)
+    },
+    enabled: query !== null && audienceReady(target),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+    meta: { persist: false },
+  })
+  return q
+}
+
+/** User ids among `people` that may not be tagged for `target` (re-checked whenever the audience changes). */
+export function useMentionCheck(people: { user_id: string; username: string }[], target: AudienceChoice) {
+  const preview = useSharePreview()
+  const ids = people.map((p) => p.user_id).sort()
+  return useQuery({
+    queryKey: ['social', 'mention-check', target.audience, target.groupId, ids] as const,
+    queryFn: async (): Promise<string[]> => {
+      if (preview) {
+        return people.filter((p) => !(preview.people ?? []).find((x) => x.user_id === p.user_id)?.allowed(target)).map((p) => p.user_id)
+      }
+      return api.disallowedMentions(people, target)
+    },
+    enabled: people.length > 0 && audienceReady(target),
+    staleTime: 30_000,
+    meta: { persist: false },
+  })
+}
+
+/** The viewer removes their own tag from a post, then every feed refreshes. */
+export function useRemoveMention() {
+  const preview = useSharePreview()
+  const refresh = useRefreshFeeds()
+  return useMutation({
+    mutationFn: async (postId: string) => (preview ? (await sleep(300), true) : api.removeMyMention(postId)),
     onSuccess: () => void refresh(),
   })
 }

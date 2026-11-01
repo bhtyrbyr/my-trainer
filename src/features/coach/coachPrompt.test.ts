@@ -143,5 +143,19 @@ describe('signCoachReply', () => {
     expect(sig).toMatch(/^[0-9a-f]{64}$/)
     expect(sig).toBe('84ae3011a3f4964ad48b06018d1c99c8ce43662f00c8f6f8aaabf65a9b5eb0af')
     expect(await signCoachReply('coach-test-secret', '00000000-0000-0000-0000-000000000541', 'Harika!')).not.toBe(sig)
+    expect(await signCoachReply('coach-test-secret', '00000000-0000-0000-0000-000000000541', 'Harika', null)).toBe(sig)
+  })
+  it('signs a payload with the v2 key over "<id>:<content bytes>:<content>:<payload>" (matches the SQL check)', async () => {
+    // reference computed with pgcrypto: encode(hmac(id||':'||octet_length(c)||':'||c||':'||p,
+    //   encode(hmac('coach-reply-v2', secret, 'sha256'), 'hex'), 'sha256'), 'hex'); "ğ" is 2 UTF-8 bytes
+    const id = '00000000-0000-0000-0000-000000000541'
+    const payload = '{"b":1,"a":["ş"]}'
+    const sig = await signCoachReply('coach-test-secret', id, 'Harika ğ', payload)
+    expect(sig).toBe('2ccb792060ae02f167ca2b8028061ce8ef7eb87da4a5c274a0929160401228e1')
+    // tampering with either part, or moving text across the boundary, changes it
+    expect(await signCoachReply('coach-test-secret', id, 'Harika ğ', '{"a":["ş"],"b":1}')).not.toBe(sig)
+    expect(await signCoachReply('coach-test-secret', id, 'Harika g', payload)).not.toBe(sig)
+    expect(await signCoachReply('coach-test-secret', id, 'Harika ğ:{"b":1,', '"a":["ş"]}')).not.toBe(sig)
+    expect(await signCoachReply('coach-test-secret', id, 'Harika ğ')).not.toBe(sig)
   })
 })

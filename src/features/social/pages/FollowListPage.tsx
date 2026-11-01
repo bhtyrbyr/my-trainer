@@ -5,12 +5,15 @@ import { Users } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { GroupedList, Segmented } from '@/components/ui/GroupedList'
+import { GroupedList } from '@/components/ui/GroupedList'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import { useAuth } from '@/features/auth/AuthProvider'
 import * as api from '../api'
 import { useFollowers, useFollowing, useSocialAction, useSocialProfile } from '../hooks'
 import type { Person } from '../schema'
 import { BackLink, EmptyState, ListSkeleton, PersonRow, RowButton } from '../components/parts'
+
+const LISTS = ['followers', 'following'] as const
 
 /** /social/u/:id/followers | following. On your own followers list each row can be removed. */
 export function FollowListPage() {
@@ -41,14 +44,12 @@ export function FollowListPage() {
       }
     >
       <div className="mx-auto max-w-xl space-y-5 pb-6">
-        <Segmented
+        <SectionTabs
           label={t('profile.lists')}
+          options={LISTS}
           value={mode}
           onChange={(v) => navigate(`/social/u/${id}/${v}`, { replace: true })}
-          options={[
-            { value: 'followers', label: t('profile.followersList') },
-            { value: 'following', label: t('profile.followingList') },
-          ]}
+          labelOf={(v) => t(`profile.${v}List`)}
         />
         <ErrorNote error={q.error} />
         {q.isLoading ? (

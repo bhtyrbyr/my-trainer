@@ -7,15 +7,16 @@ import { ArrowLeft, Check, Inbox, Loader2, Trash2, X } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { PLAIN_LIST } from '@/components/ui/GroupedList'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import { avatarUrl } from '@/features/profile/api'
-import { cn } from '@/lib/utils'
 import type { RegistrationStatus } from '@/lib/database.types'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useDeleteRejectedUser, useRegistrations, useSetRegistrationStatus } from '../hooks'
 
 const TABS: RegistrationStatus[] = ['pending', 'approved', 'rejected']
 
-/** Admin inbox for registrations. Segmented filter, one row per request, approve/reject inline. */
+/** Admin inbox for registrations. Section tabs per status, one row per request, approve/reject inline. */
 export function RegistrationRequestsPage() {
   const { t, i18n } = useTranslation(['admin', 'common'])
   const [tab, setTab] = useState<RegistrationStatus>('pending')
@@ -35,22 +36,13 @@ export function RegistrationRequestsPage() {
         </Link>
       }
     >
-      <div role="tablist" aria-label={t('admin:requests.title')} className="hairline mb-4 grid grid-cols-3 rounded-full bg-surface p-1">
-        {TABS.map((s) => (
-          <button
-            key={s}
-            role="tab"
-            aria-selected={tab === s}
-            onClick={() => setTab(s)}
-            className={cn(
-              'h-9 rounded-full text-sm font-medium transition-colors',
-              tab === s ? 'bg-raised text-ink' : 'text-ink-muted hover:text-ink',
-            )}
-          >
-            {t(`admin:status.${s}`)}
-          </button>
-        ))}
-      </div>
+      <SectionTabs
+        label={t('admin:requests.title')}
+        options={TABS}
+        value={tab}
+        onChange={setTab}
+        labelOf={(s) => t(`admin:status.${s}`)}
+      />
 
       <ErrorNote error={error ?? mutation.error ?? deletion.error} className="mb-4" />
 
@@ -62,7 +54,7 @@ export function RegistrationRequestsPage() {
           <p className="text-sm">{t(`admin:requests.empty.${tab}`)}</p>
         </div>
       ) : (
-        <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
+        <ul className={PLAIN_LIST}>
           {data.map((r) => {
             const busy =
               (mutation.isPending && mutation.variables?.userId === r.user_id) ||
@@ -72,7 +64,7 @@ export function RegistrationRequestsPage() {
             const confirming = confirmId === r.user_id
             return (
               <li key={r.user_id}>
-              <div className="flex items-center gap-3 p-3">
+              <div className="flex items-center gap-3 px-4 py-3">
                 {src ? <img src={src} alt="" className="size-11 rounded-full object-cover" /> : <span className="size-11 rounded-full bg-raised" />}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-semibold leading-tight">{r.display_name}</p>
@@ -125,7 +117,7 @@ export function RegistrationRequestsPage() {
                 </div>
               </div>
               {confirming && (
-                <div className="mx-3 mb-3 space-y-3 rounded-[var(--radius-input)] border border-danger/30 bg-danger/10 p-3">
+                <div className="mx-4 mb-3 space-y-3 rounded-[var(--radius-input)] border border-danger/30 bg-danger/10 p-3">
                   <p className="text-sm text-ink">
                     {t('admin:delete.body', { name: r.display_name })}
                   </p>

@@ -16,7 +16,7 @@ import {
   RowButton,
   ShareFab,
 } from '../components/parts'
-import { SectionTabs } from '../components/SectionTabs'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import { ComposerSheet } from '../components/shareBridge'
 
 type Tab = 'home' | 'discover'

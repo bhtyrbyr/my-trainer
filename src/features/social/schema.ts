@@ -26,6 +26,8 @@ export type MySocial = {
   discoverable: boolean
   bio: string | null
   enabled_at: string | null
+  /** others may tag the caller in posts (default true) */
+  allow_mentions: boolean
 }
 
 export type Relation = 'self' | 'friends' | 'following' | 'requested' | 'none'

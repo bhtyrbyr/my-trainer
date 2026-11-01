@@ -5,16 +5,19 @@ import {
   PROGRAM_MAX_EXERCISES,
   applyMatches,
   buildProgramPrompt,
+  looseNamePattern,
   nameScore,
   nameTokens,
   normalizeProgram,
   parseModelJson,
   pickBestMatch,
+  COACH_PAYLOAD_BYTES,
+  programPayload,
   programSummary,
   searchTokens,
   type CatalogCandidate,
 } from '../../../supabase/functions/ai-coach/coach'
-import { PROGRAM_SLOT, programRequestOf, programTemplateName } from './logic'
+import { PROGRAM_SLOT, programFromPayload, programRequestOf, programTemplateName } from './logic'
 
 const fallback = { name: 'Program', day: (n: number) => `Day ${n}` }
 const ex = (name_en: string, sets = 3, reps = 10, rest_sec = 90) => ({ name_en, sets, reps, rest_sec })
@@ -101,6 +104,32 @@ describe('name matching', () => {
     expect(pickBestMatch('Overhead Press', [row('3', 'Leg Press')])).toBeNull()
     expect(pickBestMatch('Squat', [])).toBeNull()
   })
+  it('treats separated and joined spellings of a compound as the same word', () => {
+    expect(nameScore('pushup', 'push up')).toBe(1)
+    expect(nameScore('Push Up', 'Pushups')).toBe(1)
+    expect(nameScore('Wide Grip Pushup', 'Push-Up, Wide Grip')).toBe(1)
+    expect(nameScore('Push-Up Wide Grip', 'Wide-Grip Pushups')).toBe(1)
+    expect(nameScore('Chinup', 'Chin-Up')).toBe(1)
+    expect(nameScore('Incline Pushup', 'Incline Push-Up')).toBe(1)
+    expect(nameScore('Dumbbell Pushup', 'Push-Up')).toBeCloseTo(2 / 3)
+    expect(pickBestMatch('Pushups', [row('1', 'Push Press'), row('2', 'Push-Up'), row('3', 'Pull-Up')])?.id).toBe('2')
+    expect(pickBestMatch('Wide Grip Pushup', [row('1', 'Push-Up'), row('2', 'Push-Up, Wide Grip')])?.id).toBe('2')
+  })
+  it('does not invent matches from joined words', () => {
+    // joining only ever produces a word the other name has; it never splits or merges into new words
+    expect(nameScore('Pushup', 'Push Press')).toBe(0)
+    expect(nameScore('Pullup', 'Push-Up')).toBe(0)
+    expect(nameScore('Situp', 'Sit Squat Up')).toBe(0)
+    expect(nameScore('Legpress', 'Bench Press')).toBe(0)
+    expect(pickBestMatch('Pushup', [row('1', 'Push Press'), row('2', 'Pull-Up')])).toBeNull()
+    expect(pickBestMatch('Pullup', [row('1', 'Push-Up')])).toBeNull()
+  })
+  it('builds a loose prefilter regex that finds separated spellings only', () => {
+    const re = new RegExp(looseNamePattern('pushup'), 'i')
+    expect(looseNamePattern('pushup')).toBe('p[^a-z0-9]*u[^a-z0-9]*s[^a-z0-9]*h[^a-z0-9]*u[^a-z0-9]*p')
+    for (const n of ['Pushup', 'Push-Up', 'Push Ups', 'Incline push - up']) expect(re.test(n)).toBe(true)
+    for (const n of ['Push Press', 'Pull-Up', 'Push Sled Up']) expect(re.test(n)).toBe(false)
+  })
   it('prefers the caller’s custom row on a full tie', () => {
     expect(pickBestMatch('Goblet Squat', [row('a', 'Goblet Squat'), row('b', 'goblet squat', 'custom')])?.id).toBe('b')
   })
@@ -183,5 +212,31 @@ describe('programRequestOf', () => {
   })
   it('handles a wish in the middle of a template', () => {
     expect(programRequestOf('Plan: legs please!', [{ ask: 'Plan.', askWith: `Plan: ${PROGRAM_SLOT}!` }])).toBe('legs please')
+  })
+})
+
+describe('stored program payload (reload fallback)', () => {
+  const program = {
+    name: 'Full body',
+    notes: null,
+    days: [{ name: 'Day 1', exercises: [{ exercise_id: 'e1', name_en: 'Goblet Squat', name_tr: null, sets: 3, reps: 10, rest_sec: 90 }] }],
+  }
+  it('round-trips what the Edge Function stores', () => {
+    const text = programPayload(program, ['Cable Crossover'])
+    expect(text).not.toBeNull()
+    expect(programFromPayload(JSON.parse(text!))).toEqual({ program, unmatched: ['Cable Crossover'] })
+  })
+  it('stores nothing for an empty or oversized program', () => {
+    expect(programPayload({ ...program, days: [] }, [])).toBeNull()
+    expect(programPayload(program, ['x'.repeat(COACH_PAYLOAD_BYTES)])).toBeNull()
+  })
+  it('renders only a valid payload with days', () => {
+    expect(programFromPayload(null)).toBeNull()
+    expect(programFromPayload(undefined)).toBeNull()
+    expect(programFromPayload('{"program":{}}')).toBeNull()
+    expect(programFromPayload({ program: { ...program, days: [] }, unmatched: [] })).toBeNull()
+    expect(programFromPayload({ program, unmatched: 'nope' })).toBeNull()
+    expect(programFromPayload({ program: { ...program, days: [{ name: 'D', exercises: [{ exercise_id: 'e1', sets: '3' }] }] }, unmatched: [] })).toBeNull()
+    expect(programFromPayload({ unmatched: [] })).toBeNull()
   })
 })

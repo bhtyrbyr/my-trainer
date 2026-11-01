@@ -1,11 +1,23 @@
-import type { ComponentType, ReactNode } from 'react'
+import { Children, type ComponentType, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
- * iOS inset grouped list: an optional section title (the one section-header style), one surface
- * container with hairline dividers, and an optional footnote under it. Rows are ListRow.
+ * Container classes of the plain list, for hand-rolled `<ul>`s that need their own row markup (admin
+ * inboxes, notifications). Rows should use `px-4` so their text sits on the page margin.
+ */
+export const PLAIN_LIST = '-mx-4 divide-y divide-line border-y border-line lg:mx-0'
+
+/**
+ * Plain list (the default): an optional section title (the one section-header style), rows straight on
+ * the page background split by hairlines, and an optional footnote. On a phone the rows bleed to the
+ * screen edge while their 16 px padding keeps the text on the page margin; from lg up (two-column
+ * layouts) the list stays inside its column. An empty list renders only its title and footnote.
+ * Rows are ListRow.
+ *
+ * `inset`: the iOS inset-grouped card (surface, hairline border, radius). Only for lists that sit on
+ * another surface, e.g. inside a bottom sheet, where a bleed would not line up with the sheet padding.
  */
 export function GroupedList({
   title,
@@ -13,23 +25,38 @@ export function GroupedList({
   children,
   className,
   id,
+  inset,
 }: {
   title?: ReactNode
   footer?: ReactNode
   children: ReactNode
   className?: string
   id?: string
+  inset?: boolean
 }) {
   const titleId = id ? `${id}-title` : undefined
+  const empty = !inset && Children.toArray(children).length === 0
+  const textPad = inset ? 'px-4' : 'px-0 lg:px-4'
   return (
     <section className={cn('space-y-2', className)} aria-labelledby={title ? titleId : undefined}>
       {title && (
-        <h2 id={titleId} className="section-title px-4">
+        <h2 id={titleId} className={cn('section-title', textPad)}>
           {title}
         </h2>
       )}
-      <div className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">{children}</div>
-      {footer && <p className="px-4 text-[12px] leading-snug text-ink-faint">{footer}</p>}
+      {!empty && (
+        <div
+          className={cn(
+            'divide-y divide-line',
+            inset
+              ? 'hairline overflow-hidden rounded-[var(--radius-card)] bg-surface'
+              : PLAIN_LIST,
+          )}
+        >
+          {children}
+        </div>
+      )}
+      {footer && <p className={cn('text-[12px] leading-snug text-ink-faint', textPad)}>{footer}</p>}
     </section>
   )
 }

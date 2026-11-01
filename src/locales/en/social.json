@@ -169,7 +169,8 @@
       "like": "{{name}} liked your post",
       "group_invite": "{{name}} invited you to {{group}}",
       "group_request": "{{name}} asked to join {{group}}",
-      "group_accepted": "You are now a member of {{group}}"
+      "group_accepted": "You are now a member of {{group}}",
+      "mention": "{{name}} tagged you in a post"
     }
   },
   "groups": {
@@ -286,11 +287,10 @@
     "leave": "Leave and delete my data",
     "leaveConfirmTitle": "Leave Community and delete?",
     "leaveConfirmBody": "Your posts and their photos, likes, follows in both directions, group memberships (owned groups pass to another member) and notifications are deleted.",
-    "leaveIrreversible": "This cannot be undone."
-  },
-  "me": {
-    "posts": "My posts",
-    "counts": "{{posts}} posts · {{followers}} followers · {{following}} following"
+    "leaveIrreversible": "This cannot be undone.",
+    "mentions": "Tagging",
+    "allowMentions": "Allow mentions",
+    "allowMentionsHint": "People you follow or who follow you, and your group members, can tag you in posts."
   },
   "admin": {
     "title": "Reports",

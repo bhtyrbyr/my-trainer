@@ -73,7 +73,8 @@
   "menu": {
     "audience": "Görebilenleri değiştir",
     "delete": "Gönderiyi sil",
-    "report": "Gönderiyi şikâyet et"
+    "report": "Gönderiyi şikâyet et",
+    "untag": "Etiketten beni çıkar"
   },
   "delete": {
     "title": "Gönderi silinsin mi?",
@@ -142,5 +143,27 @@
     "label": "Gönderi görünümü",
     "list": "Liste",
     "grid": "Izgara"
+  },
+  "untag": {
+    "title": "Etiketten çıkılsın mı?",
+    "body": "Adın bu gönderideki etiketlerden kaldırılır; gönderi yerinde kalır. Paylaşan kişiye haber verilmez.",
+    "confirm": "Etiketten çık"
+  },
+  "mentions": {
+    "hint": "Kişi etiketlemek için @ yaz",
+    "suggestions": "Etiketlenebilecek kişiler",
+    "none": "Eşleşen kimse yok. Takip ettiğin ya da seni takip eden kişileri etiketleyebilirsin.",
+    "noneFriends": "Eşleşen kimse yok. Arkadaşlar kitlesinde yalnızca karşılıklı takipleştiğin kişiler etiketlenebilir.",
+    "noneGroup": "Eşleşen kimse yok. Grup gönderisinde yalnızca grubun üyeleri etiketlenebilir.",
+    "full": "En fazla {{count}} kişi etiketleyebilirsin.",
+    "tagged": "Etiketlenenler",
+    "of": "{{n}}/{{max}}",
+    "remove": "@{{name}} etiketini kaldır",
+    "notAllowed": {
+      "public": "{{names}} bu gönderide etiketlenemez; paylaşınca etiketlenmeyecek.",
+      "followers": "{{names}} takipçi gönderisini göremediği için etiketlenemez; paylaşınca etiketlenmeyecek.",
+      "friends": "{{names}} arkadaşın (karşılıklı takip) olmadığı için etiketlenemez; paylaşınca etiketlenmeyecek.",
+      "group": "{{names}} bu grubun üyesi olmadığı için etiketlenemez; paylaşınca etiketlenmeyecek."
+    }
   }
 }

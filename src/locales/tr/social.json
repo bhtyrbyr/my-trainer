@@ -169,7 +169,8 @@
       "like": "{{name}} gönderini beğendi",
       "group_invite": "{{name}} seni {{group}} grubuna davet etti",
       "group_request": "{{name}}, {{group}} grubuna katılmak istiyor",
-      "group_accepted": "Artık {{group}} grubunun üyesisin"
+      "group_accepted": "Artık {{group}} grubunun üyesisin",
+      "mention": "{{name}} seni bir gönderide etiketledi"
     }
   },
   "groups": {
@@ -286,11 +287,10 @@
     "leave": "Ayrıl ve verilerimi sil",
     "leaveConfirmTitle": "Topluluktan ayrılıp her şey silinsin mi?",
     "leaveConfirmBody": "Gönderilerin ve fotoğrafları, beğenilerin, iki yöndeki takipler, grup üyeliklerin (sahibi olduğun gruplar başka bir üyeye geçer) ve bildirimlerin silinir.",
-    "leaveIrreversible": "Bu geri alınamaz."
-  },
-  "me": {
-    "posts": "Gönderilerim",
-    "counts": "{{posts}} gönderi · {{followers}} takipçi · {{following}} takip"
+    "leaveIrreversible": "Bu geri alınamaz.",
+    "mentions": "Etiketleme",
+    "allowMentions": "Beni etiketleyebilsinler",
+    "allowMentionsHint": "Takip ettiğin ya da seni takip eden kişiler ve grup arkadaşların seni gönderilerde etiketleyebilir."
   },
   "admin": {
     "title": "Şikâyetler",

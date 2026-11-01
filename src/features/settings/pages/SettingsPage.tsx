@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Compass, Info, LogOut, Mail, Scale, Trash2, Trophy, UsersRound } from 'lucide-react'
+import { Compass, Info, LogOut, Mail, Scale, ShieldCheck, Trash2, Trophy, UsersRound } from 'lucide-react'
 import { BackTitle } from '@/components/layout/BackTitle'
 import { PageShell } from '@/components/layout/PageShell'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { GroupedList, ListRow, Segmented } from '@/components/ui/GroupedList'
 import { Switch } from '@/components/ui/Switch'
+import { useErrorReports, usePendingCount } from '@/features/admin/hooks'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { NotificationsSection } from '@/features/notifications/NotificationsSection'
 import { DeleteAccountSheet, PrivacySection } from '@/features/privacy/components/PrivacySection'
@@ -19,11 +20,12 @@ import { useTour } from '@/features/tour/tourContext'
 import { useUserSettings } from '../hooks'
 
 /**
- * Settings (pushed from the Profile hub). iOS inset-grouped: Preferences, Notifications, Privacy and
- * data, Account, About. Every choice is a row; two-to-three-way choices are segmented controls.
+ * Settings (pushed from the Profile header's gear). Plain grouped lists: Admin (admins only),
+ * Preferences, Notifications, Privacy and data, Account, About. Every choice is a row; two-to-three-way
+ * choices are segmented controls.
  */
 export function SettingsPage() {
-  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'legal', 'profile', 'social', 'tour'])
+  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'legal', 'profile', 'social', 'tour', 'admin'])
   const tour = useTour()
   const { user, profile, signOut } = useAuth()
   const sync = useSyncState()
@@ -52,6 +54,8 @@ export function SettingsPage() {
     <PageShell title={t('settings:title')} leading={<BackTitle to="/me" label={t('profile:title')} title={t('settings:title')} />}>
       <div className="mx-auto max-w-xl space-y-7 pb-6">
         <ErrorNote error={updateSettings.error} />
+
+        {profile?.role === 'admin' && <AdminRow />}
 
         <GroupedList title={t('settings:groups.preferences')} footer={t('settings:units.hint')}>
           <PrefRow label={t('settings:language')}>
@@ -98,7 +102,7 @@ export function SettingsPage() {
               icon={Trophy}
               label={t('settings:leaderboard.label')}
               hint={t('settings:leaderboard.hint')}
-              className="py-1.5 pr-2"
+              className="py-1.5"
               trailing={
                 <Switch
                   checked={visible}
@@ -145,6 +149,25 @@ export function SettingsPage() {
       />
       <DeleteAccountSheet open={sheet === 'delete'} onClose={() => setSheet(null)} />
     </PageShell>
+  )
+}
+
+/** Admin hub entry with the waiting count (registration requests + open error reports). Admins only. */
+function AdminRow() {
+  const { t } = useTranslation(['settings', 'admin'])
+  const pending = usePendingCount()
+  const openReports = useErrorReports('open')
+  const count = (pending.data ?? 0) + (openReports.data?.length ?? 0)
+  return (
+    <GroupedList>
+      <ListRow
+        icon={ShieldCheck}
+        label={t('admin:section')}
+        to="/admin"
+        badge={count}
+        aria-label={count > 0 ? t('settings:adminBadge', { count }) : undefined}
+      />
+    </GroupedList>
   )
 }
 

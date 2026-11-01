@@ -96,7 +96,10 @@
     "badName": "Ad 3 ile 60 karakter arasında olmalı.",
     "groupBanned": "Bu gruptan çıkarıldın; yeniden katılmak için bir yöneticinin engeli kaldırması gerekir.",
     "userBanned": "Bu kişi gruptan çıkarılmış; önce engelini kaldır.",
-    "groupCodeNotFound": "Bu davet kodu geçersiz ya da yenilenmiş. Grup yöneticisinden yeni bağlantı iste."
+    "groupCodeNotFound": "Bu davet kodu geçersiz ya da yenilenmiş. Grup yöneticisinden yeni bağlantı iste.",
+    "mentionNotAllowed": "Etiketlediğin kişilerden biri bu gönderide etiketlenemiyor. Etiketleri ya da kitleyi değiştirip tekrar dene.",
+    "tooManyMentions": "Bir gönderide en fazla 10 kişi etiketleyebilirsin.",
+    "postRateLimited": "Bugünkü paylaşım ya da etiketleme sınırına ulaştın (günde 20 gönderi, 50 etiket). Yarın tekrar dene."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { StreakFlame } from '@/features/gamification/StreakFlame'
-
-const POINTS_PER_LEVEL = 1000
+import { levelProgress } from '@/features/gamification/level'
 
 /**
  * Level and streak as one quiet status line above the hero (they used to be a second hero). Opens the
@@ -10,8 +9,7 @@ const POINTS_PER_LEVEL = 1000
  */
 export function ScoreLine({ points, streak, base = '' }: { points: number; streak: number; base?: string }) {
   const { t, i18n } = useTranslation('common')
-  const level = Math.floor(points / POINTS_PER_LEVEL) + 1
-  const into = points % POINTS_PER_LEVEL
+  const { level, toNext, ratio } = levelProgress(points)
   const nf = new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr')
   return (
     <Link
@@ -23,11 +21,11 @@ export function ScoreLine({ points, streak, base = '' }: { points: number; strea
         <span className="flex items-baseline justify-between gap-2 text-[13px]">
           <span className="font-semibold text-ink">{t('level', { n: level })}</span>
           <span className="tabular truncate text-ink-muted">
-            {nf.format(points)} {t('score.points')} · {t('score.toNextLevel', { n: POINTS_PER_LEVEL - into })}
+            {nf.format(points)} {t('score.points')} · {t('score.toNextLevel', { n: toNext })}
           </span>
         </span>
         <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-raised" aria-hidden>
-          <span className="block h-full rounded-full bg-volt" style={{ width: `${(into / POINTS_PER_LEVEL) * 100}%` }} />
+          <span className="block h-full rounded-full bg-volt" style={{ width: `${ratio * 100}%` }} />
         </span>
       </span>
       <span className="flex shrink-0 items-center gap-1.5 border-l border-line pl-4">

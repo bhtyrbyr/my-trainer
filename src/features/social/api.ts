@@ -31,7 +31,7 @@ function check<T>(r: { data: T | null; error: unknown }): T {
 export async function fetchMySocial(): Promise<MySocial | null> {
   const r = await supabase
     .from('social_profiles')
-    .select('enabled, is_private, discoverable, bio, enabled_at')
+    .select('enabled, is_private, discoverable, bio, enabled_at, allow_mentions')
     .maybeSingle()
   return check(r)
 }
@@ -49,12 +49,14 @@ export async function updateSocialSettings(p: {
   isPrivate?: boolean
   discoverable?: boolean
   bio?: string
+  allowMentions?: boolean
 }): Promise<void> {
   check(
     await supabase.rpc('social_update_settings', {
       p_is_private: p.isPrivate,
       p_discoverable: p.discoverable,
       p_bio: p.bio,
+      p_allow_mentions: p.allowMentions,
     }),
   )
 }
@@ -83,6 +85,10 @@ export async function fetchGroupPosts(group: string, before: Before): Promise<Po
 /** Posts with one hashtag (same row shape and keyset as social_discover); `tag` is already normalised. */
 export async function fetchTagPosts(tag: string, before: Before): Promise<PostItem[]> {
   return check(await supabase.rpc('social_tag_posts', { p_tag: tag, p_before: before, p_limit: PAGE_SIZE })) ?? []
+}
+/** Posts the caller is tagged in (caller only; still only posts the caller may view), newest first. */
+export async function fetchMentionedPosts(before: Before): Promise<PostItem[]> {
+  return check(await supabase.rpc('social_mentioned_posts', { p_before: before, p_limit: PAGE_SIZE })) ?? []
 }
 export async function fetchPost(id: string): Promise<PostItem | null> {
   return (check(await supabase.rpc('social_post', { p_post: id })) ?? [])[0] ?? null

@@ -83,7 +83,7 @@ const OWN_TABLES = [
   'session_exercises', 'session_sets', 'cardio_entries', 'personal_records', 'body_metrics', 'foods', 'meal_entries',
   'sleep_entries', 'water_entries', 'progress_photos', 'point_events', 'ai_usage', 'habits', 'habit_logs', 'todos', 'todo_completions',
   'social_profiles', 'follows', 'blocks', 'posts', 'post_media', 'post_likes', 'groups', 'group_members', 'reports',
-  'social_notifications',
+  'social_notifications', 'ai_conversations', 'ai_messages',
 ] as const
 
 /** KVKK art. 11: everything we hold about the caller, as one JSON document. */

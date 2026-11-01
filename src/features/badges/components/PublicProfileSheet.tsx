@@ -6,7 +6,7 @@ import { StreakAvatar } from '@/features/gamification/StreakAvatar'
 import { avatarUrl } from '@/features/profile/api'
 import { useUserBadges } from '../hooks'
 import { BADGES, shelfItems } from '../logic'
-import { BadgeGrid } from './BadgeShelf'
+import { BadgeGrid } from './BadgeCollection'
 
 export type PublicPerson = {
   user_id: string

@@ -1,23 +1,24 @@
 {
   "title": "Profil",
   "edit": "Profili düzenle",
-  "pointsTotal": "{{n}} puan",
-  "streak_one": "{{count}} günlük seri",
-  "streak_other": "{{count}} günlük seri",
-  "stats": {
-    "open": "Sıralamayı aç",
-    "rank": "Haftalık sıra",
-    "week": "Haftalık puan",
-    "best": "En uzun seri"
+  "settings": "Ayarlar",
+  "tabs": {
+    "label": "Profil bölümleri",
+    "posts": "Paylaşımlarım",
+    "badges": "Rozetler",
+    "tagged": "Etiketlendiklerim"
   },
-  "rows": {
-    "settings": "Ayarlar",
-    "admin": "Yönetim",
-    "adminBadge_one": "Yönetim, {{count}} bekleyen iş",
-    "adminBadge_other": "Yönetim, {{count}} bekleyen iş"
+  "level": {
+    "points": "{{n}} puan",
+    "progress": "Seviye {{level}} ilerlemesi",
+    "toNext": "Seviye {{level}} için {{n}} puan kaldı"
+  },
+  "posts": {
+    "offTitle": "Paylaşımların burada görünür",
+    "offBody": "Paylaşmak için önce Topluluğa katıl. Katılmak isteğe bağlıdır.",
+    "join": "Topluluğa git"
   },
   "badges": {
-    "all": "Tümü",
     "family": {
       "workouts": "Antrenman",
       "streak": "Seri",
@@ -53,5 +54,11 @@
     "errors": {
       "range": "İzin verilen aralığın dışında"
     }
-  }
+  },
+  "tagged": {
+    "emptyTitle": "Henüz etiketlenmedin",
+    "emptyBody": "Biri seni bir gönderide etiketlediğinde burada görünür."
+  },
+  "bestStreak_one": "En iyi seri {{n}} gün",
+  "bestStreak_other": "En iyi seri {{n}} gün"
 }

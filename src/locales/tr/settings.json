@@ -48,5 +48,7 @@
   "signOut": {
     "title": "Çıkış yapılsın mı?",
     "body": "İstediğin zaman Google ile yeniden giriş yapabilirsin."
-  }
+  },
+  "adminBadge_one": "Yönetim, bekleyen {{count}} öğe",
+  "adminBadge_other": "Yönetim, bekleyen {{count}} öğe"
 }

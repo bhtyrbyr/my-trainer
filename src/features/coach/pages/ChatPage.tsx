@@ -19,9 +19,9 @@ import { ProgramRequest } from '../components/ProgramRequest'
 import { QuickPrompts } from '../components/QuickPrompts'
 import type { CoachMessage } from '../schema'
 
-/** A message, with the program card in place of the summary when this session received one. */
+/** A message, with the program card in place of the summary when it has one (this session's answer or the stored payload). */
 function ThreadMessage({ message, index }: { message: CoachMessage; index: number }) {
-  const program = useProgramFor(message.id)
+  const program = useProgramFor(message)
   return (
     <MessageBubble message={message} index={index}>
       {message.role === 'assistant' && program ? <ProgramCard data={program} /> : undefined}

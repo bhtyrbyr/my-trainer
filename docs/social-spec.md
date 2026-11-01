@@ -38,5 +38,21 @@ Product decisions (2026-11-01, user): follow + private accounts; mutual follow =
 ## 5. KVKK
 - New consent kind `social` (versioned), separate from the notice. Notice gains a "Social" section: what is shown to whom, snapshots, unencrypted copies of shared photos, under-18 exclusion, blocking/reporting, leaving deletes social data, retention (notifications 60 days, reports until resolved + 30 days). `noticeVersion` bump. Export includes the user's posts, likes, follows, groups.
 
+## 5b. Mentions (@tagging, migration 20261180000000)
+- A post may tag people: `social_create_post(..., p_mentions uuid[])`; stored in `post_mentions (post_id, user_id)` (RLS on, no policies, no grants: reads only via RPCs). Every post RPC returns `mentions jsonb` = `[{user_id, username, display_name}]` (tagging order; people who left Community or are blocked with the viewer are left out).
+- Rule (all must hold for the post's audience/group, `private.mention_ok`):
+  a) the tagged user is social-active, not the author, no block either way, and has `social_profiles.allow_mentions` on (default true);
+  b) group post: an active member of that group; otherwise an accepted follow in either direction;
+  c) the tagged user could view the post under its audience (`private.post_audience_ok`, the same code `can_view_post` uses).
+  Mentions never widen who sees a post (`can_view_post` ignores `post_mentions`).
+- Limits: at most 10 per post (`TOO_MANY_MENTIONS`), 50 per author per day (`RATE_LIMITED`, counted in the activity log, survives deletes). A rule failure on publish raises `MENTION_NOT_ALLOWED`. Changing the audience/group of a post drops the mentions that no longer pass; a block drops the mentions between the two users.
+- Composer: typing `@` opens a flat suggestion list from `social_mention_candidates(p_query, p_audience, p_group)` (max 8, only people allowed for the CURRENT audience/group, empty query = recent relations), debounced 200 ms. Picking writes `@username ` and adds a removable chip; chips whose `@username` was deleted from the text are dropped before publishing. When the audience changes every chip is re-checked; ones no longer allowed are struck through with a one-line reason and not sent.
+- Rendering: one tokenizer (`src/features/social/mentions.ts`, unit-tested) splits a body into text, hashtags and mentions. `@username` (3-20 of `[A-Za-z0-9_]`, case-insensitive, not glued to a word, `.`, `@` or `&`) links to `/social/u/:user_id` in volt only when it is in the post's `mentions`; any other `@text` stays plain.
+- Notification kind `mention` (with `post_id`), opens the post; removing the mention removes the notification.
+- Untag: the tagged user can remove themselves from any post (`social_remove_mention(p_post)`; post menu "Remove my tag", confirm sheet). The author is not notified.
+- Toggle: Settings > Community "Allow mentions" (`social_update_settings(p_allow_mentions)`). Off: nobody can tag the user from then on (existing tags stay until removed).
+- Profile tab (`/me`): Posts | Tagged | Badges; Tagged (`?tab=tagged`) lists `social_mentioned_posts(p_before, p_limit)` (caller only, still only posts the caller may view) with the same list/grid as Posts. Query key `['social', 'posts', 'mentioned']` (non-persisted root).
+- KVKK: the notice's Community section says people you interact with can tag you in posts visible to you, and that tagging can be turned off and tags removed.
+
 ## 6. Badges (also requested 2026-11-01)
 Extend the badge set (same mechanism, no points): more tiers and new kinds, e.g. workouts 10/50/100/250, streak 100/365, sets 500/1000/5000, volume 10 t / 100 t / 1000 t, PR 10/50, cardio minutes 600/3000, habits 100/365, to-dos 200, water goal days 30, sleep log days 30, photos 25, weigh-ins 30, early bird (5 workouts started before 07:00), weekend warrior (10 weekend workouts), coach plan saved (1). Icons and TR/EN names and descriptions.
