@@ -19,6 +19,25 @@ const PERIODS: LeaderboardPeriod[] = ['week', 'month', 'all']
  * is a quiet ruled row with tabular numbers. Your own row is the only volt-tinted thing in the list.
  */
 export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[] }) {
+  const { t } = useTranslation('common')
+  return (
+    <PageShell title={t('nav.leaderboard')}>
+      <LeaderboardContent previewRows={previewRows} />
+    </PageShell>
+  )
+}
+
+/**
+ * The standings without a page frame (the Community tab's Ranking segment). `onOpenPerson` replaces the
+ * public profile sheet (e.g. opens the social profile when the viewer has joined Community).
+ */
+export function LeaderboardContent({
+  previewRows,
+  onOpenPerson,
+}: {
+  previewRows?: LeaderboardRow[]
+  onOpenPerson?: (row: LeaderboardRow) => void
+}) {
   const { t } = useTranslation(['leaderboard', 'common'])
   const [period, setPeriod] = useState<LeaderboardPeriod>('week')
   const query = useLeaderboard(period)
@@ -33,9 +52,10 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
   const meInList = rows.find((r) => r.is_me)
   const [openId, setOpenId] = useState<string | null>(null)
   const open = rows.find((r) => r.user_id === openId) ?? null
+  const openRow = (r: LeaderboardRow) => (onOpenPerson ? onOpenPerson(r) : setOpenId(r.user_id))
 
   return (
-    <PageShell title={t('common:nav.leaderboard')}>
+    <>
       <div
         role="tablist"
         aria-label={t('leaderboard:periodLabel')}
@@ -65,12 +85,12 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
         <EmptyState />
       ) : (
         <div className="space-y-4">
-          {leader && <LeaderCard row={leader} onOpen={() => setOpenId(leader.user_id)} />}
+          {leader && <LeaderCard row={leader} onOpen={() => openRow(leader)} />}
 
           {rest.length > 0 && (
             <ol className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
               {rest.map((r) => (
-                <Row key={r.user_id} row={r} onOpen={() => setOpenId(r.user_id)} />
+                <Row key={r.user_id} row={r} onOpen={() => openRow(r)} />
               ))}
             </ol>
           )}
@@ -86,7 +106,7 @@ export function LeaderboardPage({ previewRows }: { previewRows?: LeaderboardRow[
       )}
 
       <PublicProfileSheet person={open} onClose={() => setOpenId(null)} />
-    </PageShell>
+    </>
   )
 }
 

@@ -61,6 +61,21 @@
         ]
       },
       {
+        "title": "Topluluk (sosyal)",
+        "items": [
+          "Topluluk isteğe bağlıdır ve ayrı bir açık rızayla açılır; 18 yaş altındakiler katılamaz (doğum yılı 18 yaş altına değişirse Topluluk otomatik kapanır).",
+          "Katıldığında Topluluktaki diğer kullanıcılar adını, kullanıcı adını, profil fotoğrafını, seviyeni, rozetlerini, biyografini ve takipçi/takip/gönderi sayılarını görebilir. Hesabın varsayılan olarak gizlidir.",
+          "Gönderiler, paylaşıldığı andaki bir kopyadır (antrenman özeti, program, öğün değerleri); seçtiğin kitle (herkese açık, takipçiler, arkadaşlar veya bir grup) görür. Kilo, uyku ve beslenme yalnızca açıkça paylaşırsan görünür.",
+          "Açık gruplara yaptığın paylaşımları Topluluktaki herkes görebilir; hesabın gizliyse grup paylaşımlarını yalnızca grup üyeleri görür. Grubun üye listesini yalnızca üyeleri görür.",
+          "Paylaştığın fotoğraflar (gelişim fotoğrafları dahil) cihazında küçültülür ve seçtiğin kitlenin görebileceği şifresiz bir kopya olarak saklanır; özel albümün uçtan uca şifreli kalır.",
+          "Beğeniler ve takipler ilgili kişilere görünür (beğenilen gönderinin sahibi, takip edilen ve takip eden).",
+          "İstediğin kişiyi engelleyebilir, gönderi, hesap veya grupları şikâyet edebilirsin; şikâyetleri yalnızca yöneticiler görür.",
+          "Topluluktan ayrıldığında gönderilerin ve fotoğrafları, beğenilerin, takiplerin, grup üyeliklerin ve bildirimlerin silinir; duraklatırsan veriler saklanır ama kimseye görünmez.",
+          "Silinen gönderilerin ve ayrıldığında silinen fotoğrafların dosyaları depodan en geç 24 saat içinde kaldırılır; paylaşılan fotoğraflara erişim bağlantıları en fazla 5 dakika geçerlidir.",
+          "Saklama: sosyal bildirimler 60 gün, şikâyetler çözülene kadar ve sonrasında 30 gün saklanır."
+        ]
+      },
+      {
         "title": "Saklama süresi",
         "items": [
           "Hesabın açık olduğu sürece saklanır.",
@@ -145,5 +160,9 @@
     "withdrawTitle": "Yapay zekâ iznini geri al?",
     "withdrawBody": "Yemek tahmini kapanır. Daha önce eklediğin öğünler silinmez; Google'a gönderilmiş içerikler onların koşullarına tabidir.",
     "withdrawConfirm": "İzni geri al"
+  },
+  "social": {
+    "statement": "Topluluğa katılmak için 18 yaşında veya daha büyük olduğumu onaylıyor; {{app}}'ın paylaştığım gönderileri, fotoğrafları, takip, beğeni ve grup bilgilerimi seçtiğim kitleye göstermek amacıyla işlemesine ve aydınlatma metninde sayılan yurt dışındaki sağlayıcıların sunucularında saklamasına açık rıza veriyorum. Rızamı istediğim an Topluluktan ayrılarak geri alabilirim.",
+    "readNotice": "Aydınlatma metni"
   }
 }

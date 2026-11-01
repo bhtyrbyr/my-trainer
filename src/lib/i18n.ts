@@ -45,13 +45,19 @@ import trCoach from '@/locales/tr/coach.json'
 import enCoach from '@/locales/en/coach.json'
 import trProfile from '@/locales/tr/profile.json'
 import enProfile from '@/locales/en/profile.json'
+import trSocial from '@/locales/tr/social.json'
+import enSocial from '@/locales/en/social.json'
+import trShare from '@/locales/tr/share.json'
+import enShare from '@/locales/en/share.json'
+import trTour from '@/locales/tr/tour.json'
+import enTour from '@/locales/en/tour.json'
 
 export const SUPPORTED_LOCALES = ['tr', 'en'] as const
 export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 export const resources = {
-  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal, today: trToday, licenses: trLicenses, offline: trOffline, badges: trBadges, dashboard: trDashboard, coach: trCoach, profile: trProfile },
-  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal, today: enToday, licenses: enLicenses, offline: enOffline, badges: enBadges, dashboard: enDashboard, coach: enCoach, profile: enProfile },
+  tr: { common: trCommon, auth: trAuth, settings: trSettings, onboarding: trOnboarding, admin: trAdmin, leaderboard: trLeaderboard, exercises: trExercises, workouts: trWorkouts, body: trBody, track: trTrack, nutrition: trNutrition, sleepwater: trSleepWater, photos: trPhotos, legal: trLegal, today: trToday, licenses: trLicenses, offline: trOffline, badges: trBadges, dashboard: trDashboard, coach: trCoach, profile: trProfile, share: trShare, social: trSocial, tour: trTour },
+  en: { common: enCommon, auth: enAuth, settings: enSettings, onboarding: enOnboarding, admin: enAdmin, leaderboard: enLeaderboard, exercises: enExercises, workouts: enWorkouts, body: enBody, track: enTrack, nutrition: enNutrition, sleepwater: enSleepWater, photos: enPhotos, legal: enLegal, today: enToday, licenses: enLicenses, offline: enOffline, badges: enBadges, dashboard: enDashboard, coach: enCoach, profile: enProfile, share: enShare, social: enSocial, tour: enTour },
 } as const
 
 void i18n

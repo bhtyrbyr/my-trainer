@@ -74,7 +74,13 @@ export default defineConfig(({ mode }) => ({
             // yet" answer could lead to a second vault; rows carry IVs and wrapped data. Coach chats, private
             // profile and consents stay off the device (src/lib/offline/policy.ts). Must precede the rule below.
             urlPattern: ({ url }) =>
-              /^\/rest\/v1\/(photo_vault|progress_photos|ai_conversations|ai_messages|profile_private|user_consents)\b/.test(url.pathname),
+              /^\/rest\/v1\/(photo_vault|progress_photos|ai_conversations|ai_messages|profile_private|user_consents|social_profiles|follows|blocks|groups|group_members|group_bans|posts|post_media|post_likes|reports|social_notifications)\b/.test(url.pathname),
+            handler: 'NetworkOnly',
+          },
+          {
+            // Shared post images (social-media bucket, signed URLs): other people's content, never cached on
+            // the device; the share side keeps signed URLs in memory only.
+            urlPattern: ({ url }) => url.pathname.includes('/storage/v1/object/') && url.pathname.includes('/social-media/'),
             handler: 'NetworkOnly',
           },
           {

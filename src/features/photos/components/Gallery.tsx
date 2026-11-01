@@ -10,6 +10,9 @@ import { toLocalDateISO } from '@/lib/dates'
 import { parseWeightInput } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { useAddPhoto, useDecryptedMeta, useDecryptedUrl, useDeletePhoto } from '../hooks'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { ShareButton } from '@/features/social/share'
+import { openPart } from '../api'
 import { POSES, type PhotoRow, type Pose } from '../types'
 
 function useLocale() {
@@ -219,6 +222,7 @@ export function PhotoViewer({ photo, cryptoKey, onClose }: { photo: PhotoRow; cr
   const { url, error } = useDecryptedUrl(photo, 'image', cryptoKey)
   const meta = useDecryptedMeta(photo, cryptoKey)
   const del = useDeletePhoto()
+  const { user } = useAuth()
   const [confirm, setConfirm] = useState(false)
   return (
     <Sheet title={t('viewer.title')} onClose={onClose}>
@@ -243,6 +247,10 @@ export function PhotoViewer({ photo, cryptoKey, onClose }: { photo: PhotoRow; cr
           </p>
           {meta.data?.note && <p className="mt-2 text-[14px]">{meta.data.note}</p>}
         </div>
+        {user && (
+          // decrypted in memory only when the user confirms the share warning (rule 5)
+          <ShareButton className="w-full" source={{ kind: 'progress', getImage: () => openPart(user.id, cryptoKey, photo, 'image') }} />
+        )}
         <ErrorNote error={del.error} />
         <Button
           variant="ghost"
@@ -272,6 +280,7 @@ export function CompareSheet({ photos, cryptoKey, onClose }: { photos: PhotoRow[
   const a = useDecryptedUrl(before, 'image', cryptoKey)
   const b = useDecryptedUrl(after, 'image', cryptoKey)
   const [pos, setPos] = useState(50)
+  const { user } = useAuth()
   const label = (p: PhotoRow) => format(parseISO(p.taken_on), 'd MMM yyyy', { locale })
 
   return (
@@ -332,6 +341,16 @@ export function CompareSheet({ photos, cryptoKey, onClose }: { photos: PhotoRow[
             </div>
             <input type="range" min={0} max={100} value={pos} onChange={(e) => setPos(Number(e.target.value))} aria-label={t('compare.slider')} className="w-full accent-[var(--color-volt)]" />
             <p className="text-center text-[13px] text-ink-muted">{t('compare.days', { count: Math.abs(differenceInCalendarDays(parseISO(after.taken_on), parseISO(before.taken_on))) })}</p>
+            {user && before.id !== after.id && (
+              <ShareButton
+                className="w-full"
+                source={{
+                  kind: 'compare',
+                  labels: [label(before), label(after)],
+                  getImages: () => Promise.all([openPart(user.id, cryptoKey, before, 'image'), openPart(user.id, cryptoKey, after, 'image')]),
+                }}
+              />
+            )}
           </>
         )}
       </div>

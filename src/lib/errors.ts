@@ -50,6 +50,19 @@ export function classifyError(err: unknown): AppError {
   if (/COACH_AI_(QUOTA|APP_LIMIT|GOOGLE_DAILY)/.test(message)) return { key: 'errors.coachQuota', code }
   if (/COACH_AI_(UNAVAILABLE|NOT_CONFIGURED)/.test(message)) return { key: 'errors.coachUnavailable', code }
   if (/COACH_AI_REGION/.test(message)) return { key: 'errors.coachRegion', code }
+  // Social (before the generic UNDERAGE below)
+  if (/SOCIAL_UNDERAGE/.test(message)) return { key: 'errors.socialUnderage', code }
+  if (/SOCIAL_BIRTH_YEAR_REQUIRED/.test(message)) return { key: 'errors.socialBirthYear', code }
+  if (/SOCIAL_DISABLED/.test(message)) return { key: 'errors.socialDisabled', code }
+  if (/SOCIAL_CONSENT_VERSION/.test(message)) return { key: 'errors.updating', code }
+  if (/GROUP_BANNED/.test(message)) return { key: 'errors.groupBanned', code }
+  if (/USER_BANNED/.test(message)) return { key: 'errors.userBanned', code }
+  if (/GROUP_CODE_NOT_FOUND/.test(message)) return { key: 'errors.groupCodeNotFound', code }
+  if (/GROUP_FULL/.test(message)) return { key: 'errors.groupFull', code }
+  if (/GROUP_LIMIT/.test(message)) return { key: 'errors.groupLimit', code }
+  if (/NOT_GROUP_MEMBER/.test(message)) return { key: 'errors.notGroupMember', code }
+  if (/BAD_NAME/.test(message)) return { key: 'errors.badName', code }
+  if (/RATE_LIMITED/.test(message)) return { key: 'errors.rateLimited', code }
   // Codes returned by the ai-coach Edge Function
   if (/UNDERAGE/.test(message)) return { key: 'errors.underage', code } // UNDERAGE and AI_UNDERAGE
   if (/AI_CONSENT_REQUIRED/.test(message)) return { key: 'errors.aiConsent', code }
@@ -61,6 +74,14 @@ export function classifyError(err: unknown): AppError {
   if (/AI_NOT_CONFIGURED/.test(message)) return { key: 'errors.aiNotConfigured', code }
   if (/AI_UNAVAILABLE/.test(message)) return { key: 'errors.aiUnavailable', code }
   if (/AI_BAD_INPUT/.test(message)) return { key: 'errors.aiBadInput', code }
+  // Social sharing (social_create_post, social_like, social_report, post_media upload)
+  if (/^RATE_LIMITED$/.test(message)) return { key: 'errors.socialRateLimited', code }
+  if (/SOCIAL_DISABLED/.test(message)) return { key: 'errors.socialDisabled', code }
+  if (/BAD_AUDIENCE/.test(message)) return { key: 'errors.socialAudience', code }
+  if (/NOT_GROUP_MEMBER/.test(message)) return { key: 'errors.socialNotGroupMember', code }
+  if (/BAD_BODY|BAD_PAYLOAD|BAD_REASON/.test(message)) return { key: 'errors.socialBadPost', code }
+  if (/IMAGE_TOO_LARGE/.test(message)) return { key: 'errors.tooLarge', code }
+  if (/IMAGE_LOAD_FAILED|ENCODE_FAILED|CANVAS_UNSUPPORTED/.test(message)) return { key: 'errors.imageUnreadable', code }
   if (/REPORT_LIMIT/.test(message)) return { key: 'errors.reportLimit', code }
   if (/SEARCH_BUSY/.test(message)) return { key: 'errors.searchBusy', code }
   if (/SEARCH_UNAVAILABLE/.test(message)) return { key: 'errors.searchUnavailable', code }

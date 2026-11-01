@@ -1,25 +1,28 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Dumbbell, LayoutDashboard, LineChart, Trophy, UserRound } from 'lucide-react'
+import { Dumbbell, LayoutDashboard, LineChart, UserRound, UsersRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePendingCount } from '@/features/admin/hooks'
+import { useUnreadCount } from '@/features/social/hooks'
 
 /**
- * Five tabs: Home, Track, Workouts (centre, the primary action), Ranking, Profile.
+ * Five tabs: Community, Home, Workouts (centre, the primary action), Track, Profile. Ranking lives in
+ * Community's "Ranking" segment; `/` stays the landing route.
  * On the phone the Workouts tab is a raised volt disc so it reads as the main thing to do;
  * on desktop the sidebar keeps one quiet style and only highlights Workouts with the accent.
  */
 const tabs = [
+  { to: '/social', key: 'social', icon: UsersRound },
   { to: '/', key: 'home', icon: LayoutDashboard },
-  { to: '/track', key: 'track', icon: LineChart },
   { to: '/workouts', key: 'workouts', icon: Dumbbell, featured: true },
-  { to: '/leaderboard', key: 'leaderboard', icon: Trophy },
+  { to: '/track', key: 'track', icon: LineChart },
   { to: '/me', key: 'profile', icon: UserRound },
 ] as const
 
 /** Extra path prefixes that belong to a tab (e.g. the exercise library lives under the Workouts tab). */
 const ALSO_ACTIVE: Partial<Record<(typeof tabs)[number]['key'], string[]>> = {
   workouts: ['/exercises', '/coach'],
+  social: ['/leaderboard'],
   profile: ['/settings', '/admin'],
 }
 
@@ -28,6 +31,7 @@ export function BottomNav() {
   const { pathname } = useLocation()
   const pending = usePendingCount()
   const pendingCount = pending.data ?? 0
+  const unread = useUnreadCount()
 
   return (
     <nav
@@ -75,6 +79,14 @@ export function BottomNav() {
                       ) : (
                         <span className="relative">
                           <Icon className="size-6 lg:size-5" aria-hidden />
+                          {key === 'social' && unread > 0 && (
+                            <span
+                              className="tabular absolute -right-1.5 -top-1 flex min-w-4 items-center justify-center rounded-full bg-volt px-1 text-[9px] font-bold leading-4 text-volt-ink ring-2 ring-bg"
+                              aria-label={t('nav.unreadBadge', { n: unread })}
+                            >
+                              {unread > 99 ? '99+' : unread}
+                            </span>
+                          )}
                           {key === 'profile' && pendingCount > 0 && (
                             <span
                               className="absolute -right-1.5 -top-1 flex min-w-4 items-center justify-center rounded-full bg-volt px-1 text-[9px] font-bold leading-4 text-volt-ink ring-2 ring-bg"

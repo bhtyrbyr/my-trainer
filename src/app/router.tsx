@@ -8,6 +8,7 @@ import { AuthCallbackPage } from '@/features/auth/pages/AuthCallbackPage'
 import { AccessDeniedPage } from '@/features/auth/pages/AccessDeniedPage'
 import { PendingApprovalPage } from '@/features/auth/pages/PendingApprovalPage'
 import { HealthGate, NoticeGate } from '@/features/privacy/components/Gates'
+import { TourGate } from '@/features/tour/components/TourGate'
 
 /**
  * Route-level code splitting: the shell, auth flow and dashboard ship in the main bundle; every other
@@ -41,6 +42,19 @@ const coach = {
 }
 const devHome = (name: 'DevHomeLayout' | 'DevHome') => page(() => import('@/features/dashboard/dev/DevDashboardPreview'), name)
 const devProfile = (name: 'DevProfileLayout' | 'DevProfile') => page(() => import('@/features/badges/dev/DevBadgesPreview'), name)
+const social = {
+  home: page(() => import('@/features/social/pages/SocialPage'), 'SocialPage'),
+  notifications: page(() => import('@/features/social/pages/NotificationsPage'), 'NotificationsPage'),
+  user: page(() => import('@/features/social/pages/UserProfilePage'), 'UserProfilePage'),
+  list: page(() => import('@/features/social/pages/FollowListPage'), 'FollowListPage'),
+  post: page(() => import('@/features/social/pages/PostPage'), 'PostPage'),
+  group: page(() => import('@/features/social/pages/GroupPage'), 'GroupPage'),
+  groupSettings: page(() => import('@/features/social/pages/GroupSettingsPage'), 'GroupSettingsPage'),
+  join: page(() => import('@/features/social/pages/JoinByCodePage'), 'JoinByCodePage'),
+  settings: page(() => import('@/features/social/pages/SocialSettingsPage'), 'SocialSettingsPage'),
+}
+const devSocial = (name: 'DevSocialLayout') => page(() => import('@/features/social/dev/DevSocialPreview'), name)
+
 const admin = {
   access: page(() => import('@/features/admin/pages/AccessPage'), 'AccessPage'),
   users: page(() => import('@/features/admin/pages/UsersPage'), 'UsersPage'),
@@ -70,8 +84,11 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
       { path: '/__dev/pending', element: <PendingApprovalPage preview="pending" /> },
       { path: '/__dev/rejected', element: <PendingApprovalPage preview="rejected" /> },
       { path: '/__dev/update', element: <UpdatePrompt forceVisible /> },
+      // first-run tour without persistence: ?step=1..7, ?standalone=1, ?theme=light|dark
+      { path: '/__dev/tour', lazy: page(() => import('@/features/tour/dev/DevTourPreview'), 'DevTourPreview') },
       { path: '/__dev/errors', lazy: page(() => import('./DevErrorsPreview'), 'DevErrorsPreview') },
       { path: '/__dev/streak/:n', lazy: page(() => import('./DevStreakPreview'), 'DevStreakPreview') },
+      { path: '/__dev/share', lazy: page(() => import('@/features/social/share/dev/DevSharePreview'), 'DevSharePreview') },
       { path: '/__dev/leaderboard', lazy: page(() => import('./DevLeaderboardPreview'), 'DevLeaderboardPreview') },
       {
         path: '/__dev/exercises',
@@ -111,6 +128,23 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
           { path: 'settings', lazy: page(() => import('@/features/settings/pages/SettingsPage'), 'SettingsPage') },
           { path: 'edit', lazy: page(() => import('@/features/profile/pages/ProfileEditPage'), 'ProfileEditPage') },
           { path: 'admin', lazy: page(() => import('@/features/admin/pages/AdminHubPage'), 'AdminHubPage') },
+        ],
+      },
+      {
+        // Community with sample data: ?state=off|underage|nobirth (not joined), /__dev/social?tab=groups|ranking,
+        // notifications, u/sample-2 (profile), u/sample-3 (private), g/g1 (group), settings, reports
+        path: '/__dev/social',
+        lazy: devSocial('DevSocialLayout'),
+        children: [
+          { index: true, lazy: social.home },
+          { path: 'notifications', lazy: social.notifications },
+          { path: 'u/:id', lazy: social.user },
+          { path: 'u/:id/:list', lazy: social.list },
+          { path: 'g/:id', lazy: social.group },
+          { path: 'g/:id/settings', lazy: social.groupSettings },
+          { path: 'join/:code', lazy: social.join },
+          { path: 'settings', lazy: social.settings },
+          { path: 'reports', lazy: page(() => import('@/features/social/pages/AdminReportsPage'), 'AdminReportsPage') },
         ],
       },
       {
@@ -179,7 +213,9 @@ export const router = createBrowserRouter([
     element: (
       <RequireAuth>
         <NoticeGate>
-          <AppShell />
+          <TourGate>
+            <AppShell />
+          </TourGate>
         </NoticeGate>
       </RequireAuth>
     ),
@@ -208,7 +244,17 @@ export const router = createBrowserRouter([
       { path: 'track/habits', lazy: page(() => import('@/features/today/pages/HabitsPage'), 'HabitsPage') },
       { path: 'track/todos', lazy: page(() => import('@/features/today/pages/TodosPage'), 'TodosPage') },
       { path: 'today', element: <Navigate to="/track" replace /> },
-      { path: 'leaderboard', lazy: page(() => import('@/features/leaderboard/pages/LeaderboardPage'), 'LeaderboardPage') },
+      // the Ranking tab lives in Community now
+      { path: 'leaderboard', element: <Navigate to="/social?tab=ranking" replace /> },
+      { path: 'social', lazy: social.home },
+      { path: 'social/notifications', lazy: social.notifications },
+      { path: 'social/u/:id', lazy: social.user },
+      { path: 'social/u/:id/:list', lazy: social.list },
+      { path: 'social/p/:id', lazy: social.post },
+      { path: 'social/g/:id', lazy: social.group },
+      { path: 'social/g/:id/settings', lazy: social.groupSettings },
+      { path: 'social/join/:code', lazy: social.join },
+      { path: 'settings/social', lazy: social.settings },
       { path: 'coach', lazy: coach.list },
       { path: 'coach/:id', lazy: coach.chat },
       { path: 'me', lazy: page(() => import('@/features/profile/pages/ProfilePage'), 'ProfilePage') },
@@ -245,6 +291,7 @@ export const router = createBrowserRouter([
       { path: 'admin/access', lazy: adminPage(() => import('@/features/admin/pages/AccessPage'), 'AccessPage') },
       { path: 'admin/users', lazy: adminPage(() => import('@/features/admin/pages/UsersPage'), 'UsersPage') },
       { path: 'admin/usage', lazy: adminPage(() => import('@/features/admin/pages/UsagePage'), 'UsagePage') },
+      { path: 'admin/social-reports', lazy: adminPage(() => import('@/features/social/pages/AdminReportsPage'), 'AdminReportsPage') },
       {
         path: 'admin/requests',
         lazy: async () => {

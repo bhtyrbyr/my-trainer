@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Info, LogOut, Mail, Scale, Trash2, Trophy } from 'lucide-react'
+import { Compass, Info, LogOut, Mail, Scale, Trash2, Trophy, UsersRound } from 'lucide-react'
 import { BackTitle } from '@/components/layout/BackTitle'
 import { PageShell } from '@/components/layout/PageShell'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
@@ -15,6 +15,7 @@ import { SUPPORTED_LOCALES, type Locale } from '@/lib/i18n'
 import { useSyncState } from '@/lib/offline/hooks'
 import { THEMES, applyTheme, readTheme, type ThemePref } from '@/lib/theme'
 import { LENGTH_UNITS, WEIGHT_UNITS, asLengthUnit, asWeightUnit } from '@/lib/units'
+import { useTour } from '@/features/tour/tourContext'
 import { useUserSettings } from '../hooks'
 
 /**
@@ -22,7 +23,8 @@ import { useUserSettings } from '../hooks'
  * data, Account, About. Every choice is a row; two-to-three-way choices are segmented controls.
  */
 export function SettingsPage() {
-  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'legal', 'profile'])
+  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'legal', 'profile', 'social', 'tour'])
+  const tour = useTour()
   const { user, profile, signOut } = useAuth()
   const sync = useSyncState()
   const { settings, updateSettings } = useUserSettings()
@@ -90,6 +92,8 @@ export function SettingsPage() {
 
         <PrivacySection
           leading={
+            <>
+            <ListRow icon={UsersRound} label={t('social:settings.title')} hint={t('social:settings.rowHint')} to="/settings/social" />
             <ListRow
               icon={Trophy}
               label={t('settings:leaderboard.label')}
@@ -104,6 +108,7 @@ export function SettingsPage() {
                 />
               }
             />
+            </>
           }
         />
         <ErrorNote error={visibility.error} />
@@ -115,6 +120,7 @@ export function SettingsPage() {
         </GroupedList>
 
         <GroupedList title={t('settings:about')}>
+          <ListRow icon={Compass} label={t('tour:replay')} hint={t('tour:replayHint')} onClick={tour.open} />
           <ListRow icon={Scale} label={t('settings:licenses.link')} hint={t('settings:licenses.hint')} to="/settings/licenses" />
           <ListRow
             icon={Info}

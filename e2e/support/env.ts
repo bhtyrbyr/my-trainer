@@ -7,6 +7,9 @@ export const ORIGIN = 'http://localhost:5180'
 export const AUTH_DIR = fileURLToPath(new URL('../.auth/', import.meta.url))
 export const STATE_FILE = `${AUTH_DIR}user.json`
 export const META_FILE = `${AUTH_DIR}meta.json`
+/** Second adult user (social spec: two people who follow, post and block). */
+export const STATE_FILE_B = `${AUTH_DIR}user-b.json`
+export const META_FILE_B = `${AUTH_DIR}meta-b.json`
 /** Custom exercise created for the test user in global setup (the local stack has no synced catalog). */
 export const E2E_EXERCISE = 'E2E Bench Press'
 
@@ -38,6 +41,23 @@ export type TestUser = { id: string; email: string; accessToken: string }
 
 export function testUser(): TestUser {
   return JSON.parse(readFileSync(META_FILE, 'utf8')) as TestUser
+}
+
+export function testUserB(): TestUser {
+  return JSON.parse(readFileSync(META_FILE_B, 'utf8')) as TestUser
+}
+
+/** PostgREST RPC as a given test user (RLS and grants apply, exactly like the app). */
+export async function rpcAs<T = unknown>(user: TestUser, fn: string, args: Record<string, unknown> = {}): Promise<T> {
+  const { url, anonKey } = localStack()
+  const r = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { apikey: anonKey, authorization: `Bearer ${user.accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify(args),
+  })
+  if (!r.ok) throw new Error(`RPC ${fn}: ${r.status} ${await r.text()}`)
+  const text = await r.text()
+  return (text ? JSON.parse(text) : null) as T
 }
 
 /** PostgREST read as the test user (RLS applies, exactly like the app). */

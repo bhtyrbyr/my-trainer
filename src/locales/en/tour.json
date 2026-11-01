@@ -1,0 +1,105 @@
+{
+  "label": "App tour",
+  "slide": "step",
+  "stepOf": "Step {{n}} of {{total}}",
+  "goTo": "Go to step {{n}}",
+  "skip": "Skip",
+  "next": "Next",
+  "back": "Back",
+  "start": "Let's go",
+  "replay": "Watch the tour again",
+  "replayHint": "See what the app can do from the start",
+  "steps": {
+    "welcome": {
+      "eyebrow": "Welcome",
+      "title": "Training, food and habits in one place.",
+      "body": "Five tabs, one logbook. Let's take a minute to see what you can do."
+    },
+    "workouts": {
+      "eyebrow": "Workouts",
+      "title": "Plan it, get guided, get stronger.",
+      "body": "Plan your weekdays. In a session, last time's weights and the rest timer are right there; the AI coach suggests programs."
+    },
+    "track": {
+      "eyebrow": "Track",
+      "title": "Your whole day in one logbook.",
+      "body": "Weight and measurements, food search or AI estimates, sleep and water, habits and to-dos. Your photos are end-to-end encrypted."
+    },
+    "progress": {
+      "eyebrow": "Home and points",
+      "title": "Every entry scores, every day builds a streak.",
+      "body": "Home shows your day and your week. Daily caps keep points fair, and 32 badges are waiting."
+    },
+    "social": {
+      "eyebrow": "Community",
+      "title": "Together if you like, solo if you don't.",
+      "body": "Community is optional and off by default. Turn it on for the feed, groups and the ranking."
+    },
+    "privacy": {
+      "eyebrow": "Privacy",
+      "title": "Your data belongs to you.",
+      "body": "Nobody else can see your entries. In Settings you can export your data, delete your account and manage consents."
+    },
+    "install": {
+      "eyebrow": "Home Screen",
+      "title": "Add it to your iPhone Home Screen.",
+      "body": "In Safari, tap Share, then Add to Home Screen. That turns on reminders and offline use."
+    }
+  },
+  "mock": {
+    "today": "Today",
+    "hello": "Hi, {{name}}",
+    "helloAnon": "Hi there",
+    "level": "Level {{n}}",
+    "points": "{{n}} pts",
+    "todayWorkout": "Today's workout",
+    "push": "Push day",
+    "pushMeta": "{{n}} exercises · ~{{min}} min",
+    "startWorkout": "Start",
+    "bench": "Bench press",
+    "lastTime": "Last time {{w}} × {{reps}}",
+    "set": "Set",
+    "reps": "Reps",
+    "rest": "Rest",
+    "plus30": "+30 s",
+    "coach": "AI coach: 4-week strength program",
+    "weight": "Weight",
+    "sleep": "Sleep",
+    "sleepValue": "{{h}} h {{m}} min",
+    "nutrition": "Nutrition",
+    "kcal": "{{v}} / {{goal}} kcal",
+    "foodSearch": "Search food",
+    "aiEstimate": "AI estimate",
+    "water": "{{v}} ml",
+    "habitStretch": "Stretch for 10 minutes",
+    "todoGroceries": "Buy groceries",
+    "photosEncrypted": "Progress photos are encrypted on your device",
+    "levelLabel": "Level",
+    "pointsLabel": "Points",
+    "streakLabel": "Streak",
+    "toNext": "{{n}} pts to level {{level}}",
+    "ptsWorkout": "Workout",
+    "ptsWater": "Water goal",
+    "ptsMeal": "Meal logged",
+    "badges": "Badges · {{n}} / {{total}}",
+    "postAuthor": "Deniz K.",
+    "postTime": "2 h ago",
+    "postText": "Push day done, new bench PR.",
+    "min": "min",
+    "prs": "PRs",
+    "rank1": "Ece",
+    "you": "You",
+    "privateDefault": "Default: off and private",
+    "onlyYou": "Who can see your entries",
+    "onlyYouValue": "Only you",
+    "encryptedNote": "Photos are encrypted before upload; the key stays with you.",
+    "copyLink": "Copy link",
+    "addToHome": "Add to Home Screen",
+    "reminders": "Reminders",
+    "offline": "Offline",
+    "suggestWater": "{{v}} ml left to your water goal",
+    "aiReview": "Your AI weekly review is ready",
+    "thisWeek": "This week · {{n}} workouts",
+    "rank3": "Mert"
+  }
+}

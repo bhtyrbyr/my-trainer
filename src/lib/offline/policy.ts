@@ -10,9 +10,10 @@ import { isQueuedMutation } from './queue'
  *  - consents: legal state, must be fresh
  *  - push: this browser's subscription state
  *  - anything AI (availability, coach): quota/consent gated, must be fresh
+ *  - social: other users' posts, profiles and notifications never touch this device's storage
  * A query can also opt out with `meta: { persist: false }`.
  */
-const DENY_ROOTS = new Set(['photos', 'exercise-media', 'admin', 'consents', 'push', 'offline'])
+const DENY_ROOTS = new Set(['photos', 'exercise-media', 'admin', 'consents', 'push', 'offline', 'social'])
 const AI_SEGMENT = /^ai($|[-_])|coach/i
 const SECRET_SEGMENT = /vault|signed|media|decrypt|private-key|privateKey/i
 

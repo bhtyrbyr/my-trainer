@@ -61,6 +61,21 @@
         ]
       },
       {
+        "title": "Community (social)",
+        "items": [
+          "Community is optional and is turned on with a separate explicit consent; people under 18 cannot join (if your birth year changes to under 18, Community switches off automatically).",
+          "Once you join, other Community users can see your name, username, profile photo, level, badges, bio and your follower/following/post counts. Your account is private by default.",
+          "Posts are a snapshot of what you shared at that moment (workout summary, program, meal values), visible to the audience you choose (public, followers, friends or a group). Weight, sleep and nutrition appear only if you explicitly post them.",
+          "Posts you share to an open group can be seen by everyone in Community; if your account is private, your group posts are seen only by group members. Only group members can see a group's member list.",
+          "Photos you share (including progress photos) are downscaled on your device and stored as an unencrypted copy visible to the chosen audience; your private album stays end-to-end encrypted.",
+          "Likes and follows are visible to the people involved (the owner of the liked post, the person followed and the follower).",
+          "You can block anyone and report posts, accounts or groups; only admins see reports.",
+          "Leaving Community deletes your posts and their photos, likes, follows, group memberships and notifications; pausing keeps the data but shows it to nobody.",
+          "Files of deleted posts, and of photos deleted when you leave, are removed from storage within 24 hours; access links to shared photos are valid for at most 5 minutes.",
+          "Retention: social notifications are kept for 60 days, reports until resolved and then 30 days."
+        ]
+      },
+      {
         "title": "Retention",
         "items": [
           "Kept while your account exists.",
@@ -145,5 +160,9 @@
     "withdrawTitle": "Withdraw AI consent?",
     "withdrawBody": "Food estimates turn off. Meals you already added are kept; content already sent to Google is subject to its terms.",
     "withdrawConfirm": "Withdraw consent"
+  },
+  "social": {
+    "statement": "I confirm that I am 18 or older and give my explicit consent for {{app}} to process the posts, photos, follows, likes and group details I share in order to show them to the audience I choose, and to store them on the servers of the providers abroad listed in the privacy notice. I can withdraw this at any time by leaving Community.",
+    "readNotice": "Privacy notice"
   }
 }

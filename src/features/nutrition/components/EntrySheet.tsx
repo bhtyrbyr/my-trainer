@@ -8,6 +8,7 @@ import { useDeleteMeal, useUpdateMeal } from '../hooks'
 import { MEAL_SLOTS, type MealEntry } from '../types'
 import { AmountInput } from './AmountInput'
 import { BottomSheet } from './BottomSheet'
+import { ShareButton, mealPayload } from '@/features/social/share'
 
 /** Edit or delete one logged food. */
 export function EntrySheet({ entry, onClose }: { entry: MealEntry | null; onClose: () => void }) {
@@ -83,6 +84,13 @@ export function EntrySheet({ entry, onClose }: { entry: MealEntry | null; onClos
           {update.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
           {t('entry.save')}
         </Button>
+        <ShareButton
+          size="lg"
+          source={{
+            kind: 'meal',
+            payload: mealPayload({ name: entry.name, kcal: Number(entry.kcal), protein_g: Number(entry.protein_g), carb_g: Number(entry.carb_g), fat_g: Number(entry.fat_g) }),
+          }}
+        />
         <Button
           size="lg"
           variant="ghost"

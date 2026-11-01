@@ -9,7 +9,9 @@
     "leaderboard": "Liderlik",
     "profile": "Profil",
     "pendingBadge": "{{n}} bekleyen kayıt isteği",
-    "settings": "Ayarlar"
+    "settings": "Ayarlar",
+    "social": "Topluluk",
+    "unreadBadge": "{{n}} okunmamış bildirim"
   },
   "comingSoon": "Bu modül bir sonraki fazda geliyor.",
   "phase": "Faz {{n}}",
@@ -29,6 +31,12 @@
     "notFound": "Aradığın kayıt bulunamadı, silinmiş olabilir. Sayfayı yenileyip tekrar dene.",
     "tooLarge": "Dosya çok büyük. Daha küçük bir fotoğraf seç ya da ekran görüntüsü al.",
     "rateLimited": "Çok fazla istek gönderildi. Bir dakika bekleyip tekrar dene.",
+    "socialRateLimited": "Bugün için bu işlemin sınırına ulaştın. Yarın tekrar dene.",
+    "socialDisabled": "Bunun için Topluluğa katılmış olman gerekir.",
+    "socialAudience": "Gönderiyi kimlerin görebileceğini seç.",
+    "socialNotGroupMember": "Artık o grubun üyesi değilsin.",
+    "socialBadPost": "Gönderi bu haliyle kaydedilemedi. Metni kısaltıp tekrar dene.",
+    "imageUnreadable": "Bu fotoğraf okunamadı. Başka bir tane dene.",
     "timeout": "İşlem zaman aşımına uğradı. Tekrar dene.",
     "server": "Sunucu tarafında geçici bir sorun var. Biraz sonra tekrar dene.",
     "usernameCooldown": "Kullanıcı adını 30 günde yalnızca bir kez değiştirebilirsin.",
@@ -79,7 +87,16 @@
     "coachQuota": "Bugünkü yapay zekâ hakkı doldu (koç ve yemek tahmini ortak). Yarın tekrar sorabilirsin.",
     "coachUnavailable": "Koça şu an ulaşılamıyor. Biraz sonra tekrar dene.",
     "coachRegion": "Yapay zekâ koçu bulunduğun bölgede kullanılamıyor.",
-    "title": "Bir sorun oluştu"
+    "title": "Bir sorun oluştu",
+    "socialUnderage": "Topluluk 18 yaş ve üzeri içindir.",
+    "socialBirthYear": "Topluluk için önce profiline doğum yılını ekle.",
+    "groupFull": "Grup dolu (en fazla 200 üye).",
+    "groupLimit": "En fazla 20 grubun sahibi olabilirsin.",
+    "notGroupMember": "Bu gruba paylaşmak için üye olmalısın.",
+    "badName": "Ad 3 ile 60 karakter arasında olmalı.",
+    "groupBanned": "Bu gruptan çıkarıldın; yeniden katılmak için bir yöneticinin engeli kaldırması gerekir.",
+    "userBanned": "Bu kişi gruptan çıkarılmış; önce engelini kaldır.",
+    "groupCodeNotFound": "Bu davet kodu geçersiz ya da yenilenmiş. Grup yöneticisinden yeni bağlantı iste."
   },
   "update": {
     "title": "Yeni sürüm yayınlandı",

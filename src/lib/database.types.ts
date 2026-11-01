@@ -58,6 +58,9 @@ type UserSettingsRow = {
   ai_provider: 'gemini' | 'openrouter' | 'off'
   ai_daily_limit: number
   theme: 'dark' | 'light' | 'system'
+  social_push: boolean
+  /** first-run tour finished or skipped; null = show it */
+  tour_completed_at: string | null
   created_at: string
   updated_at: string
 }

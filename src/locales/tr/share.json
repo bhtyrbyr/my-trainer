@@ -1,0 +1,146 @@
+{
+  "button": "Paylaş",
+  "buttonLabel": "Toplulukta paylaş",
+  "kinds": {
+    "text": "Gönderi",
+    "workout": "Antrenman",
+    "program": "Program",
+    "meal": "Öğün",
+    "photo": "Fotoğraf",
+    "progress": "İlerleme",
+    "compare": "Önce / sonra"
+  },
+  "audience": {
+    "label": "Kimler görebilir",
+    "public": "Herkes",
+    "followers": "Takipçiler",
+    "friends": "Arkadaşlar",
+    "group": "Grup",
+    "publicHint": "Uygulamanın sosyal tarafındaki herkes (uygulama içi). Hesabın gizliyse yalnızca takipçilerin.",
+    "followersHint": "Seni takip edenler.",
+    "friendsHint": "Takip ettiğin ve seni geri takip edenler.",
+    "groupHint": "Tek bir grubun üyeleri.",
+    "pickGroup": "Grup seç",
+    "noGroups": "Henüz bir grupta değilsin. Toplulukta bir gruba katıl ya da grup kur."
+  },
+  "time": {
+    "now": "şimdi",
+    "m": "{{count}} dk",
+    "h": "{{count}} sa",
+    "d": "{{count}} g"
+  },
+  "card": {
+    "like": "Beğen",
+    "unlike": "Beğeniyi geri al",
+    "likes_one": "{{count}} beğeni",
+    "likes_other": "{{count}} beğeni",
+    "menu": "Gönderi seçenekleri",
+    "inGroup": "{{group}} grubunda",
+    "audienceIs": "Görebilenler: {{audience}}",
+    "mediaAlt": "Fotoğraf {{n}} / {{total}}",
+    "mediaFailed": "Fotoğraf yüklenemedi",
+    "openMedia": "{{n}}. fotoğrafı aç ({{total}} fotoğraf)"
+  },
+  "workout": {
+    "duration": "Süre",
+    "sets": "Set",
+    "volume": "Hacim {{unit}}",
+    "reps_one": "{{count}} tekrar",
+    "reps_other": "{{count}} tekrar",
+    "more": "+{{count}} hareket daha"
+  },
+  "program": {
+    "days_one": "{{count}} gün",
+    "days_other": "{{count}} gün",
+    "exercises_one": "{{count}} hareket",
+    "exercises_other": "{{count}} hareket",
+    "setsReps": "{{sets}} × {{reps}}",
+    "copy": "Şablonlarıma kopyala",
+    "copied_one": "Antrenmanlara {{count}} şablon eklendi.",
+    "copied_other": "Antrenmanlara {{count}} şablon eklendi.",
+    "skipped": "Katalogda yok, atlandı: {{names}}",
+    "nothing": "Bu hareketlerin hiçbiri katalogda yok, bu yüzden hiçbir şey kopyalanmadı.",
+    "moreDays_one": "+{{count}} gün daha",
+    "moreDays_other": "+{{count}} gün daha"
+  },
+  "meal": {
+    "kcal": "kcal",
+    "protein": "Protein",
+    "carb": "Karb.",
+    "fat": "Yağ",
+    "grams": "{{value}} g"
+  },
+  "menu": {
+    "audience": "Görebilenleri değiştir",
+    "delete": "Gönderiyi sil",
+    "report": "Gönderiyi şikâyet et"
+  },
+  "delete": {
+    "title": "Gönderi silinsin mi?",
+    "body": "Gönderi, beğenileri ve paylaşılan fotoğraf kopyası herkes için kaldırılır.",
+    "confirm": "Sil"
+  },
+  "audienceSheet": {
+    "title": "Görebilenleri değiştir",
+    "save": "Kaydet"
+  },
+  "report": {
+    "title": "Gönderiyi şikâyet et",
+    "body": "Şikâyeti bir yönetici inceler. Gönderi sahibine kimin şikâyet ettiği söylenmez.",
+    "reason": "Neden (isteğe bağlı)",
+    "placeholder": "Spam, hakaret, sporla ilgisiz…",
+    "send": "Şikâyeti gönder",
+    "sent": "Teşekkürler. Şikâyet gönderildi."
+  },
+  "composer": {
+    "titles": {
+      "text": "Yeni gönderi",
+      "workout": "Antrenmanı paylaş",
+      "program": "Programı paylaş",
+      "meal": "Öğünü paylaş",
+      "photo": "Fotoğraf paylaş",
+      "progress": "İlerleme fotoğrafını paylaş",
+      "compare": "Karşılaştırmayı paylaş"
+    },
+    "close": "Kapat",
+    "body": "Metin",
+    "placeholder": "Bir şeyler yaz…",
+    "count": "{{count}} / {{max}}",
+    "camera": "Kamera",
+    "gallery": "Galeri",
+    "photosHint_one": "Bir fotoğraf. Konum ve kamera bilgileri telefonunda silinir.",
+    "photosHint_other": "En fazla {{count}} fotoğraf. Konum ve kamera bilgileri telefonunda silinir.",
+    "removePhoto": "{{n}}. fotoğrafı kaldır",
+    "preparing": "Fotoğraf hazırlanıyor",
+    "photoFailed": "Bu fotoğraf okunamadı. Başka bir tane dene.",
+    "previewAlt": "Paylaşılacak fotoğraf",
+    "unencrypted": "Şifresiz kopya. Gönderiyi silince o da silinir.",
+    "needText": "Bir şey yaz ya da fotoğraf ekle.",
+    "needPhoto": "En az bir fotoğraf ekle.",
+    "publish": "Paylaş",
+    "publishing": "Paylaşılıyor"
+  },
+  "warning": {
+    "progressTitle": "İlerleme fotoğrafı paylaşılsın mı?",
+    "compareTitle": "Karşılaştırma paylaşılsın mı?",
+    "copy": "Albümün şifreli kalır. Paylaşınca ayrı, küçültülmüş ve şifresiz bir kopya oluşturulur.",
+    "who": "Kimler görür: bir sonraki adımda seçtiğin kitle (herkes, takipçiler, arkadaşlar ya da tek bir grup).",
+    "remove": "Kaldırmak için gönderiyi sil. Kopya da onunla birlikte silinir.",
+    "confirm": "Devam et"
+  },
+  "viewer": {
+    "title": "Fotoğraf",
+    "close": "Kapat",
+    "prev": "Önceki fotoğraf",
+    "next": "Sonraki fotoğraf",
+    "count": "{{n}} / {{total}}"
+  },
+  "grid": {
+    "empty": "Henüz fotoğraflı gönderi yok."
+  },
+  "layout": {
+    "label": "Gönderi görünümü",
+    "list": "Liste",
+    "grid": "Izgara"
+  }
+}

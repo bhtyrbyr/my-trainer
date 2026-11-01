@@ -8,6 +8,7 @@ import { ErrorNote } from '@/components/ui/ErrorNote'
 import { exerciseName } from '@/features/exercises'
 import { useSaveProgramDays, type ProgramCardData } from '../hooks'
 import { useCoachBase } from '../previewContext'
+import { ShareButton, programPayload } from '@/features/social/share'
 
 /**
  * A suggested program as a training sheet: one ruled surface, days as numbered sections, sets x reps
@@ -101,6 +102,25 @@ export function ProgramCard({ data }: { data: ProgramCardData }) {
         {program.notes && <p className="text-[13px] leading-relaxed text-ink-muted">{program.notes}</p>}
         {unmatched.length > 0 && <p className="text-[12px] leading-snug text-ink-faint">{t('program.skipped', { names: unmatched.join(', ') })}</p>}
         <ErrorNote error={save.error} />
+        <ShareButton
+          className="w-full"
+          source={{
+            kind: 'program',
+            payload: programPayload(
+              program.name,
+              program.days.map((d) => ({
+                name: d.name,
+                exercises: d.exercises.map((e) => ({
+                  name: exerciseName(e, i18n.resolvedLanguage),
+                  exercise_id: e.exercise_id,
+                  sets: e.sets,
+                  reps_low: e.reps,
+                  reps_high: e.reps,
+                })),
+              })),
+            ),
+          }}
+        />
         {unsaved.length > 0 ? (
           <Button className="w-full" disabled={save.isPending} onClick={() => run(unsaved, 'all')}>
             {busyDay === 'all' && <Loader2 className="size-4 animate-spin" aria-hidden />}
