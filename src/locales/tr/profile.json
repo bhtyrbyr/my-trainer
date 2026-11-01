@@ -1,0 +1,57 @@
+{
+  "title": "Profil",
+  "edit": "Profili düzenle",
+  "pointsTotal": "{{n}} puan",
+  "streak_one": "{{count}} günlük seri",
+  "streak_other": "{{count}} günlük seri",
+  "stats": {
+    "open": "Sıralamayı aç",
+    "rank": "Haftalık sıra",
+    "week": "Haftalık puan",
+    "best": "En uzun seri"
+  },
+  "rows": {
+    "settings": "Ayarlar",
+    "admin": "Yönetim",
+    "adminBadge_one": "Yönetim, {{count}} bekleyen iş",
+    "adminBadge_other": "Yönetim, {{count}} bekleyen iş"
+  },
+  "badges": {
+    "all": "Tümü",
+    "family": {
+      "workouts": "Antrenman",
+      "streak": "Seri",
+      "sets": "Setler",
+      "volume_kg": "Hacim",
+      "prs": "Kişisel rekorlar",
+      "cardio_minutes": "Kardiyo",
+      "early_workouts": "Erkenci",
+      "weekend_workouts": "Hafta sonu",
+      "habit_days": "Alışkanlıklar",
+      "habitDays": "Alışkanlıklar",
+      "todos": "Yapılacaklar",
+      "water_goal_days": "Su",
+      "sleep_logs": "Uyku",
+      "weigh_ins": "Tartılma",
+      "photos": "İlerleme fotoğrafları"
+    }
+  },
+  "editPage": {
+    "title": "Profili düzenle",
+    "changePhoto": "Profil fotoğrafını değiştir",
+    "public": "Herkese açık profil",
+    "private": "Sadece sen",
+    "privateHint": "Kalori tahmini, vücut ölçüleri ve koç için kullanılır. Başkalarına asla gösterilmez.",
+    "usernameRule": "3–20 karakter: küçük harf, rakam ve alt çizgi. 30 günde bir değiştirebilirsin.",
+    "usernameLocked": "Yakın zamanda değiştirdin. Bir sonraki değişiklik: {{date}}.",
+    "height": "Boy ({{unit}})",
+    "target": "Hedef ({{unit}})",
+    "minorHint": "Doğum yılın 18 yaşından küçük olduğunu gösterirse yapay zekâ özellikleri (besin tahmini, koç) kapanır.",
+    "minorOn": "18 yaş altı: bu hesapta yapay zekâ özellikleri (besin tahmini, koç) kapanacak.",
+    "save": "Değişiklikleri kaydet",
+    "saving": "Kaydediliyor…",
+    "errors": {
+      "range": "İzin verilen aralığın dışında"
+    }
+  }
+}

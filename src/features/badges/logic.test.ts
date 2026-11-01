@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BADGES, celebrationQueue, shelfItems, type BadgeCounts } from './logic'
 
-const counts: BadgeCounts = { workouts: 0, streak: 4, sets: 250, photos: 3, habitDays: 12, todos: 50 }
+const counts = { ...Object.fromEntries(BADGES.map((b) => [b.metric, 0])), streak: 4, sets: 250, photos: 3, habit_days: 12, todos: 50 } as BadgeCounts
 
 describe('shelfItems', () => {
   it('lists the whole catalog in order with earned dates', () => {

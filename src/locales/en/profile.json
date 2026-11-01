@@ -1,0 +1,57 @@
+{
+  "title": "Profile",
+  "edit": "Edit profile",
+  "pointsTotal": "{{n}} pts",
+  "streak_one": "{{count}}-day streak",
+  "streak_other": "{{count}}-day streak",
+  "stats": {
+    "open": "Open the leaderboard",
+    "rank": "Weekly rank",
+    "week": "Weekly points",
+    "best": "Best streak"
+  },
+  "rows": {
+    "settings": "Settings",
+    "admin": "Admin",
+    "adminBadge_one": "Admin, {{count}} item waiting",
+    "adminBadge_other": "Admin, {{count}} items waiting"
+  },
+  "badges": {
+    "all": "All",
+    "family": {
+      "workouts": "Workouts",
+      "streak": "Streaks",
+      "sets": "Sets",
+      "volume_kg": "Volume",
+      "prs": "Personal records",
+      "cardio_minutes": "Cardio",
+      "early_workouts": "Early bird",
+      "weekend_workouts": "Weekends",
+      "habit_days": "Habits",
+      "habitDays": "Habits",
+      "todos": "To-dos",
+      "water_goal_days": "Water",
+      "sleep_logs": "Sleep",
+      "weigh_ins": "Weigh-ins",
+      "photos": "Progress photos"
+    }
+  },
+  "editPage": {
+    "title": "Edit profile",
+    "changePhoto": "Change profile photo",
+    "public": "Public profile",
+    "private": "Only you",
+    "privateHint": "Used for calorie estimates, body metrics and your coach. Never shown to others.",
+    "usernameRule": "3–20 characters: lowercase letters, digits and underscore. You can change it once every 30 days.",
+    "usernameLocked": "You changed it recently. Next change possible on {{date}}.",
+    "height": "Height ({{unit}})",
+    "target": "Target ({{unit}})",
+    "minorHint": "If your birth year says you are under 18, AI features (food estimates, coach) switch off.",
+    "minorOn": "Under 18: AI features (food estimates, coach) will be switched off for this account.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "errors": {
+      "range": "Out of range"
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Archive, ArchiveRestore, BellRing, Loader2, Square, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { BottomSheet } from '@/features/nutrition/components/BottomSheet'
 import { Stepper } from '@/features/workouts'
@@ -22,6 +23,7 @@ export function HabitSheet({ open, habit, onClose }: { open: boolean; habit?: Ha
   const save = useSaveHabit()
   const archive = useArchiveHabit()
   const del = useDeleteHabit()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('')
   const [rule, setRule] = useState<RecurrenceRule>({ type: 'daily' })
@@ -112,11 +114,22 @@ export function HabitSheet({ open, habit, onClose }: { open: boolean; habit?: Ha
                 variant="ghost"
                 className="text-danger hover:text-danger"
                 disabled={del.isPending}
-                onClick={() => window.confirm(t('habits.deleteConfirm')) && del.mutate(habit.id, { onSuccess: onClose })}
+                onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="size-4" aria-hidden />
                 {t('habits.delete')}
               </Button>
+              <ConfirmSheet
+                open={confirmDelete}
+                title={t('habits.deleteTitle')}
+                body={t('habits.deleteConfirm')}
+                confirmLabel={t('habits.delete')}
+                tone="danger"
+                pending={del.isPending}
+                error={del.error}
+                onConfirm={() => del.mutate(habit.id, { onSuccess: () => { setConfirmDelete(false); onClose() } })}
+                onCancel={() => setConfirmDelete(false)}
+              />
             </div>
           )}
         </div>
@@ -131,6 +144,7 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
   const save = useSaveTodo()
   const stop = useStopTodo()
   const del = useDeleteTodo()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const today = toLocalDateISO()
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
@@ -219,11 +233,22 @@ export function TodoSheet({ open, todo, defaultDay, onClose }: { open: boolean; 
                 variant="ghost"
                 className="text-danger hover:text-danger"
                 disabled={del.isPending}
-                onClick={() => window.confirm(t('todos.deleteConfirm')) && del.mutate(todo.id, { onSuccess: onClose })}
+                onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="size-4" aria-hidden />
                 {t('todos.delete')}
               </Button>
+              <ConfirmSheet
+                open={confirmDelete}
+                title={t('todos.deleteTitle')}
+                body={t('todos.deleteConfirm')}
+                confirmLabel={t('todos.delete')}
+                tone="danger"
+                pending={del.isPending}
+                error={del.error}
+                onConfirm={() => del.mutate(todo.id, { onSuccess: () => { setConfirmDelete(false); onClose() } })}
+                onCancel={() => setConfirmDelete(false)}
+              />
             </div>
           )}
         </div>

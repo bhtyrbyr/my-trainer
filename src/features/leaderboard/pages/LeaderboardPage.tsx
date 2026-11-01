@@ -102,12 +102,6 @@ function LeaderCard({ row, onOpen }: { row: LeaderboardRow; onOpen: () => void }
         row.is_me && 'border-volt/50',
       )}
     >
-      {/* soft volt glow behind the leader */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-16 size-48 rounded-full"
-        style={{ background: 'radial-gradient(circle, oklch(91% 0.21 125 / 22%), transparent 70%)' }}
-      />
       <span className="relative flex items-center gap-4">
         <span className="block relative">
           <StreakAvatar src={src} streak={row.streak} size={64} />

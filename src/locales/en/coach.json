@@ -11,7 +11,8 @@
     "empty": "No conversations yet. Pick a question above or start a new conversation.",
     "delete": "Delete conversation",
     "deleteConfirm": "Delete this conversation and all of its messages?",
-    "untitled": "Untitled conversation"
+    "untitled": "Untitled conversation",
+    "deleteTitle": "Delete conversation?"
   },
   "chat": {
     "heading": "What would you like to ask?",

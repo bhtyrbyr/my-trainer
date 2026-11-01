@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(406);
+select plan(627);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -40,10 +40,25 @@ select is(
         'admin_remove_allowed_email', 'admin_list_users', 'admin_set_blocked', 'admin_set_ai_limit',
         'ai_add_assistant_message',
         -- Faz 5
-        'admin_usage_summary')),
+        'admin_usage_summary', 'my_badge_progress',
+        -- security hardening (20261120000000); can_onboard/progress_photo_bytes are RLS policy helpers
+        'can_onboard', 'get_public_profile', 'is_username_available', 'progress_photo_bytes',
+        -- social (20261140000000); can_view_post/can_view_profile/social_media_* are also policy helpers
+        'can_view_post', 'can_view_profile', 'social_media_readable', 'social_media_upload_ok', 'social_media_attach_ok',
+        'social_enable', 'social_disable', 'social_update_settings', 'social_follow', 'social_respond_follow',
+        'social_unfollow', 'social_remove_follower', 'social_follow_requests', 'social_block', 'social_unblock',
+        'social_blocked_users', 'social_create_post', 'social_delete_post', 'social_set_audience', 'social_like',
+        'social_unlike', 'social_feed', 'social_discover', 'social_user_posts', 'social_group_posts', 'social_post',
+        'social_profile', 'social_search_users', 'social_followers', 'social_following', 'social_notifications_list',
+        'social_unread_count', 'social_mark_read', 'group_create', 'group_update', 'group_join', 'group_join_by_code',
+        'group_invite', 'group_respond', 'group_set_role', 'group_remove_member', 'group_leave', 'group_rotate_code',
+        'group_delete', 'social_my_groups', 'social_group', 'social_search_groups', 'social_group_members',
+        'social_report', 'admin_list_reports', 'admin_resolve_report', 'admin_remove_post')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
+
+select is((select value from public.app_config where key = 'ai_global_daily_limit'), '450'::jsonb, 'ai: the app-wide daily AI budget is 450');
 
 -- Fixtures ------------------------------------------------------------------
 \set ua '00000000-0000-0000-0000-00000000000a'
@@ -87,10 +102,14 @@ insert into public.profiles (user_id, username, display_name, avatar_path, onboa
 values (:'ub', 'bob', 'Bob', '00000000-0000-0000-0000-00000000000b/avatar.jpg', now());
 select is((select status from public.profiles where user_id = :'ub'), 'pending', 'new non-admin profile is pending');
 select is((select count(*)::int from public.profiles), 1, 'pending bob sees only his own profile');
-select throws_ok(
-  $$ insert into public.profile_private (user_id, height_cm) values ('00000000-0000-0000-0000-00000000000b', 180) $$,
-  '42501', null, 'pending bob cannot write other tables'
+select lives_ok(
+  $$ insert into public.profile_private (user_id, height_cm) values ('00000000-0000-0000-0000-00000000000b', 180)
+     on conflict (user_id) do update set height_cm = excluded.height_cm $$,
+  'onboarding: pending bob may still upsert his profile_private (retry)'
 );
+update public.user_settings set locale = 'en' where user_id = :'ub';
+select is((select count(*)::int from public.user_settings), 0, 'pending bob cannot read or write other tables');
+select ok(not public.can_access() and public.can_onboard(), 'pending: can_access false, can_onboard true');
 select throws_ok(
   $$ select public.admin_set_registration_status('00000000-0000-0000-0000-00000000000b', 'approved') $$,
   '42501', null, 'non-admin cannot approve'
@@ -104,14 +123,17 @@ select lives_ok(
 );
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
 select ok(public.can_access(), 'approved bob can access');
-insert into public.profile_private (user_id, height_cm) values (:'ub', 180);
+update public.profile_private set height_cm = 180 where user_id = :'ub';
 
 -- 8. bob cannot escalate himself
 update public.profiles set role = 'admin', is_blocked = false, total_points = 500 where user_id = :'ub';
 select is((select role || ':' || total_points from public.profiles where user_id = :'ub'), 'user:0', 'bob cannot change role or points');
 
 -- 9-10. isolation: bob sees alice's PUBLIC profile but not her private rows / settings
-select is((select count(*)::int from public.profiles), 2, 'public profiles visible to all users');
+select is((select count(*)::int from public.profiles), 1, 'profiles: other users'' rows are not readable directly');
+select is((select username from public.get_public_profile(:'ua')), 'alice_01', 'get_public_profile returns a visible user''s public fields');
+select ok(not public.is_username_available('alice_01') and public.is_username_available('BOB') and public.is_username_available('free_name'),
+  'is_username_available: taken by others false, own and free true');
 select is((select count(*)::int from public.user_settings where user_id = :'ua'), 0, 'bob cannot read alice settings');
 
 -- IDOR attempts: bob tampers with user_id in filters / bodies ------------------
@@ -121,7 +143,7 @@ select throws_ok(
   '42501', null, 'IDOR write: bob cannot insert a row owned by alice'
 );
 update public.profiles set display_name = 'HACKED' where user_id = :'ua';
-select is((select display_name from public.profiles where user_id = :'ua'), 'Alice', 'IDOR update: bob cannot change alice profile');
+select is((select display_name from public.get_public_profile(:'ua')), 'Alice', 'IDOR update: bob cannot change alice profile');
 delete from public.profile_private where user_id = :'ua';
 reset role;
 select is((select count(*)::int from public.profile_private where user_id = :'ua'), 0, 'IDOR delete: no-op (alice has no private row yet, and bob could not have touched it)');
@@ -442,13 +464,13 @@ select throws_like(
 );
 select throws_like($$ select public.ai_reserve() $$, '%AI_CONSENT_REQUIRED%', 'ai: no AI request before explicit consent (18+, free-tier terms)');
 select public.record_consent('ai_processing', 'test');
-select is((public.ai_reserve() ->> 'user_left')::int, 39, 'ai: a request is counted against the daily limit');
+select is((public.ai_reserve() ->> 'user_left')::int, 9, 'ai: a request is counted against the daily limit');
 select throws_ok(
   $$ insert into public.ai_usage (user_id, day, request_count) values ('00000000-0000-0000-0000-00000000000b', current_date, 0) $$,
   '42501', null, 'ai: clients cannot write the usage counter'
 );
 update public.user_settings set ai_daily_limit = 1000 where user_id = :'ub';
-select is((select ai_daily_limit from public.user_settings where user_id = :'ub'), 40, 'ai: users cannot raise their own AI limit');
+select is((select ai_daily_limit from public.user_settings where user_id = :'ub'), 10, 'ai: users cannot raise their own AI limit');
 reset role;
 update public.user_settings set ai_daily_limit = 1 where user_id = :'ub';
 set local role authenticated;
@@ -935,15 +957,15 @@ select throws_ok(
   '22023', 'BAD_ENDPOINT', 'push: endpoints must be https'
 );
 select throws_ok(
-  format('select public.register_push(%L, %L, %L, null)', 'https://push.example.com/' || repeat('x', 1000), 'abc', 'def'),
+  format('select public.register_push(%L, %L, %L, null)', 'https://fcm.googleapis.com/fcm/send/' || repeat('x', 1000), 'abc', 'def'),
   '22023', 'BAD_ENDPOINT', 'push: endpoints over 1000 characters are rejected'
 );
 select throws_ok(
-  $$ select public.register_push('https://push.example.com/k', repeat('k', 201), 'def', null) $$,
+  $$ select public.register_push('https://fcm.googleapis.com/fcm/send/k', repeat('k', 201), 'def', null) $$,
   '22023', 'BAD_KEY', 'push: oversized keys are rejected'
 );
 select throws_ok(
-  $$ insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ('00000000-0000-0000-0000-00000000000a', 'https://push.example.com/direct', 'k', 'a') $$,
+  $$ insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ('00000000-0000-0000-0000-00000000000a', 'https://fcm.googleapis.com/fcm/send/direct', 'k', 'a') $$,
   '42501', null, 'push: clients cannot insert subscriptions directly'
 );
 select throws_ok(
@@ -951,31 +973,31 @@ select throws_ok(
   '42501', null, 'push: clients cannot update subscriptions'
 );
 select lives_ok(
-  $$ select public.register_push('https://push.example.com/alice-' || lpad(g::text, 2, '0'), 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', 'tBHItJI5svbpez7KI4CCXg', null)
+  $$ select public.register_push('https://fcm.googleapis.com/fcm/send/alice-' || lpad(g::text, 2, '0'), 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', 'tBHItJI5svbpez7KI4CCXg', null)
        from generate_series(1, 11) g $$,
   'push: alice registers 11 more devices'
 );
 select ok(
   (select count(*) = 10 from public.push_subscriptions)
-  and not exists (select 1 from public.push_subscriptions where endpoint in (:'pe1', 'https://push.example.com/alice-01'))
-  and exists (select 1 from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11'),
+  and not exists (select 1 from public.push_subscriptions where endpoint in (:'pe1', 'https://fcm.googleapis.com/fcm/send/alice-01'))
+  and exists (select 1 from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/alice-11'),
   'push: at most 10 devices per user, the oldest are dropped'
 );
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
-select public.register_push('https://push.example.com/alice-11', :'pk', :'pa', null);
+select public.register_push('https://fcm.googleapis.com/fcm/send/alice-11', :'pk', :'pa', null);
 select is(
-  (select array_agg(endpoint) from public.push_subscriptions), array['https://push.example.com/alice-11'],
+  (select array_agg(endpoint) from public.push_subscriptions), array['https://fcm.googleapis.com/fcm/send/alice-11'],
   'push: re-registering an endpoint from another account moves it there (bob sees only his device)'
 );
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
 select ok(
   (select count(*) = 9 from public.push_subscriptions)
-  and not exists (select 1 from public.push_subscriptions where user_id = :'ub' or endpoint = 'https://push.example.com/alice-11'),
+  and not exists (select 1 from public.push_subscriptions where user_id = :'ub' or endpoint = 'https://fcm.googleapis.com/fcm/send/alice-11'),
   'push IDOR: alice sees only her own devices, not the one that moved to bob'
 );
-select public.unregister_push('https://push.example.com/alice-11');
-delete from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11';
-select public.unregister_push('https://push.example.com/alice-10');
+select public.unregister_push('https://fcm.googleapis.com/fcm/send/alice-11');
+delete from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/alice-11';
+select public.unregister_push('https://fcm.googleapis.com/fcm/send/alice-10');
 select is((select count(*)::int from public.push_subscriptions), 8, 'push: unregister_push removes the caller''s own device');
 reset role;
 select is(
@@ -991,7 +1013,7 @@ select throws_ok(
 );
 select throws_ok($$ select * from private.push_config $$, '42501', null, 'push: a signed-in user cannot read the dispatch secret');
 select throws_ok(
-  $$ select public.prune_push_subscriptions('anything', array['https://push.example.com/alice-09']) $$,
+  $$ select public.prune_push_subscriptions('anything', array['https://fcm.googleapis.com/fcm/send/alice-09']) $$,
   '42501', 'FORBIDDEN', 'push: prune is refused while no secret is configured'
 );
 reset role;
@@ -1003,11 +1025,11 @@ select public.set_push_config(:'purl', :'psecret');
 set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
 select throws_ok(
-  $$ select public.prune_push_subscriptions('wrong-secret-wrong-secret-wrong-secret', array['https://push.example.com/alice-09']) $$,
+  $$ select public.prune_push_subscriptions('wrong-secret-wrong-secret-wrong-secret', array['https://fcm.googleapis.com/fcm/send/alice-09']) $$,
   '42501', 'FORBIDDEN', 'push: prune with a wrong secret is refused'
 );
 select is(
-  public.prune_push_subscriptions(:'psecret', array['https://push.example.com/alice-09', 'https://push.example.com/unknown']), 1,
+  public.prune_push_subscriptions(:'psecret', array['https://fcm.googleapis.com/fcm/send/alice-09', 'https://fcm.googleapis.com/fcm/send/unknown']), 1,
   'push: prune with the dispatch secret deletes the dead endpoints'
 );
 reset role;
@@ -1059,7 +1081,7 @@ select is(public.dispatch_reminders(), 1, 'push: one message is queued for bob''
 select is(
   (select convert_from(q.body, 'UTF8')::jsonb from net.http_request_queue q where q.url = :'purl'),
   jsonb_build_object('messages', jsonb_build_array(jsonb_build_object(
-    'endpoint', 'https://push.example.com/alice-11', 'p256dh', :'pk', 'auth', :'pa',
+    'endpoint', 'https://fcm.googleapis.com/fcm/send/alice-11', 'p256dh', :'pk', 'auth', :'pa',
     'payload', jsonb_build_object('body', 'A esneme, B kitap, C fatura +1', 'url', '/track', 'tag', 'reminders-' || current_date::text)))),
   'push: the batch carries the device keys and a grouped body (3 names + count)'
 );
@@ -1083,7 +1105,7 @@ select is(
 select is(public.dispatch_reminders(), 0, 'push: a second run in the same window queues nothing (reminder_log dedupe)');
 select is((select count(*)::int from net.http_request_queue where url = :'purl'), 1, 'push: and adds no request');
 select ok(
-  (select last_used_at is not null from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11'),
+  (select last_used_at is not null from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/alice-11'),
   'push: the targeted device is stamped last_used_at'
 );
 set local role authenticated;
@@ -1128,7 +1150,7 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","e
 update public.profiles set is_blocked = false where user_id = :'ub';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
-delete from public.push_subscriptions where endpoint = 'https://push.example.com/alice-11';
+delete from public.push_subscriptions where endpoint = 'https://fcm.googleapis.com/fcm/send/alice-11';
 select is((select count(*)::int from public.push_subscriptions), 0, 'push: the owner can delete his own device');
 reset role;
 select is(public.dispatch_reminders(), 0, 'push: a user without a device gets no message');
@@ -1391,9 +1413,13 @@ select ok(
 );
 select is(
   (select array_agg(code order by sort) from public.badges),
-  array['first_workout', 'streak_7', 'streak_30', 'sets_100', 'photos_10', 'habit_30', 'todo_50'],
-  'badges: the seven badges are seeded in display order'
+  array['first_workout', 'workouts_10', 'workouts_50', 'workouts_100', 'workouts_250', 'streak_7', 'streak_30', 'streak_100',
+        'streak_365', 'sets_100', 'sets_500', 'sets_1000', 'sets_5000', 'volume_10t', 'volume_100t', 'volume_1000t', 'pr_10',
+        'pr_50', 'cardio_600', 'cardio_3000', 'early_bird_5', 'weekend_10', 'habit_30', 'habit_100', 'habit_365', 'todo_50',
+        'todo_200', 'water_30', 'sleep_30', 'weigh_30', 'photos_10', 'photos_25'],
+  'badges: the badges are seeded in display order'
 );
+select is((select count(*)::int from public.badges), 32, 'badges: public.badges has 32 rows');
 
 -- badges: workouts ---------------------------------------------------------------------------
 set local role authenticated;
@@ -1423,9 +1449,9 @@ select throws_ok(
 );
 update public.user_badges set earned_at = now() - interval '1 year';
 delete from public.user_badges;
-select is((select count(*)::int from public.user_badges where earned_at = now()), 2, 'badges: clients cannot edit or delete their badges');
+select is((select count(*)::int from public.user_badges where earned_at = now()), 3, 'badges: clients cannot edit or delete their badges');
 delete from public.workout_sessions where id = :'cs2';
-select is((select count(*)::int from public.user_badges), 2, 'badges: deleting the source session does not revoke a milestone');
+select is((select count(*)::int from public.user_badges), 3, 'badges: deleting the source session does not revoke a milestone');
 select is((select count(*)::int from public.point_events where ref_table = 'user_badges' or kind like 'badge%'), 0, 'badges: badges give no points');
 
 -- badges: streak, photos, habits, to-dos (direct fixtures as the owner role) ----------------------
@@ -1468,20 +1494,24 @@ insert into public.todo_completions (user_id, todo_id, day) select :'uc', t.id, 
 select ok(exists (select 1 from public.user_badges where user_id = :'uc' and badge_code = 'todo_50'), 'badges: the 50th completed to-do earns todo_50');
 
 select is(public.check_badges(:'uc'), '{}'::text[], 'badges: check_badges is idempotent (a full re-check earns nothing new)');
-select is((select count(*)::int from public.user_badges where user_id = :'uc'), 7, 'badges: and adds no duplicate rows');
+select is((select count(*)::int from public.user_badges where user_id = :'uc'), 8, 'badges: and adds no duplicate rows');
 
 -- get_user_badges privacy
 insert into public.user_badges (user_id, badge_code) values (:'ud', 'first_workout');
 set local role authenticated;
 set local request.jwt.claims = :'jwt_b';
 select is((select count(*)::int from public.user_badges where user_id = :'uc'), 0, 'badges IDOR: bob reads none of carol''s badge rows');
-select is((select count(*)::int from public.get_user_badges(:'uc')), 7, 'badges: get_user_badges shows a leaderboard user''s badges');
+select is((select count(*)::int from public.get_user_badges(:'uc')), 8, 'badges: get_user_badges shows a leaderboard user''s badges');
 select is((select count(*)::int from public.get_user_badges(:'ud')), 0, 'badges privacy: nothing for a user who is not approved');
 set local request.jwt.claims = :'jwt_c';
 update public.profiles set show_on_leaderboard = false where user_id = :'uc';
 select is((select array_agg(badge_code) from public.get_user_badges(:'uc'))::text[],
-  array['first_workout', 'streak_7', 'streak_30', 'sets_100', 'photos_10', 'habit_30', 'todo_50'],
+  array['first_workout', 'streak_7', 'streak_30', 'sets_100', 'volume_10t', 'habit_30', 'todo_50', 'photos_10'],
   'badges: a hidden user still gets her own badges (in display order)');
+select ok((select public.my_badge_progress() ?& array['workouts', 'weigh_ins']), 'badges: my_badge_progress returns the workouts and weigh_ins metrics');
+set local request.jwt.claims = :'jwt_d';
+select throws_ok($$ select public.my_badge_progress() $$, '42501', 'FORBIDDEN', 'badges: my_badge_progress is FORBIDDEN without access (pending)');
+set local request.jwt.claims = :'jwt_c';
 set local request.jwt.claims = :'jwt_b';
 select is((select count(*)::int from public.get_user_badges(:'uc')), 0, 'badges privacy: nothing for a user hidden from the leaderboard');
 set local request.jwt.claims = :'jwt_c';
@@ -1750,6 +1780,691 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","e
 select lives_ok($$ update public.profile_private set birth_year = extract(year from current_date)::int - 10 where user_id = '00000000-0000-0000-0000-00000000000b' $$, 'age: users under 18 may use the app');
 select throws_like($$ select public.record_consent('ai_processing', 'test') $$, '%UNDERAGE%', 'age: under 18 cannot consent to AI');
 select throws_like($$ select public.ai_reserve() $$, '%AI_UNDERAGE%', 'age: AI requests are refused under 18 even after an earlier consent');
+reset role;
+
+-- =============================================================================
+-- Security hardening (20261120000000)
+-- =============================================================================
+reset role;
+set local request.jwt.claims = '';
+update public.app_config set value = '"open"'::jsonb where key = 'access_mode';
+update public.app_config set value = 'true'::jsonb where key = 'require_approval';
+\set ue '00000000-0000-0000-0000-00000000000e'
+\set jwt_e '{"sub":"00000000-0000-0000-0000-00000000000e","email":"eve@example.com","role":"authenticated"}'
+insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) values
+  (:'ue', 'eve@example.com', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now());
+
+-- 1. a signed-in user without a profile has no access, only the onboarding writes
+set local role authenticated;
+set local request.jwt.claims = :'jwt_e';
+select ok(not public.can_access() and public.can_onboard(), 'hardening: no profile -> can_access false, can_onboard true');
+select is((select count(*)::int from public.profiles), 0, 'hardening: no profile -> other profiles are invisible');
+select is((select count(*)::int from public.get_leaderboard('week', 50)), 0, 'hardening: no profile -> no leaderboard');
+update public.user_settings set locale = 'en';
+select is((select count(*)::int from public.user_settings), 0, 'hardening: no profile -> user tables are closed');
+select throws_ok($$ select public.ai_reserve() $$, '42501', 'FORBIDDEN', 'hardening: no profile -> no AI quota');
+select throws_ok($$ select public.record_consent('ai_processing', 'test') $$, '42501', 'FORBIDDEN', 'hardening: no profile -> only the privacy notice can be acknowledged');
+select lives_ok($$ select public.record_consent('privacy_notice', 'v1') $$, 'hardening: onboarding acknowledges the privacy notice');
+select public.record_consent('privacy_notice', 'v1');
+reset role;
+select is((select count(*)::int from public.user_consents where user_id = :'ue'), 1, 'consent: an unchanged acknowledgement is not logged twice');
+set local role authenticated;
+select lives_ok($$ insert into public.profile_private (user_id, height_cm) values ('00000000-0000-0000-0000-00000000000e', 170)
+                   on conflict (user_id) do update set height_cm = excluded.height_cm $$, 'hardening: onboarding upserts profile_private');
+select lives_ok($$ insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000e/avatar.jpg') $$, 'hardening: onboarding uploads the avatar');
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000e/big.png') $$, '42501', null, 'storage: avatar names are only <uid>/avatar.(jpg|webp)');
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000e/x/avatar.jpg') $$, '42501', null, 'storage: no nested avatar paths');
+select ok(public.is_username_available('eve_1') and not public.is_username_available('bob') and not public.is_username_available('x'),
+  'hardening: is_username_available works during onboarding (taken / malformed -> false)');
+select lives_ok($$ insert into public.error_reports (route) values ('/onboarding') $$, 'reports: a user without a profile can report an onboarding error');
+insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
+values (:'ue', 'eve_1', 'Eve', '00000000-0000-0000-0000-00000000000e/avatar.jpg', now());
+select is((select status from public.profiles where user_id = :'ue'), 'pending', 'hardening: eve onboarded and is pending');
+select is((select count(*)::int from public.get_public_profile('00000000-0000-0000-0000-00000000000a')), 0, 'hardening: a pending user gets no public profiles');
+select lives_ok($$ select public.record_consent('privacy_notice', 'v2') $$, 'hardening: a pending user may acknowledge a new notice');
+set local request.jwt.claims = :'jwt_a';
+select public.admin_set_registration_status(:'ue', 'rejected');
+set local request.jwt.claims = :'jwt_e';
+select is((select status from public.profiles), 'rejected', 'hardening: a rejected user still reads her own profile');
+select ok(not public.can_onboard() and not public.can_access(), 'hardening: a rejected user can neither onboard nor access');
+select throws_ok($$ select public.record_consent('privacy_notice', 'v3') $$, '42501', 'FORBIDDEN', 'hardening: a rejected user cannot record consents');
+select throws_ok($$ insert into storage.objects (bucket_id, name) values ('avatars', '00000000-0000-0000-0000-00000000000e/avatar.webp') $$, '42501', null, 'hardening: a rejected user cannot upload avatars');
+select throws_ok($$ select public.is_username_available('abc') $$, '42501', 'FORBIDDEN', 'hardening: is_username_available needs onboarding or access');
+
+-- 2. profiles: owner/admin only; public fields via get_public_profile
+set local request.jwt.claims = :'jwt_a';
+select is((select count(*)::int from public.profiles where user_id = :'ue'), 1, 'profiles: the admin reads every profile');
+set local request.jwt.claims = :'jwt_b';
+select is(
+  (select array_agg(k order by k) from public.get_public_profile('00000000-0000-0000-0000-00000000000c') g, jsonb_object_keys(to_jsonb(g)) k),
+  array['avatar_path', 'created_at', 'current_streak', 'display_name', 'level', 'total_points', 'username'],
+  'get_public_profile returns only the public columns'
+);
+select is((select count(*)::int from public.get_public_profile('00000000-0000-0000-0000-00000000000e')), 0, 'get_public_profile: nothing for a rejected user');
+select is((select count(*)::int from public.get_public_profile('00000000-0000-0000-0000-00000000000d')), 0, 'get_public_profile: nothing for a pending user');
+reset role;
+update public.profiles set show_on_leaderboard = false where user_id = :'ub';
+set local role authenticated;
+select is((select count(*)::int from public.get_public_profile('00000000-0000-0000-0000-00000000000b')), 1, 'get_public_profile: a hidden user sees herself');
+set local request.jwt.claims = :'jwt_a';
+select is((select count(*)::int from public.get_public_profile('00000000-0000-0000-0000-00000000000b')), 0, 'get_public_profile: nothing for a user hidden from the leaderboard');
+
+-- 12. leaderboard: hidden users see their own row; all-time = total_points
+select is((select count(*)::int from public.get_leaderboard('all', 50) where username = 'bob'), 0, 'leaderboard: a hidden user is not listed for others');
+set local request.jwt.claims = :'jwt_b';
+select is((select count(*)::int from public.get_leaderboard('all', 50) where is_me), 1, 'leaderboard: a hidden user still sees her own rank row');
+select is((select points from public.get_leaderboard('all', 50) where is_me), (select total_points::bigint from public.profiles where user_id = :'ub'),
+  'leaderboard: all-time points come from profiles.total_points');
+reset role;
+update public.profiles set show_on_leaderboard = true where user_id = :'ub';
+
+-- 6. profiles guard keeps created_at and username_changed_at
+set local role authenticated;
+set local request.jwt.claims = :'jwt_c';
+create temp table t_prof as select created_at, username_changed_at from public.profiles where user_id = :'uc';
+update public.profiles set created_at = now() - interval '5 years', username_changed_at = now() - interval '1 year' where user_id = :'uc';
+select ok((select p.created_at = t.created_at and p.username_changed_at is not distinct from t.username_changed_at
+             from public.profiles p, t_prof t where p.user_id = :'uc'), 'profiles guard: created_at and username_changed_at are not client-editable');
+update public.profiles set username = 'carol_2' where user_id = :'uc';
+select ok((select username_changed_at > now() - interval '1 minute' from public.profiles where user_id = :'uc'), 'profiles guard: a real rename stamps username_changed_at');
+select throws_like($$ update public.profiles set username = 'carol_3', username_changed_at = null where user_id = '00000000-0000-0000-0000-00000000000c' $$,
+  '%USERNAME_COOLDOWN%', 'profiles guard: the 30-day rename rule cannot be bypassed');
+
+-- 7. blocked users cannot file error reports
+set local request.jwt.claims = :'jwt_a';
+select public.admin_set_blocked(:'uc', true);
+set local request.jwt.claims = :'jwt_c';
+select throws_ok($$ insert into public.error_reports (route) values ('/x') $$, '42501', null, 'reports: a blocked user cannot file reports');
+select ok(not public.can_onboard(), 'hardening: a blocked user cannot onboard');
+set local request.jwt.claims = :'jwt_a';
+select public.admin_set_blocked(:'uc', false);
+
+-- 4. record_consent daily cap
+reset role;
+insert into public.user_consents (user_id, kind, version, granted)
+  select :'ua', 'adult', 'cap' || g, true
+  from generate_series(1, greatest(0, 20 - (select count(*)::int from public.user_consents where user_id = :'ua' and created_at >= current_date::timestamptz))) g;
+set local role authenticated;
+set local request.jwt.claims = :'jwt_a';
+select throws_like($$ select public.record_consent('health_data', 'cap-test') $$, '%RATE_LIMITED%', 'consent: at most 20 consent rows per user per day');
+
+-- 5. register_push: push-service hosts only
+select throws_ok($$ select public.register_push('https://evil.example.com/x', 'abc', 'def', null) $$, '22023', 'BAD_ENDPOINT', 'push: unknown push hosts are rejected');
+select throws_ok($$ select public.register_push('https://fcm.googleapis.com.evil.io/x', 'abc', 'def', null) $$, '22023', 'BAD_ENDPOINT', 'push: look-alike hosts are rejected');
+select throws_ok($$ select public.register_push('https://user@fcm.googleapis.com/x', 'abc', 'def', null) $$, '22023', 'BAD_ENDPOINT', 'push: userinfo tricks are rejected');
+select lives_ok($$ select public.register_push('https://web.push.apple.com/abc', 'abc', 'def', null) $$, 'push: Apple push hosts are accepted');
+select lives_ok($$ select public.register_push('https://updates.push.services.mozilla.com/wpush/v2/x', 'abc', 'def', null) $$, 'push: Mozilla is accepted');
+select lives_ok($$ select public.register_push('https://wns2-par02p.notify.windows.com/w/?token=x', 'abc', 'def', null) $$, 'push: Windows is accepted');
+
+-- 3. progress-photos: 2 MB files, 150 MB per user
+reset role;
+select is((select file_size_limit from storage.buckets where id = 'progress-photos'), 2097152::bigint, 'storage: progress-photos files are at most 2 MB');
+insert into public.user_consents (user_id, kind, version, granted) values (:'ub', 'health_data', 'test', true);
+update public.profile_private set birth_year = null where user_id = :'ub';
+set local role authenticated;
+set local request.jwt.claims = :'jwt_b';
+select lives_ok($$ insert into storage.objects (bucket_id, name, owner_id) values ('progress-photos', '00000000-0000-0000-0000-00000000000b/' || gen_random_uuid() || '.img.bin', '00000000-0000-0000-0000-00000000000b') $$,
+  'storage: a photo upload under the byte cap is accepted');
+reset role;
+insert into storage.objects (bucket_id, name, owner_id, metadata) values
+  ('progress-photos', :'ub' || '/' || gen_random_uuid() || '.img.bin', :'ub', '{"size": 157286400}');
+set local role authenticated;
+select throws_ok($$ insert into storage.objects (bucket_id, name, owner_id) values ('progress-photos', '00000000-0000-0000-0000-00000000000b/' || gen_random_uuid() || '.img.bin', '00000000-0000-0000-0000-00000000000b') $$,
+  '42501', null, 'storage: uploads stop at 150 MB per user');
+
+-- 8. AI quota
+reset role;
+select is((select column_default from information_schema.columns where table_schema = 'public' and table_name = 'user_settings' and column_name = 'ai_daily_limit'), '10', 'ai: the default per-user limit is 10');
+select is((select ai_daily_limit from public.user_settings where user_id = :'ue'), 10, 'ai: new users get 10 requests a day');
+select ok(pg_get_functiondef('public.ai_reserve()'::regprocedure) like '%pg_advisory_xact_lock(hashtext(''ai_reserve''))%', 'ai: ai_reserve serializes app-wide');
+update public.app_config set value = '{"m1": {"rpd": 100, "rpm": 2, "tpm": 0}}'::jsonb where key = 'ai_model_limits';
+update public.app_config set value = '["m1"]'::jsonb where key = 'ai_model_order';
+update public.app_config set value = '450'::jsonb where key = 'ai_global_daily_limit';
+delete from private.ai_reservations;
+select is(public.ai_decide(:'ue') ->> 'reason', 'ok', 'ai: available while the minute budget is free');
+insert into private.ai_reservations default values;
+insert into private.ai_reservations default values;
+select is(public.ai_decide(:'ue') ->> 'reason', 'google_minute', 'ai: the per-minute gate counts reservations, not only logged calls');
+delete from private.ai_reservations;
+update public.app_config set value = '1'::jsonb where key = 'ai_global_daily_limit';
+insert into public.ai_usage (user_id, day, request_count) values (:'ua', current_date, 1)
+  on conflict (user_id, day) do update set request_count = greatest(public.ai_usage.request_count, 1);
+select is(public.ai_decide(:'ue') ->> 'reason', 'app_daily', 'ai: the app-wide budget counts reservations');
+select ok(not has_function_privilege('authenticated', 'public.ai_decide(uuid)', 'execute'), 'ai: ai_decide is internal');
+
+-- 9. retention
+select is((select count(*)::int from cron.job where jobname = 'nightly-retention' and command = 'select private.run_retention()'), 1, 'retention: one nightly job');
+insert into public.error_reports (user_id, route) values (:'ua', '/old-resolved'), (:'ua', '/old-open');
+alter table public.error_reports disable trigger error_reports_guard;
+update public.error_reports set created_at = now() - interval '100 days' where route in ('/old-resolved', '/old-open');
+update public.error_reports set status = 'resolved', resolved_at = now() - interval '100 days' where route = '/old-resolved';
+alter table public.error_reports enable trigger error_reports_guard;
+insert into public.ai_usage_log (user_id, action, provider, model, created_at) values (:'ua', 'coach_chat', 'gemini', 'old', now() - interval '200 days');
+select private.run_retention();
+select ok(not exists (select 1 from public.error_reports where route = '/old-resolved')
+          and exists (select 1 from public.error_reports where route = '/old-open')
+          and not exists (select 1 from public.ai_usage_log where model = 'old'),
+  'retention: removes old resolved reports and AI logs, keeps open reports');
+select ok(not has_function_privilege('authenticated', 'private.run_retention()', 'execute'), 'retention: the job function is internal');
+
+-- 10. monitoring
+insert into private.push_monthly (month, sent) values (date_trunc('month', now())::date, 7)
+  on conflict (month) do update set sent = 7;
+set local role authenticated;
+set local request.jwt.claims = :'jwt_a';
+select is((public.admin_usage_summary() ->> 'push_month')::int, 7, 'monitoring: push_month reads the monthly counter');
+reset role;
+select ok(not has_function_privilege('authenticated', 'public.ops_health()', 'execute')
+          and not has_function_privilege('anon', 'public.ops_health()', 'execute')
+          and has_function_privilege('service_role', 'public.ops_health()', 'execute'), 'monitoring: ops_health is service_role only');
+select is((select array_agg(k order by k) from jsonb_object_keys(public.ops_health()) k),
+  array['db_bytes', 'failed_cron_24h', 'http_errors_24h', 'open_error_reports', 'storage_bytes'], 'monitoring: ops_health keys');
+select ok((select bool_and(jsonb_typeof(v) = 'number') from jsonb_each(public.ops_health()) e(k, v)), 'monitoring: ops_health values are numeric');
+
+-- 11. policies evaluate auth.uid() / helpers once (InitPlan)
+select is(
+  (select count(*)::int from pg_policies
+    where (schemaname = 'public' or (schemaname = 'storage' and tablename = 'objects'))
+      and (coalesce(qual, '') || ' ' || coalesce(with_check, '') ~ '(?<!SELECT )auth\.uid\(\)'
+        or coalesce(qual, '') || ' ' || coalesce(with_check, '') ~ '(?<!SELECT )(?<![.\w])(can_access|is_admin|can_onboard)\(\)')),
+  0, 'rls perf: every policy wraps auth.uid() and the access helpers in a scalar subquery');
+create function pg_temp.explain_lines(q text) returns setof text language plpgsql as $f$
+begin return query execute 'explain ' || q; end $f$;
+set local role authenticated;
+set local request.jwt.claims = :'jwt_a';
+select ok((select bool_or(l ~ 'InitPlan') from pg_temp.explain_lines('select * from public.session_sets') l)
+          and not (select bool_or(l ~ 'SubPlan') from pg_temp.explain_lines('select * from public.session_sets') l),
+  'rls perf: session_sets evaluates the access check as an InitPlan');
+
+-- 12. invite list compares e-mails case-insensitively
+reset role;
+set local request.jwt.claims = '';
+update public.app_config set value = '"invite"'::jsonb where key = 'access_mode';
+insert into public.allowed_emails (email) values ('Frank@Example.com');
+select lives_ok($$ insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+  values ('00000000-0000-0000-0000-00000000000f', 'FRANK@example.COM', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now()) $$,
+  'invite: e-mails match case-insensitively');
+select throws_like($$ insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+  values ('00000000-0000-0000-0000-000000000010', 'mallory@example.com', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now()) $$,
+  '%ACCESS_DENIED%', 'invite: others are still refused');
+update public.app_config set value = '"open"'::jsonb where key = 'access_mode';
+
+-- =============================================================================
+-- Social (20261140000000)
+-- =============================================================================
+reset role;
+set local request.jwt.claims = '';
+update public.app_config set value = 'false'::jsonb where key = 'require_approval';
+\set s1 '00000000-0000-0000-0000-000000000101'
+\set s2 '00000000-0000-0000-0000-000000000102'
+\set s3 '00000000-0000-0000-0000-000000000103'
+\set s4 '00000000-0000-0000-0000-000000000104'
+\set s5 '00000000-0000-0000-0000-000000000105'
+\set s6 '00000000-0000-0000-0000-000000000106'
+\set s7 '00000000-0000-0000-0000-000000000107'
+\set s8 '00000000-0000-0000-0000-000000000108'
+\set s9 '00000000-0000-0000-0000-000000000109'
+\set s10 '00000000-0000-0000-0000-00000000010a'
+\set s11 '00000000-0000-0000-0000-00000000010b'
+\set j1 '{"sub":"00000000-0000-0000-0000-000000000101","role":"authenticated"}'
+\set j2 '{"sub":"00000000-0000-0000-0000-000000000102","role":"authenticated"}'
+\set j3 '{"sub":"00000000-0000-0000-0000-000000000103","role":"authenticated"}'
+\set j4 '{"sub":"00000000-0000-0000-0000-000000000104","role":"authenticated"}'
+\set j5 '{"sub":"00000000-0000-0000-0000-000000000105","role":"authenticated"}'
+\set j6 '{"sub":"00000000-0000-0000-0000-000000000106","role":"authenticated"}'
+\set j7 '{"sub":"00000000-0000-0000-0000-000000000107","role":"authenticated"}'
+\set j8 '{"sub":"00000000-0000-0000-0000-000000000108","role":"authenticated"}'
+\set j9 '{"sub":"00000000-0000-0000-0000-000000000109","role":"authenticated"}'
+\set j10 '{"sub":"00000000-0000-0000-0000-00000000010a","role":"authenticated"}'
+\set j11 '{"sub":"00000000-0000-0000-0000-00000000010b","role":"authenticated"}'
+-- sam (public), pia (private), sid stranger, pen pending, fay follower, fred friend, bart blocked, gus group member,
+-- nora never enables social, kid is under 18, nobirth has no birth year
+insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+select u.id::uuid, u.n || '@example.com', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', '{}', '{}', now(), now()
+  from (values (:'s1', 'sam'), (:'s2', 'pia'), (:'s3', 'sid'), (:'s4', 'pen'), (:'s5', 'fay'), (:'s6', 'fred'),
+               (:'s7', 'bart'), (:'s8', 'gus'), (:'s9', 'nora'), (:'s10', 'kid'), (:'s11', 'nobirth')) u(id, n);
+insert into public.profiles (user_id, username, display_name, avatar_path, onboarding_completed_at)
+select u.id::uuid, u.n || '_s', initcap(u.n), u.id || '/avatar.jpg', now()
+  from (values (:'s1', 'sam'), (:'s2', 'pia'), (:'s3', 'sid'), (:'s4', 'pen'), (:'s5', 'fay'), (:'s6', 'fred'),
+               (:'s7', 'bart'), (:'s8', 'gus'), (:'s9', 'nora'), (:'s10', 'kid'), (:'s11', 'nobirth')) u(id, n);
+insert into public.profile_private (user_id, birth_year)
+select u.id::uuid, u.y from (values (:'s1', 1990), (:'s2', 1991), (:'s3', 1992), (:'s4', 1993), (:'s5', 1994), (:'s6', 1995),
+  (:'s7', 1996), (:'s8', 1997), (:'s9', 1998), (:'s10', extract(year from current_date)::int - 15), (:'s11', null)) u(id, y);
+update public.app_config set value = 'true'::jsonb where key = 'require_approval';
+
+select ok((select not public and file_size_limit = 614400 and allowed_mime_types = array['image/jpeg', 'image/webp']
+             from storage.buckets where id = 'social-media'), 'social: social-media bucket is private, 600 KB, JPEG/WebP');
+select is((select value #>> '{}' from public.app_config where key = 'social_consent_version'), '2026-11-01', 'social: consent version in app_config');
+select is((select social_push from public.user_settings where user_id = :'s1'), true, 'social: social_push defaults to on');
+select ok((select bool_and(c.relrowsecurity) from pg_class c where c.oid in ('public.social_profiles'::regclass, 'public.follows'::regclass,
+  'public.blocks'::regclass, 'public.groups'::regclass, 'public.group_members'::regclass, 'public.posts'::regclass, 'public.post_media'::regclass,
+  'public.post_likes'::regclass, 'public.reports'::regclass, 'public.social_notifications'::regclass)), 'social: every social table has RLS');
+select ok(not has_function_privilege('authenticated', 'private.social_wipe(uuid, boolean, boolean)', 'execute')
+  and not has_function_privilege('authenticated', 'public.social_likes_after()', 'execute')
+  and not has_function_privilege('authenticated', 'public.social_age_guard()', 'execute')
+  and not has_function_privilege('authenticated', 'public.social_before_user_delete()', 'execute')
+  and not has_function_privilege('authenticated', 'public.ops_claim_storage_garbage(integer)', 'execute')
+  and not has_function_privilege('anon', 'public.ops_claim_storage_garbage(integer)', 'execute')
+  and has_function_privilege('service_role', 'public.ops_claim_storage_garbage(integer)', 'execute')
+  and not has_table_privilege('authenticated', 'private.storage_garbage', 'select'),
+  'social: wipe/trigger helpers internal, ops_claim_storage_garbage service_role only');
+select is((select count(*)::int from pg_proc where prosecdef and pronamespace in ('public'::regnamespace, 'private'::regnamespace)
+            and not exists (select 1 from unnest(coalesce(proconfig, '{}')) c where c like 'search_path=%')), 0,
+  'every security-definer function pins search_path');
+
+create function pg_temp.vis(l text[], ids uuid[]) returns text[] language sql as $f$
+  select coalesce(array_agg(x.l order by x.l), '{}') from unnest(l, ids) x(l, id) where public.can_view_post(x.id)
+$f$;
+create function pg_temp.social_msgs() returns int language sql as $f$
+  select count(*)::int from net.http_request_queue q
+   cross join lateral jsonb_array_elements(convert_from(q.body, 'UTF8')::jsonb -> 'messages') m
+   where m -> 'payload' ->> 'tag' = 'social'
+$f$;
+
+-- Enabling ------------------------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j10';
+select throws_ok($$ select public.social_enable('2026-11-01') $$, 'P0001', 'SOCIAL_UNDERAGE', 'social: under 18 is refused');
+set local request.jwt.claims = :'j11';
+select throws_ok($$ select public.social_enable('2026-11-01') $$, 'P0001', 'SOCIAL_BIRTH_YEAR_REQUIRED', 'social: a missing birth year is refused');
+set local request.jwt.claims = :'jwt_d';
+select throws_ok($$ select public.social_enable('2026-11-01') $$, '42501', 'FORBIDDEN', 'social: a pending user cannot enable social');
+set local request.jwt.claims = :'j1';
+select throws_ok($$ select public.social_enable('2025-01-01') $$, '22023', 'SOCIAL_CONSENT_VERSION', 'social: an old consent version is refused');
+select lives_ok($$ select public.social_enable('2026-11-01') $$, 'social: an adult enables social');
+set local request.jwt.claims = :'j2'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j3'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j4'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j5'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j6'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j7'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j8'; select public.social_enable('2026-11-01');
+set local request.jwt.claims = :'j9';
+select throws_ok($$ select public.social_follow('00000000-0000-0000-0000-000000000101') $$, 'P0001', 'SOCIAL_DISABLED', 'social: a non-social user cannot follow');
+reset role;
+select is((select count(*)::int from public.user_consents where kind = 'social' and granted and user_id::text like '00000000-0000-0000-0000-0000000001%'), 8,
+  'social: enabling records the social consent');
+select is((select count(*)::int from public.social_profiles where enabled and is_private), 8, 'social: accounts start private');
+set local role authenticated;
+set local request.jwt.claims = :'j1';
+select public.social_update_settings(false, null, 'Hello there');
+set local request.jwt.claims = :'j6';
+select public.social_update_settings(false);
+select throws_ok($$ select public.social_update_settings(null, null, repeat('x', 161)) $$, '22023', 'BAD_BIO', 'social: bio is at most 160 characters');
+
+-- Follows --------------------------------------------------------------------------------------
+set local request.jwt.claims = :'j4';
+select is(public.social_follow('00000000-0000-0000-0000-000000000102'), 'pending', 'follow: a private account gets a request');
+set local request.jwt.claims = :'j5';
+select is(public.social_follow('00000000-0000-0000-0000-000000000101'), 'accepted', 'follow: a public account is followed at once');
+select public.social_follow(:'s2');
+set local request.jwt.claims = :'j6';
+select public.social_follow(:'s1'); select public.social_follow(:'s2');
+set local request.jwt.claims = :'j7';
+select public.social_follow(:'s1');
+set local request.jwt.claims = :'j2';
+select lives_ok($$ select public.social_respond_follow('00000000-0000-0000-0000-000000000105', true) $$, 'follow: the owner accepts a request');
+select public.social_respond_follow(:'s6', true);
+select is(public.social_follow('00000000-0000-0000-0000-000000000106'), 'accepted', 'follow: pia follows fred back (friends)');
+select is((select count(*)::int from public.social_follow_requests()), 1, 'follow: one open request left (pen)');
+set local request.jwt.claims = :'j1';
+select public.social_follow(:'s6');
+reset role;
+select ok(exists (select 1 from public.social_notifications where user_id = :'s2' and kind = 'follow_request' and actor_id = :'s4')
+      and exists (select 1 from public.social_notifications where user_id = :'s5' and kind = 'follow_accepted' and actor_id = :'s2')
+      and (select count(*) from public.social_notifications where user_id = :'s1' and kind = 'follow') = 3,
+  'notifications: follow, follow_request and follow_accepted are written by triggers');
+
+-- Groups -------------------------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j1';
+select public.group_create('Closed Crew', 'secret plans', 'closed') as gc \gset
+select public.group_create('Open Gym', 'all welcome', 'open') as go \gset
+set local request.jwt.claims = :'j2';
+select is(public.group_join(:'gc'), 'pending', 'groups: joining a closed group is a request');
+set local request.jwt.claims = :'j1';
+select lives_ok(format('select public.group_respond(%L, true, %L)', :'gc', :'s2'), 'groups: the owner approves the request');
+reset role;
+select ok(exists (select 1 from public.social_notifications where user_id = :'s1' and kind = 'group_request' and actor_id = :'s2')
+      and exists (select 1 from public.social_notifications where user_id = :'s2' and kind = 'group_accepted' and actor_id = :'s1')
+      and (select status from public.group_members where group_id = :'gc' and user_id = :'s2') = 'active',
+  'groups: request and approval notify both sides');
+select invite_code as gccode from public.groups where id = :'gc' \gset
+set local role authenticated;
+set local request.jwt.claims = :'j8';
+select is(public.group_join_by_code(lower(:'gccode')), :'gc'::uuid, 'groups: the invite code joins a closed group');
+select throws_ok($$ select public.group_join_by_code('AAAAAAAAAA') $$, 'P0001', 'NOT_FOUND', 'groups: a wrong code is refused');
+set local request.jwt.claims = :'j3';
+select is(public.group_join(:'go'), 'active', 'groups: an open group is joined at once');
+set local request.jwt.claims = :'j7';
+select public.group_join(:'go');
+set local request.jwt.claims = :'j1';
+select public.group_invite(:'go', :'s5');
+reset role;
+select ok(exists (select 1 from public.social_notifications where user_id = :'s5' and kind = 'group_invite' and group_id = :'go'),
+  'groups: an invitation notifies the invitee');
+set local role authenticated;
+set local request.jwt.claims = :'j5';
+select is((select status from public.social_my_groups() where group_id = :'go'), 'invited', 'groups: the invitee sees the invitation');
+select lives_ok(format('select public.group_respond(%L, true)', :'go'), 'groups: the invitee accepts');
+select is((select status from public.social_my_groups() where group_id = :'go'), 'active', 'groups: the invitation became a membership');
+set local request.jwt.claims = :'j1';
+select lives_ok(format('select public.group_set_role(%L, %L, %L)', :'gc', :'s2', 'admin'), 'groups: the owner promotes an admin');
+set local request.jwt.claims = :'j2';
+select lives_ok(format('select public.group_rotate_code(%L)', :'gc'), 'groups: an admin rotates the invite code');
+select throws_ok(format('select public.group_remove_member(%L, %L)', :'gc', :'s1'), '42501', 'FORBIDDEN', 'groups: an admin cannot remove the owner');
+set local request.jwt.claims = :'j8';
+select throws_ok(format('select public.group_rotate_code(%L)', :'gc'), '42501', 'FORBIDDEN', 'groups: a member cannot rotate the code');
+select throws_ok(format('select public.group_set_role(%L, %L, %L)', :'gc', :'s8', 'admin'), '42501', 'FORBIDDEN', 'groups: a member cannot change roles');
+set local request.jwt.claims = :'j3';
+select is((select row(description, member_count)::text from public.social_search_groups('closed cr')), '(,)',
+  'groups: a closed group shows only its name to non-members');
+select is((select count(*)::int from public.social_group_members(:'gc')), 0, 'groups: closed member lists are hidden from non-members');
+select is((select count(*)::int from public.social_group_members(:'go')), 4, 'groups: open group members are listed');
+reset role;
+insert into public.groups (owner_id, name, visibility, invite_code)
+select :'s4', 'Group ' || i, 'open', private.new_invite_code() from generate_series(1, 20) i;
+set local role authenticated;
+set local request.jwt.claims = :'j4';
+select throws_ok($$ select public.group_create('One too many') $$, 'P0001', 'GROUP_LIMIT', 'groups: at most 20 owned groups');
+
+-- Posts ----------------------------------------------------------------------------------------
+set local request.jwt.claims = :'j1';
+select public.social_create_post('text', 'p1 public', null, 'public') as p1pub \gset
+select public.social_create_post('text', 'p1 followers', null, 'followers') as p1fol \gset
+select public.social_create_post('text', 'p1 friends', null, 'friends') as p1fr \gset
+select public.social_create_post('text', 'p1 group', null, 'group', :'gc') as p1grp \gset
+set local request.jwt.claims = :'j2';
+select public.social_create_post('text', 'p2 public', null, 'public') as p2pub \gset
+select public.social_create_post('text', 'p2 followers', null, 'followers') as p2fol \gset
+select public.social_create_post('text', 'p2 friends', null, 'friends') as p2fr \gset
+select public.social_create_post('text', 'p2 group', null, 'group', :'gc') as p2grp \gset
+set local request.jwt.claims = :'j7';
+select public.social_like(:'p1pub');
+set local request.jwt.claims = :'j1';
+select lives_ok($$ select public.social_block('00000000-0000-0000-0000-000000000107') $$, 'block: sam blocks bart');
+set local request.jwt.claims = :'j2';
+select public.social_block(:'s7');
+select is((select count(*)::int from public.social_blocked_users()), 1, 'block: the blocker lists blocked users');
+reset role;
+select ok(not exists (select 1 from public.follows where :'s7' in (follower_id, followee_id))
+      and (select like_count from public.posts where id = :'p1pub') = 0
+      and not exists (select 1 from public.social_notifications where actor_id = :'s7' and user_id = :'s1'),
+  'block: follows both ways, the blocked user''s likes and notifications are removed');
+
+-- Visibility matrix (labels fol, fr, grp, pub) -------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j1';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), array['fol', 'fr', 'grp', 'pub'], 'matrix: the author sees all own posts');
+set local request.jwt.claims = :'j3';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), array['pub'], 'matrix: public author x stranger');
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p2fol', :'p2fr', :'p2grp', :'p2pub']::uuid[]), '{}'::text[], 'matrix: private author x stranger');
+set local request.jwt.claims = :'j4';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p2fol', :'p2fr', :'p2grp', :'p2pub']::uuid[]), '{}'::text[], 'matrix: private author x pending follower');
+set local request.jwt.claims = :'j5';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), array['fol', 'pub'], 'matrix: public author x accepted follower');
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p2fol', :'p2fr', :'p2grp', :'p2pub']::uuid[]), array['fol', 'pub'], 'matrix: private author x accepted follower');
+set local request.jwt.claims = :'j6';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), array['fol', 'fr', 'pub'], 'matrix: public author x friend');
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p2fol', :'p2fr', :'p2grp', :'p2pub']::uuid[]), array['fol', 'fr', 'pub'], 'matrix: private author x friend');
+set local request.jwt.claims = :'j7';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), '{}'::text[], 'matrix: public author x blocked');
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p2fol', :'p2fr', :'p2grp', :'p2pub']::uuid[]), '{}'::text[], 'matrix: private author x blocked');
+set local request.jwt.claims = :'j8';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), array['grp', 'pub'], 'matrix: public author x group member');
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p2fol', :'p2fr', :'p2grp', :'p2pub']::uuid[]), array['grp'], 'matrix: private author x group member');
+set local request.jwt.claims = :'j9';
+select is(pg_temp.vis(array['fol', 'fr', 'grp', 'pub'], array[:'p1fol', :'p1fr', :'p1grp', :'p1pub']::uuid[]), '{}'::text[], 'matrix: a non-social user sees nothing');
+-- profile matrix (private account pia)
+set local request.jwt.claims = :'j3';
+select is((select row(relation, can_view)::text from public.social_profile(:'s2')), '(none,f)', 'profile: private x stranger -> header only');
+select is((select row(relation, can_view)::text from public.social_profile(:'s1')), '(none,t)', 'profile: public x stranger -> visible');
+set local request.jwt.claims = :'j4';
+select is((select row(relation, can_view)::text from public.social_profile(:'s2')), '(requested,f)', 'profile: private x pending follower');
+set local request.jwt.claims = :'j5';
+select is((select row(relation, can_view)::text from public.social_profile(:'s2')), '(following,t)', 'profile: private x accepted follower');
+set local request.jwt.claims = :'j6';
+select is((select row(relation, can_view, follows_me)::text from public.social_profile(:'s2')), '(friends,t,t)', 'profile: private x friend');
+set local request.jwt.claims = :'j7';
+select is((select count(*)::int from public.social_profile(:'s2')), 0, 'profile: blocked users do not see each other');
+set local request.jwt.claims = :'j8';
+select is((select row(relation, can_view)::text from public.social_profile(:'s2')), '(none,f)', 'profile: private x group member');
+set local request.jwt.claims = :'j9';
+select is((select count(*)::int from public.social_profile(:'s1')), 0, 'profile: a non-social user sees no profile');
+set local request.jwt.claims = :'j3';
+select is((select array_agg(k order by k) from public.social_profile('00000000-0000-0000-0000-000000000101') g, jsonb_object_keys(to_jsonb(g)) k),
+  array['avatar_path', 'badges', 'bio', 'can_view', 'display_name', 'followers_count', 'following_count', 'follows_me', 'incoming_request',
+        'is_private', 'level', 'posts_count', 'relation', 'user_id', 'username'], 'profile: only public fields');
+-- feeds, lists, search
+set local request.jwt.claims = :'j5';
+select is((select count(*)::int from public.social_feed()), 4, 'feed: the visible posts of followed accounts');
+select is((select count(*)::int from public.social_followers(:'s2')), 2, 'lists: followers of a followed private account (pending excluded)');
+set local request.jwt.claims = :'j8';
+select is((select array_agg(body order by body) from public.social_feed()), array['p1 group', 'p2 group'], 'feed: group posts reach members');
+select is((select count(*)::int from public.social_group_posts(:'gc')), 2, 'groups: members read the closed group''s posts');
+set local request.jwt.claims = :'j3';
+select is((select array_agg(body) from public.social_discover()), array['p1 public'], 'discover: only public posts of public accounts');
+select is((select count(*)::int from public.social_user_posts(:'s2')), 0, 'lists: a private account''s posts are closed to strangers');
+select is((select count(*)::int from public.social_followers(:'s2')), 0, 'lists: a private account''s followers are closed to strangers');
+select is((select count(*)::int from public.social_followers(:'s1')), 2, 'lists: a public account''s followers (blocked removed)');
+select is((select count(*)::int from public.social_group_posts(:'gc')), 0, 'groups: non-members read no closed group posts');
+select is((select count(*)::int from public.social_search_users('sam')), 1, 'search: finds discoverable users');
+set local request.jwt.claims = :'j7';
+select is((select count(*)::int from public.social_search_users('sam')), 0, 'search: blocked users are not found');
+select is((select count(*)::int from public.social_group(:'go')), 0, 'groups: a group whose owner blocked you is invisible');
+set local request.jwt.claims = :'j1';
+select ok(not exists (select 1 from public.social_group_members(:'go') where user_id = :'s7'), 'groups: blocked users are hidden in member lists');
+set local request.jwt.claims = :'j9';
+select ok((select count(*) from public.social_feed()) = 0 and (select count(*) from public.social_search_users('sam')) = 0
+          and (select count(*) from public.social_discover()) = 0, 'social: a non-social user gets empty feeds and search');
+
+-- Media and Storage -----------------------------------------------------------------------
+set local request.jwt.claims = :'j1';
+select public.social_create_post('photo', null, null, 'public') as p1ph \gset
+select :'s1' || '/' || :'p1ph' || '/aaaaaaaa-0000-4000-8000-00000000000' as m1pre \gset
+set local request.jwt.claims = :'j3';
+select is(public.can_view_post(:'p1ph'), false, 'media: a photo post without media is hidden');
+set local request.jwt.claims = :'j1';
+select lives_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media', :'m1pre' || '1.jpg', :'s1'),
+  'storage: the author uploads under <uid>/<post>/');
+select throws_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media',
+  :'s2' || '/' || :'p2pub' || '/aaaaaaaa-0000-4000-8000-000000000099.jpg', :'s1'), '42501', null, 'storage: no uploads into another user''s prefix');
+select throws_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media', :'s1' || '/' || :'p1ph' || '/x.png', :'s1'),
+  '42501', null, 'storage: malformed object names are refused');
+select throws_ok(format('insert into public.post_media (post_id, author_id, path, width, height, position) values (%L, %L, %L, 10, 10, 1)',
+  :'p1ph', :'s1', :'m1pre' || '2.jpg'), '42501', null, 'media: a row needs the uploaded object');
+select lives_ok(format('insert into public.post_media (post_id, author_id, path, width, height, position) values (%L, %L, %L, 1280, 960, 0)',
+  :'p1ph', :'s1', :'m1pre' || '1.jpg'), 'media: the author attaches the uploaded image');
+select lives_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L), (%L, %L, %L), (%L, %L, %L)',
+  'social-media', :'m1pre' || '2.jpg', :'s1', 'social-media', :'m1pre' || '3.jpg', :'s1', 'social-media', :'m1pre' || '4.jpg', :'s1'),
+  'storage: up to four images per post');
+select throws_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L)', 'social-media', :'m1pre' || '5.jpg', :'s1'),
+  '42501', null, 'storage: a fifth image is refused');
+set local request.jwt.claims = :'j3';
+select throws_ok(format('insert into public.post_media (post_id, author_id, path, width, height, position) values (%L, %L, %L, 10, 10, 1)',
+  :'p1ph', :'s1', :'m1pre' || '2.jpg'), '42501', null, 'media: only the author attaches media');
+select is(public.can_view_post(:'p1ph'), true, 'media: the photo post is visible once it has media');
+set local request.jwt.claims = :'j2';
+select public.social_create_post('progress', null, null, 'followers') as p2ph \gset
+select :'s2' || '/' || :'p2ph' || '/bbbbbbbb-0000-4000-8000-00000000000' as m2pre \gset
+select lives_ok(format('insert into storage.objects (bucket_id, name, owner_id) values (%L, %L, %L), (%L, %L, %L)',
+  'social-media', :'m2pre' || '1.jpg', :'s2', 'social-media', :'m2pre' || '2.jpg', :'s2'), 'storage: pia uploads two images');
+insert into public.post_media (post_id, author_id, path, width, height, position) values (:'p2ph', :'s2', :'m2pre' || '1.jpg', 800, 800, 0);
+reset role;
+update public.posts set created_at = now() - interval '11 minutes' where id = :'p2ph';
+set local role authenticated;
+set local request.jwt.claims = :'j2';
+select throws_ok(format('insert into public.post_media (post_id, author_id, path, width, height, position) values (%L, %L, %L, 10, 10, 1)',
+  :'p2ph', :'s2', :'m2pre' || '2.jpg'), '42501', null, 'media: attaching closes 10 minutes after the post');
+set local request.jwt.claims = :'j3';
+select is((select count(*)::int from storage.objects where bucket_id = 'social-media'), 4, 'storage matrix: a stranger reads only the public post''s images');
+set local request.jwt.claims = :'j4';
+select is((select count(*)::int from storage.objects where bucket_id = 'social-media'), 4, 'storage matrix: a pending follower reads nothing of the private account');
+set local request.jwt.claims = :'j5';
+select is((select count(*)::int from storage.objects where bucket_id = 'social-media'), 6, 'storage matrix: an accepted follower reads both');
+set local request.jwt.claims = :'j7';
+select is((select count(*)::int from storage.objects where bucket_id = 'social-media'), 0, 'storage matrix: a blocked user reads nothing');
+set local request.jwt.claims = :'j9';
+select is((select count(*)::int from storage.objects where bucket_id = 'social-media'), 0, 'storage matrix: a non-social user reads nothing');
+set local request.jwt.claims = :'j5';
+select is((select jsonb_array_length(media) from public.social_post(:'p2ph')), 1, 'media: post rows carry their media paths');
+
+-- Likes ----------------------------------------------------------------------------------------
+select is(public.social_like(:'p1pub'), 1, 'likes: like_count goes up');
+set local request.jwt.claims = :'j6';
+select is(public.social_like(:'p1pub'), 2, 'likes: a second like');
+select is(public.social_like(:'p1pub'), 2, 'likes: liking twice changes nothing');
+select is((select count(*)::int from public.post_likes), 1, 'likes: post_likes shows only own likes');
+set local request.jwt.claims = :'j5';
+select is(public.social_unlike(:'p1pub'), 1, 'likes: unlike lowers like_count');
+set local request.jwt.claims = :'j3';
+select throws_ok(format('select public.social_like(%L)', :'p2fol'), 'P0001', 'NOT_FOUND', 'likes: invisible posts cannot be liked');
+reset role;
+select is((select count(*)::int from public.social_notifications where user_id = :'s1' and kind = 'like' and post_id = :'p1pub'), 1,
+  'notifications: likes collapse to one per post per hour');
+
+-- Payload validation ---------------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j3';
+select lives_ok($$ select public.social_create_post('workout', 'leg day', '{"date":"2026-11-01","duration_sec":3600,"volume_kg":5000,"sets":20,"exercises":[{"name":"Squat","best":"100x5"}]}', 'public') $$,
+  'payload: a valid workout snapshot');
+select lives_ok($$ select public.social_create_post('program', null, '{"name":"PPL","days":[{"name":"Push","exercises":[{"name":"Bench","exercise_id":"abc","sets":3,"reps_low":8,"reps_high":12}]}]}', 'public') $$,
+  'payload: a valid program snapshot');
+select throws_ok($$ select public.social_create_post('workout', null, '{"date":"2026-11-01","duration_sec":1,"volume_kg":1,"sets":1,"exercises":[],"notes":"x"}') $$,
+  '22023', 'BAD_PAYLOAD', 'payload: unexpected top-level keys are refused');
+select throws_ok($$ select public.social_create_post('workout', null, '{"date":"2026-11-01","duration_sec":1,"volume_kg":1,"sets":1,"exercises":[{"name":"x","weight":1}]}') $$,
+  '22023', 'BAD_PAYLOAD', 'payload: unexpected nested keys are refused');
+select throws_ok($$ select public.social_create_post('meal', null, '{"protein_g":1,"carb_g":1,"fat_g":1}') $$, '22023', 'BAD_PAYLOAD', 'payload: meal needs kcal');
+select throws_ok($$ select public.social_create_post('text', 'hi', '{"a":1}') $$, '22023', 'BAD_PAYLOAD', 'payload: text posts carry no payload');
+select throws_ok($$ select public.social_create_post('meal', null, jsonb_build_object('kcal', 1, 'protein_g', 1, 'carb_g', 1, 'fat_g', 1, 'name', repeat('x', 17000))) $$,
+  '22023', 'BAD_PAYLOAD', 'payload: oversized payloads are refused');
+select throws_ok($$ select public.social_create_post('text', repeat('x', 1001)) $$, '22023', 'BAD_BODY', 'payload: body is at most 1000 characters');
+select throws_ok($$ select public.social_create_post('text', '   ') $$, '22023', 'BAD_BODY', 'payload: a text post needs a body');
+select throws_ok($$ select public.social_create_post('text', 'x', null, 'group') $$, '22023', 'BAD_AUDIENCE', 'payload: group audience needs a group');
+select throws_ok(format('select public.social_create_post(%L, %L, null, %L, %L)', 'text', 'x', 'group', :'gc'), 'P0001', 'NOT_GROUP_MEMBER',
+  'payload: only members post to a group');
+
+-- Rate limits ------------------------------------------------------------------------------
+do $$ begin for i in 1..18 loop perform public.social_create_post('text', 'spam ' || i); end loop; end $$;
+select throws_ok($$ select public.social_create_post('text', 'one more') $$, 'P0001', 'RATE_LIMITED', 'rate: 20 posts a day');
+reset role;
+insert into public.posts (author_id, kind, body, audience) select :'s9', 'text', 'bulk', 'public' from generate_series(1, 200);
+insert into public.post_likes (post_id, user_id) select id, :'s3' from public.posts where author_id = :'s9';
+insert into public.social_notifications (user_id, kind, actor_id) select :'s9', 'follow', :'s3' from generate_series(1, 50);
+insert into public.reports (reporter_id, target_kind, target_id) select :'s3', 'user', gen_random_uuid() from generate_series(1, 20);
+set local role authenticated;
+set local request.jwt.claims = :'j3';
+select throws_ok(format('select public.social_like(%L)', :'p1pub'), 'P0001', 'RATE_LIMITED', 'rate: 200 likes a day');
+select throws_ok(format('select public.social_follow(%L)', :'s1'), 'P0001', 'RATE_LIMITED', 'rate: 50 follow actions a day');
+select throws_ok(format('select public.social_report(%L, %L, %L)', 'post', :'p1pub', 'spam'), 'P0001', 'RATE_LIMITED', 'rate: 20 reports a day');
+
+-- Clients never write social tables directly -------------------------------------------------
+select throws_ok($$ insert into public.posts (author_id, kind, body) values ('00000000-0000-0000-0000-000000000103', 'text', 'x') $$, '42501', null,
+  'direct: posts are created only through social_create_post');
+select throws_ok($$ insert into public.social_notifications (user_id, kind) values ('00000000-0000-0000-0000-000000000101', 'follow') $$, '42501', null,
+  'direct: notifications are written only by triggers');
+select throws_ok($$ update public.follows set status = 'accepted' $$, '42501', null, 'direct: follows change only through RPCs');
+select is((select count(*)::int from public.posts where author_id <> '00000000-0000-0000-0000-000000000103'), 0, 'direct: the posts table shows only own rows');
+
+-- Reports and moderation ---------------------------------------------------------------------
+set local request.jwt.claims = :'j4';
+select lives_ok(format('select public.social_report(%L, %L, %L)', 'post', :'p1ph', 'nsfw'), 'reports: a user reports a post');
+select throws_ok($$ select * from public.admin_list_reports() $$, '42501', 'FORBIDDEN', 'reports: the queue is admin-only');
+set local request.jwt.claims = :'jwt_a';
+select is((select target ->> 'kind' from public.admin_list_reports() where target_id = :'p1ph'), 'photo', 'reports: the admin sees the reported post');
+select is((select count(*)::int from storage.objects where bucket_id = 'social-media' and name like :'s1' || '/' || :'p1ph' || '/%'), 4,
+  'reports: the admin can open the reported post''s images');
+
+-- Notifications ------------------------------------------------------------------------------
+set local request.jwt.claims = :'j1';
+select ok((select count(*) from public.social_notifications_list()) >= 3
+          and not exists (select 1 from public.social_notifications_list() where actor_id = :'s7'), 'notifications: listed, none from blocked users');
+select ok(public.social_mark_read(null) >= 3, 'notifications: mark all read');
+select is(public.social_unread_count(), 0, 'notifications: nothing unread after marking');
+
+-- Push ----------------------------------------------------------------------------------------
+reset role;
+update public.social_notifications set read_at = null where user_id = :'s1';
+insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values
+  (:'s1', 'https://fcm.googleapis.com/fcm/send/social-s1', 'k', 'a'), (:'s2', 'https://fcm.googleapis.com/fcm/send/social-s2', 'k', 'a');
+set local role authenticated;
+set local request.jwt.claims = :'j2';
+update public.user_settings set social_push = false;
+reset role;
+select is((select social_push from public.user_settings where user_id = :'s2'), false, 'push: social_push is a user setting');
+select pg_temp.social_msgs() as social_before \gset
+select public.dispatch_reminders();
+select is(pg_temp.social_msgs() - :social_before, 1, 'push: one collapsed social push (only sam; pia turned it off)');
+select ok(exists (select 1 from net.http_request_queue q
+                   cross join lateral jsonb_array_elements(convert_from(q.body, 'UTF8')::jsonb -> 'messages') m
+                   where m -> 'payload' ->> 'tag' = 'social' and m ->> 'endpoint' like '%social-s1'
+                     and m -> 'payload' ->> 'body' ~ '^[0-9]+ yeni bildirim$'), 'push: "N yeni bildirim" goes to sam''s device');
+select ok(not exists (select 1 from public.social_notifications where user_id = :'s1' and pushed_at is null)
+      and exists (select 1 from public.social_notifications where user_id = :'s2' and pushed_at is null), 'push: pushed_at marks delivered notifications only');
+insert into public.social_notifications (user_id, kind, actor_id) values (:'s1', 'follow', :'s8');
+select public.dispatch_reminders();
+select is(pg_temp.social_msgs() - :social_before, 1, 'push: at most one social push per user per 10 minutes');
+
+-- Going public accepts requests ----------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j2';
+select public.social_update_settings(false);
+reset role;
+select ok((select status from public.follows where follower_id = :'s4' and followee_id = :'s2') = 'accepted'
+          and exists (select 1 from public.social_notifications where user_id = :'s4' and kind = 'follow_accepted'),
+  'follow: switching to public accepts pending requests');
+
+-- Under-18 birth year auto-disables -------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j6';
+select public.social_create_post('text', 'fred post', null, 'public');
+update public.profile_private set birth_year = extract(year from current_date)::int - 10;
+reset role;
+select ok((select not enabled from public.social_profiles where user_id = :'s6')
+          and not exists (select 1 from public.posts where author_id = :'s6')
+          and not exists (select 1 from public.follows where :'s6' in (follower_id, followee_id))
+          and exists (select 1 from public.user_consents where user_id = :'s6' and kind = 'social' and not granted),
+  'age: a birth year under 18 closes social and deletes its data');
+set local role authenticated;
+select throws_ok($$ select public.social_enable('2026-11-01') $$, 'P0001', 'SOCIAL_UNDERAGE', 'age: social cannot be re-enabled');
+
+-- Owner leaves a group -> ownership transfers ---------------------------------------------------
+set local request.jwt.claims = :'j1';
+select lives_ok(format('select public.group_leave(%L)', :'gc'), 'groups: the owner leaves');
+reset role;
+select ok((select owner_id from public.groups where id = :'gc') = :'s2'
+          and (select role from public.group_members where group_id = :'gc' and user_id = :'s2') = 'owner',
+  'groups: ownership goes to the oldest admin');
+
+-- Leaving social deletes everything ------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims = :'j1';
+select lives_ok($$ select public.social_disable(true) $$, 'leave: sam leaves the social side');
+reset role;
+select ok(not exists (select 1 from public.posts where author_id = :'s1')
+          and not exists (select 1 from public.post_likes where user_id = :'s1')
+          and not exists (select 1 from public.follows where :'s1' in (follower_id, followee_id))
+          and not exists (select 1 from public.social_notifications where :'s1' in (user_id, actor_id))
+          and not exists (select 1 from public.group_members where user_id = :'s1')
+          and (select not enabled and bio is null from public.social_profiles where user_id = :'s1'),
+  'leave: posts, likes, follows, memberships and notifications are deleted');
+select is((select owner_id from public.groups where id = :'go'), :'s3'::uuid, 'leave: owned groups go to the oldest member');
+select is((select count(*)::int from private.storage_garbage where bucket = 'social-media' and path like :'s1' || '/%'), 4,
+  'leave: every media object is queued in storage_garbage');
+select ok(exists (select 1 from public.user_consents where user_id = :'s1' and kind = 'social' and not granted), 'leave: the withdrawal is logged');
+set local role authenticated;
+set local request.jwt.claims = :'j5';
+select is((select count(*)::int from public.social_profile(:'s1')), 0, 'leave: the user disappears for everyone');
+
+-- Account deletion queues media too -------------------------------------------------------------
+reset role;
+delete from auth.users where id = :'s2';
+select is((select count(*)::int from private.storage_garbage where path like :'s2' || '/%'), 2, 'account deletion: media objects are queued');
+select is((select owner_id from public.groups where id = :'gc'), :'s8'::uuid, 'account deletion: group ownership transfers');
+select count(*) as claimed from public.ops_claim_storage_garbage(1000) \gset
+select ok(:claimed >= 6 and not exists (select 1 from private.storage_garbage),
+  'ops_claim_storage_garbage returns and deletes the queue');
+
 reset role;
 select * from finish();
 rollback;

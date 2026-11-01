@@ -5,21 +5,150 @@
   "locked": "Kilitli",
   "close": "Kapat",
   "items": {
-    "first_workout": { "name": "İlk tekrar", "desc": "İlk antrenmanını ya da kardiyonu bitir." },
-    "streak_7": { "name": "Alev haftası", "desc": "Serini 7 gün boyunca sürdür." },
-    "streak_30": { "name": "Kesintisiz ay", "desc": "Serini 30 gün boyunca sürdür." },
-    "sets_100": { "name": "Yüz set", "desc": "100 çalışma seti bitir. Isınma setleri sayılmaz." },
-    "photos_10": { "name": "Gelişim arşivi", "desc": "10 gelişim fotoğrafı kaydet." },
-    "habit_30": { "name": "Alışkanlık ustası", "desc": "Bir alışkanlığın günlük hedefini 30 kez tamamla." },
-    "todo_50": { "name": "Elli iş", "desc": "50 yapılacak işi tamamla." }
+    "first_workout": {
+      "name": "İlk tekrar",
+      "desc": "İlk antrenmanını ya da kardiyonu bitir."
+    },
+    "streak_7": {
+      "name": "Alev haftası",
+      "desc": "Serini 7 gün boyunca sürdür."
+    },
+    "streak_30": {
+      "name": "Kesintisiz ay",
+      "desc": "Serini 30 gün boyunca sürdür."
+    },
+    "sets_100": {
+      "name": "Yüz set",
+      "desc": "100 çalışma seti bitir. Isınma setleri sayılmaz."
+    },
+    "photos_10": {
+      "name": "Gelişim arşivi",
+      "desc": "10 gelişim fotoğrafı kaydet."
+    },
+    "habit_30": {
+      "name": "Alışkanlık ustası",
+      "desc": "Bir alışkanlığın günlük hedefini 30 kez tamamla."
+    },
+    "todo_50": {
+      "name": "Elli iş",
+      "desc": "50 yapılacak işi tamamla."
+    },
+    "workouts_10": {
+      "name": "On antrenman",
+      "desc": "10 antrenman ya da kardiyo bitir."
+    },
+    "workouts_50": {
+      "name": "Elli seans",
+      "desc": "50 antrenman ya da kardiyo bitir."
+    },
+    "workouts_100": {
+      "name": "Yüzler kulübü",
+      "desc": "100 antrenman ya da kardiyo bitir."
+    },
+    "workouts_250": {
+      "name": "Demir irade",
+      "desc": "250 antrenman ya da kardiyo bitir."
+    },
+    "streak_100": {
+      "name": "Yüz gün",
+      "desc": "Serini 100 gün boyunca sürdür."
+    },
+    "streak_365": {
+      "name": "Bir yıl",
+      "desc": "Serini 365 gün boyunca sürdür."
+    },
+    "sets_500": {
+      "name": "Beş yüz set",
+      "desc": "500 çalışma seti bitir."
+    },
+    "sets_1000": {
+      "name": "Bin set",
+      "desc": "1.000 çalışma seti bitir."
+    },
+    "sets_5000": {
+      "name": "Set makinesi",
+      "desc": "5.000 çalışma seti bitir."
+    },
+    "volume_10t": {
+      "name": "10 ton",
+      "desc": "Toplam 10 ton hacim kaldır (ağırlık × tekrar)."
+    },
+    "volume_100t": {
+      "name": "100 ton",
+      "desc": "Toplam 100 ton hacim kaldır."
+    },
+    "volume_1000t": {
+      "name": "Bin ton",
+      "desc": "Toplam 1.000 ton hacim kaldır."
+    },
+    "pr_10": {
+      "name": "Rekor avcısı",
+      "desc": "10 kişisel rekor kır."
+    },
+    "pr_50": {
+      "name": "Rekor ustası",
+      "desc": "50 kişisel rekor kır."
+    },
+    "cardio_600": {
+      "name": "On saat kardiyo",
+      "desc": "Toplam 10 saat kardiyo yap."
+    },
+    "cardio_3000": {
+      "name": "Elli saat kardiyo",
+      "desc": "Toplam 50 saat kardiyo yap."
+    },
+    "early_bird_5": {
+      "name": "Erkenci",
+      "desc": "Saat 07:00'den önce 5 antrenmana başla."
+    },
+    "weekend_10": {
+      "name": "Hafta sonu savaşçısı",
+      "desc": "Hafta sonu 10 antrenman bitir."
+    },
+    "habit_100": {
+      "name": "Yüz gün alışkanlık",
+      "desc": "Bir alışkanlığın günlük hedefini 100 kez tamamla."
+    },
+    "habit_365": {
+      "name": "Alışkanlık yılı",
+      "desc": "Bir alışkanlığın günlük hedefini 365 kez tamamla."
+    },
+    "todo_200": {
+      "name": "İki yüz iş",
+      "desc": "200 yapılacak işi tamamla."
+    },
+    "water_30": {
+      "name": "Su dostu",
+      "desc": "Günlük su hedefini 30 gün tuttur."
+    },
+    "sleep_30": {
+      "name": "Uyku günlüğü",
+      "desc": "30 gece uykunu kaydet."
+    },
+    "weigh_30": {
+      "name": "Düzenli tartı",
+      "desc": "30 gün tartıl."
+    },
+    "photos_25": {
+      "name": "Uzun yolculuk",
+      "desc": "25 gelişim fotoğrafı kaydet."
+    }
   },
   "progress": {
     "workouts": "{{value}} / {{threshold}} antrenman",
-    "streak": "En iyi seri {{value}} / {{threshold}} gün",
     "sets": "{{value}} / {{threshold}} set",
+    "volume_kg": "{{value}} / {{threshold}} kg hacim",
+    "prs": "{{value}} / {{threshold}} rekor",
+    "cardio_minutes": "{{value}} / {{threshold}} dk kardiyo",
+    "early_workouts": "{{value}} / {{threshold}} sabah antrenmanı",
+    "weekend_workouts": "{{value}} / {{threshold}} hafta sonu antrenmanı",
+    "habit_days": "{{value}} / {{threshold}} alışkanlık günü",
+    "todos": "{{value}} / {{threshold}} iş",
+    "water_goal_days": "{{value}} / {{threshold}} su hedefi günü",
+    "sleep_logs": "{{value}} / {{threshold}} uyku kaydı",
+    "weigh_ins": "{{value}} / {{threshold}} tartı",
     "photos": "{{value}} / {{threshold}} fotoğraf",
-    "habitDays": "{{value}} / {{threshold}} alışkanlık günü",
-    "todos": "{{value}} / {{threshold}} iş"
+    "streak": "En iyi seri {{value}} / {{threshold}} gün"
   },
   "celebrate": {
     "eyebrow": "Yeni rozet",
@@ -29,5 +158,21 @@
   },
   "public": {
     "none": "Henüz rozet yok."
+  },
+  "family": {
+    "workouts": "Antrenman",
+    "streak": "Seri",
+    "sets": "Setler",
+    "volume_kg": "Hacim",
+    "prs": "Rekorlar",
+    "cardio_minutes": "Kardiyo",
+    "early_workouts": "Sabah",
+    "weekend_workouts": "Hafta sonu",
+    "habit_days": "Alışkanlık",
+    "todos": "İşler",
+    "water_goal_days": "Su",
+    "sleep_logs": "Uyku",
+    "weigh_ins": "Tartı",
+    "photos": "Fotoğraflar"
   }
 }

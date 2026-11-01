@@ -21,3 +21,8 @@ scripts/out/
 e2e/.auth/
 test-results/
 playwright-report/
+
+# local secrets notes (never commit)
+secret.md
+secrets.md
+secret*.md

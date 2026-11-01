@@ -1,0 +1,57 @@
+# Nightly encrypted database backup (Supabase Free has no restorable backups of its own).
+# Schema + data (including auth.users) are dumped, compressed and encrypted with AES-256 using the
+# BACKUP_PASSPHRASE secret, then kept as a workflow artifact for 14 days. Without the secret the job only
+# logs a notice. Restore: download the artifact, then
+#   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in backup.tar.gz.enc -out backup.tar.gz -pass pass:<passphrase>
+# Storage files (avatars, encrypted photos) are not included.
+name: Backup
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backup
+  cancel-in-progress: false
+jobs:
+  dump:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check secret
+        id: gate
+        run: |
+          if [ -z "$BACKUP_PASSPHRASE" ]; then echo "::notice::BACKUP_PASSPHRASE is not set; skipping the backup"; echo "run=false" >> "$GITHUB_OUTPUT"; else echo "run=true" >> "$GITHUB_OUTPUT"; fi
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: steps.gate.outputs.run == 'true'
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3
+        with:
+          version: 2.122.0
+      - if: steps.gate.outputs.run == 'true'
+        name: Dump and encrypt
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          mkdir -p backup
+          supabase db dump --linked -f backup/schema.sql
+          supabase db dump --linked --data-only --use-copy -f backup/data.sql
+          supabase db dump --linked --role-only -f backup/roles.sql
+          tar -czf backup.tar.gz backup
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in backup.tar.gz -out backup.tar.gz.enc -pass env:BACKUP_PASSPHRASE
+          rm -rf backup backup.tar.gz
+          ls -l backup.tar.gz.enc
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backup.tar.gz.enc
+          retention-days: 14
+          if-no-files-found: error

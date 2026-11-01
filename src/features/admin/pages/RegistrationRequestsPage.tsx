@@ -30,7 +30,7 @@ export function RegistrationRequestsPage() {
     <PageShell
       title={t('admin:requests.title')}
       actions={
-        <Link to="/settings" className="touch-target flex items-center justify-center rounded-full text-ink-muted hover:text-ink" aria-label={t('common:nav.settings')}>
+        <Link to="/admin" className="touch-target flex items-center justify-center rounded-full text-ink-muted hover:text-ink" aria-label={t('admin:back')}>
           <ArrowLeft className="size-5" aria-hidden />
         </Link>
       }

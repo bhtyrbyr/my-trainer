@@ -30,11 +30,14 @@ export function ErrorNote({ error, className }: { error: unknown; className?: st
   }
 
   return (
-    <div role="alert" className={cn('hairline rounded-[var(--radius-input)] bg-danger/10 px-3.5 py-3 text-sm text-danger', className)}>
-      <p className="flex items-start gap-2">
-        <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-        <span>{errorMessage(error, t)}</span>
-      </p>
+    <div role="alert" className={cn('hairline rounded-[var(--radius-input)] bg-surface px-3.5 py-3 text-sm', className)}>
+      <div className="flex items-start gap-2">
+        <AlertCircle className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden />
+        <div className="min-w-0">
+          <p className="font-medium text-danger">{t('errors.title')}</p>
+          <p className="mt-0.5 leading-snug text-ink-muted">{errorMessage(error, t)}</p>
+        </div>
+      </div>
       {isReportable(error) && (
         <div className="mt-2 flex items-center justify-between gap-3 pl-6">
           <span className="text-[12px] text-ink-muted">

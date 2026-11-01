@@ -12,10 +12,10 @@ export type AdminConfigKey = keyof AdminConfig
 export const CONFIG_DEFAULTS: AdminConfig = {
   access_mode: 'open',
   require_approval: true,
-  ai_global_daily_limit: 200,
+  ai_global_daily_limit: 450,
 }
 /** user_settings.ai_daily_limit default (no settings row yet). */
-export const DEFAULT_USER_AI_LIMIT = 40
+export const DEFAULT_USER_AI_LIMIT = 10
 export const LIMITS = { userAi: 1000, globalAi: 10000, note: 200, query: 100 } as const
 
 /** app_config rows -> typed config; anything missing or malformed falls back to the server default. */

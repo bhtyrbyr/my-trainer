@@ -45,8 +45,8 @@ export function TodayWorkoutCard({ variant = 'workouts' }: { variant?: 'workouts
     const s = active.data
     const minutes = Math.max(1, Math.round((Date.now() - new Date(s.started_at).getTime()) / 60_000))
     return (
-      <Frame glow>
-        <p className="eyebrow text-volt">{t('today.inProgress')}</p>
+      <Frame>
+        <p className="text-[13px] font-medium text-volt">{t('today.inProgress')}</p>
         <h2 className="display mt-3 text-[32px]">{s.title ?? t('session.freeTitle')}</h2>
         <p className="mt-2 text-sm text-ink-muted">{t('today.startedAgo', { n: minutes })}</p>
         <ErrorNote error={error} className="mt-4" />
@@ -62,10 +62,10 @@ export function TodayWorkoutCard({ variant = 'workouts' }: { variant?: 'workouts
     const minutes = roundMinutes(estimateDurationSec(hero.template_exercises))
     const others = todays.filter((x) => x.id !== hero.id)
     return (
-      <Frame glow>
+      <Frame>
         <div className="flex items-baseline justify-between gap-3">
-          <p className="eyebrow text-volt">{t('today.title')}</p>
-          <p className="eyebrow">{t(`weekday.long.${weekday}`)}</p>
+          <p className="text-[13px] font-medium text-volt">{t('today.title')}</p>
+          <p className="section-title">{t(`weekday.long.${weekday}`)}</p>
         </div>
         <h2 className="display mt-3 text-[34px] leading-[1.02]">{hero.name}</h2>
 
@@ -106,8 +106,8 @@ export function TodayWorkoutCard({ variant = 'workouts' }: { variant?: 'workouts
   return (
     <Frame>
       <div className="flex items-baseline justify-between gap-3">
-        <p className="eyebrow">{t('today.title')}</p>
-        <p className="eyebrow">{t(`weekday.long.${weekday}`)}</p>
+        <p className="section-title">{t('today.title')}</p>
+        <p className="section-title">{t(`weekday.long.${weekday}`)}</p>
       </div>
       {all.length === 0 ? (
         <>
@@ -154,16 +154,9 @@ export function TodayWorkoutCard({ variant = 'workouts' }: { variant?: 'workouts
   )
 }
 
-function Frame({ children, glow }: { children: React.ReactNode; glow?: boolean }) {
+function Frame({ children }: { children: React.ReactNode }) {
   return (
     <section className="hairline relative overflow-hidden rounded-[var(--radius-card)] bg-surface p-5">
-      {glow && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full"
-          style={{ background: 'radial-gradient(circle, oklch(91% 0.21 125 / 16%), transparent 70%)' }}
-        />
-      )}
       <div className="relative">{children}</div>
     </section>
   )

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { ChevronRight, Download, FileText, HeartPulse, Loader2, Sparkles, Trash2 } from 'lucide-react'
+import { Download, FileText, HeartPulse, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { GroupedList, ListRow } from '@/components/ui/GroupedList'
 import { BottomSheet } from '@/features/nutrition/components/BottomSheet'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useConsents, useDeleteMyAccount, useExportMyData, useWithdrawAiConsent, useWithdrawHealthConsent } from '../hooks'
@@ -11,58 +11,37 @@ import { AiConsentCard } from './AiConsent'
 import { HealthConsentScreen } from './Gates'
 import { cn } from '@/lib/utils'
 
-const row = 'hairline flex w-full items-center gap-3 rounded-xl bg-surface px-4 py-3.5 text-left transition-colors hover:bg-raised'
-
-/** Settings > Privacy & data: notice, health consent, export (KVKK art. 11), account deletion. */
-export function PrivacySection() {
+/**
+ * Settings > Privacy & data: optional leading rows (leaderboard visibility), the notice, health and AI
+ * consent, export (KVKK art. 11). Account deletion lives in the Account group (DeleteAccountSheet).
+ */
+export function PrivacySection({ leading }: { leading?: ReactNode }) {
   const { t } = useTranslation('legal')
-  const { profile } = useAuth()
   const consents = useConsents()
   const exporter = useExportMyData()
-  const [sheet, setSheet] = useState<'grant' | 'withdraw' | 'aiGrant' | 'aiWithdraw' | 'delete' | null>(null)
+  const [sheet, setSheet] = useState<'grant' | 'withdraw' | 'aiGrant' | 'aiWithdraw' | null>(null)
   const close = () => setSheet(null)
+  const onOff = (on: boolean) => (
+    <span className={cn('text-[15px]', on ? 'text-volt' : 'text-ink-muted')}>{on ? t('settings.healthOn') : t('settings.healthOff')}</span>
+  )
 
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">{t('settings.section')}</h2>
-
-      <Link to="/privacy" className={row}>
-        <FileText className="size-5 text-ink-muted" aria-hidden />
-        <span className="flex-1 text-[15px]">{t('settings.notice')}</span>
-        <ChevronRight className="size-4 text-ink-faint" aria-hidden />
-      </Link>
-
-      <button type="button" className={row} onClick={() => setSheet(consents.health ? 'withdraw' : 'grant')}>
-        <HeartPulse className="size-5 text-ink-muted" aria-hidden />
-        <span className="flex-1 text-[15px]">{t('settings.health')}</span>
-        <span className={cn('text-[13px] font-medium', consents.health ? 'text-volt' : 'text-ink-faint')}>
-          {consents.health ? t('settings.healthOn') : t('settings.healthOff')}
-        </span>
-        <ChevronRight className="size-4 text-ink-faint" aria-hidden />
-      </button>
-
-      <button type="button" className={row} onClick={() => setSheet(consents.ai ? 'aiWithdraw' : 'aiGrant')}>
-        <Sparkles className="size-5 text-ink-muted" aria-hidden />
-        <span className="flex-1 text-[15px]">{t('ai.setting')}</span>
-        <span className={cn('text-[13px] font-medium', consents.ai ? 'text-volt' : 'text-ink-faint')}>
-          {consents.ai ? t('settings.healthOn') : t('settings.healthOff')}
-        </span>
-        <ChevronRight className="size-4 text-ink-faint" aria-hidden />
-      </button>
-
-      <button type="button" className={row} disabled={exporter.isPending} onClick={() => exporter.mutate()}>
-        {exporter.isPending ? <Loader2 className="size-5 animate-spin text-ink-muted" aria-hidden /> : <Download className="size-5 text-ink-muted" aria-hidden />}
-        <span className="flex-1">
-          <span className="block text-[15px]">{exporter.isPending ? t('settings.exporting') : t('settings.export')}</span>
-          <span className="block text-[12px] leading-snug text-ink-faint">{t('settings.exportHint')}</span>
-        </span>
-      </button>
+    <>
+      <GroupedList title={t('settings.section')}>
+        {leading}
+        <ListRow icon={FileText} label={t('settings.notice')} to="/privacy" />
+        <ListRow icon={HeartPulse} label={t('settings.health')} value={onOff(consents.health)} onClick={() => setSheet(consents.health ? 'withdraw' : 'grant')} />
+        <ListRow icon={Sparkles} label={t('ai.setting')} value={onOff(consents.ai)} onClick={() => setSheet(consents.ai ? 'aiWithdraw' : 'aiGrant')} />
+        <ListRow
+          icon={exporter.isPending ? Spinner : Download}
+          label={exporter.isPending ? t('settings.exporting') : t('settings.export')}
+          hint={t('settings.exportHint')}
+          disabled={exporter.isPending}
+          chevron={false}
+          onClick={() => exporter.mutate()}
+        />
+      </GroupedList>
       <ErrorNote error={exporter.error} />
-
-      <button type="button" className={cn(row, 'text-danger')} onClick={() => setSheet('delete')}>
-        <Trash2 className="size-5" aria-hidden />
-        <span className="flex-1 text-[15px] font-medium">{t('settings.delete')}</span>
-      </button>
 
       <BottomSheet open={sheet === 'grant'} label={t('health.title')} closeLabel={t('notice.close')} onClose={close}>
         <GrantSheetBody onDone={close} granted={consents.health} />
@@ -78,10 +57,22 @@ export function PrivacySection() {
       <BottomSheet open={sheet === 'aiWithdraw'} label={t('ai.withdrawTitle')} closeLabel={t('notice.close')} onClose={close}>
         <AiWithdrawBody onCancel={close} />
       </BottomSheet>
-      <BottomSheet open={sheet === 'delete'} label={t('settings.deleteTitle')} closeLabel={t('notice.close')} onClose={close}>
-        <DeleteSheetBody username={profile?.username ?? ''} onCancel={close} />
-      </BottomSheet>
-    </section>
+    </>
+  )
+}
+
+function Spinner({ className }: { className?: string }) {
+  return <Loader2 className={cn(className, 'animate-spin')} aria-hidden />
+}
+
+/** Account deletion (KVKK): typed-username confirmation in a bottom sheet. */
+export function DeleteAccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation('legal')
+  const { profile } = useAuth()
+  return (
+    <BottomSheet open={open} label={t('settings.deleteTitle')} closeLabel={t('notice.close')} onClose={onClose}>
+      <DeleteSheetBody username={profile?.username ?? ''} onCancel={onClose} />
+    </BottomSheet>
   )
 }
 

@@ -3,13 +3,12 @@ import { PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { BadgeCelebration, type BadgeCode } from '@/features/badges'
 import { WeeklyReviewCard } from '@/features/coach'
-import { ScoreHero } from '@/features/gamification/ScoreHero'
 import { effectiveStreak } from '@/features/gamification/streak'
 import { useConsents } from '@/features/privacy/hooks'
 import { TodayWorkoutCard } from '@/features/workouts'
-import { DailyEnergyCard } from '../components/DailyEnergyCard'
+import { ProgressStrip } from '../components/ProgressStrip'
+import { ScoreLine } from '../components/ScoreLine'
 import { Suggestions, type SuggestionPreview } from '../components/Suggestions'
-import { TodayGlance } from '../components/TodayGlance'
 import { WeekSummary } from '../components/WeekSummary'
 
 type Preview = {
@@ -24,9 +23,9 @@ type Preview = {
 }
 
 /**
- * Home. Today first (score, nudges, the workout, energy, the day's list), then the week and the coach's
- * weekly review (on tap only). On desktop the
- * same blocks split into two columns: today on the left, the week on the right.
+ * Home. One hero: today's workout. Above it a quiet level/streak line, under it one compact progress
+ * strip (kcal, water, sleep, habits; the detailed tiles live in Track), then nudges, the week and the
+ * coach's weekly review. On desktop: today on the left, the week on the right.
  */
 export function DashboardPage({ preview }: { preview?: Preview }) {
   const { t } = useTranslation('common')
@@ -42,13 +41,12 @@ export function DashboardPage({ preview }: { preview?: Preview }) {
     <PageShell title={t('nav.home')} bare className="pt-3">
       <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-5 lg:space-y-0">
         <div className="space-y-4">
-          <ScoreHero points={points} streak={streak} />
-          <Suggestions health={health} preview={preview?.suggest} base={base} />
+          <ScoreLine points={points} streak={streak} base={base} />
           <TodayWorkoutCard variant="dashboard" />
-          <DailyEnergyCard preview={preview?.energy} />
+          <ProgressStrip health={health} base={base} eatenPreview={preview?.energy?.eaten} />
         </div>
         <div className="space-y-4">
-          <TodayGlance health={health} base={base} />
+          <Suggestions health={health} preview={preview?.suggest} base={base} />
           <div className="pt-2 lg:pt-0">
             <WeekSummary />
           </div>

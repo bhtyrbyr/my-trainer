@@ -8,7 +8,7 @@ import { AppShell } from '@/app/AppShell'
 import { AdminPreviewContext } from '@/features/admin/previewContext'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { effectiveStreak } from '@/features/gamification/streak'
-import { SettingsPage } from '@/features/settings/pages/SettingsPage'
+import { ProfilePage } from '@/features/profile/pages/ProfilePage'
 import { BadgeCelebration } from '../components/BadgeCelebration'
 import { badgeKeys } from '../hooks'
 import { BADGES, type BadgeCode, type BadgeCounts, type EarnedBadge } from '../logic'
@@ -26,9 +26,10 @@ function seed(fresh: boolean): QueryClient {
   const qc = new QueryClient({
     defaultOptions: { queries: { staleTime: Infinity, gcTime: Infinity, retry: false, refetchOnWindowFocus: false, refetchOnMount: false } },
   })
+  const zero = Object.fromEntries(BADGES.map((b) => [b.metric, 0])) as BadgeCounts
   const counts: BadgeCounts = fresh
-    ? { workouts: 0, streak: 0, sets: 0, photos: 0, habitDays: 0, todos: 0 }
-    : { workouts: 14, streak: 12, sets: 236, photos: 4, habitDays: 22, todos: 9 }
+    ? zero
+    : { ...zero, workouts: 14, streak: 12, sets: 236, volume_kg: 8400, prs: 6, cardio_minutes: 240, photos: 4, habit_days: 22, todos: 9, water_goal_days: 11, sleep_logs: 18, weigh_ins: 9 }
   qc.setQueryData(badgeKeys.mine, fresh ? [] : SAMPLE_EARNED)
   qc.setQueryData([...badgeKeys.counts, 0], counts)
   return qc
@@ -62,7 +63,7 @@ export function DevProfile() {
   const codes = BADGES.map((b) => b.code).filter((c) => celebrate.includes(c)) as BadgeCode[]
   return (
     <>
-      <SettingsPage />
+      <ProfilePage />
       <BadgeCelebration preview={codes} />
     </>
   )

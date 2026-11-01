@@ -29,7 +29,7 @@
     "link": "AI usage",
     "linkToday": "{{count}} requests today",
     "title": "AI usage",
-    "back": "Profile",
+    "back": "Admin",
     "quota": {
       "title": "Google quota · today",
       "reset": "Daily quotas reset every day at {{time}} (midnight Pacific) · in {{in}}",
@@ -88,7 +88,7 @@
   "reports": {
     "link": "Error reports",
     "title": "Error reports",
-    "back": "Profile",
+    "back": "Admin",
     "tabs": {
       "open": "Open",
       "resolved": "Resolved",
@@ -110,7 +110,7 @@
     "unknownUser": "Account without a profile",
     "note": "Note"
   },
-  "back": "Profile",
+  "back": "Admin",
   "access": {
     "link": "Access",
     "linkOpen": "Open",
@@ -197,5 +197,9 @@
     "active_one": "{{count}} active in the last 7 days",
     "active_other": "{{count}} active in the last 7 days",
     "footer": "Limits from the Supabase Free plan (2026-10-31): 500 MB database, 1 GB storage, 500k Edge Function calls a month. Bars turn red above 80%. The AI quota is on the AI usage page."
+  },
+  "hub": {
+    "people": "People and access",
+    "system": "System"
   }
 }

@@ -31,7 +31,7 @@ export function WeekSummary() {
   return (
     <section aria-labelledby="week-title" className="space-y-2">
       <div className="flex items-baseline justify-between px-1">
-        <h2 id="week-title" className="eyebrow">
+        <h2 id="week-title" className="section-title">
           {t('week.title')}
         </h2>
         <span className="tabular text-[12px] text-ink-faint">{range}</span>

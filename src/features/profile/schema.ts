@@ -40,3 +40,33 @@ export function suggestUsername(fullName: string | undefined, email: string | un
     .slice(0, 20)
   return base.length >= 3 ? base : `${base}_${Math.floor(100 + Math.random() * 900)}`.slice(0, 20)
 }
+
+/**
+ * Profile edit (/me/edit): the onboarding rules for the shared fields, plus the target weight. Sex and
+ * goal keep their "must be chosen" refinement, so an edit can never blank them out.
+ */
+export const profileEditSchema = onboardingSchema
+  .pick({ username: true, displayName: true, birthYear: true, heightCm: true, sex: true, goal: true })
+  .extend({ targetWeightKg: onboardingSchema.shape.weightKg })
+
+export type ProfileEditInput = z.input<typeof profileEditSchema>
+export type ProfileEditValues = z.output<typeof profileEditSchema>
+
+/** Username changes are limited to one per 30 days (enforced by the profiles trigger, mirrored here). */
+export const USERNAME_COOLDOWN_DAYS = 30
+
+/** When the username may change again; null when it may change now (never changed, or cooldown over). */
+export function nextUsernameChange(changedAt: string | null | undefined, now: Date = new Date()): Date | null {
+  if (!changedAt) return null
+  const next = new Date(new Date(changedAt).getTime() + USERNAME_COOLDOWN_DAYS * 86_400_000)
+  return next.getTime() > now.getTime() ? next : null
+}
+
+/**
+ * Same rule as the server's AI gate (ai_reserve, 20261105020000): a stored birth year after
+ * (current year - 18) means the AI features are off. Unknown year = not a minor.
+ */
+export function isMinorBirthYear(birthYear: number | '' | null | undefined, now: Date = new Date()): boolean {
+  if (birthYear === '' || birthYear == null || !Number.isFinite(birthYear)) return false
+  return birthYear > now.getFullYear() - 18
+}

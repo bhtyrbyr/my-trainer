@@ -5,21 +5,150 @@
   "locked": "Locked",
   "close": "Close",
   "items": {
-    "first_workout": { "name": "First rep", "desc": "Finish your first workout or cardio session." },
-    "streak_7": { "name": "Week on fire", "desc": "Keep your streak going for 7 days." },
-    "streak_30": { "name": "Unbroken month", "desc": "Keep your streak going for 30 days." },
-    "sets_100": { "name": "Hundred sets", "desc": "Finish 100 working sets. Warm-ups don't count." },
-    "photos_10": { "name": "Progress archive", "desc": "Save 10 progress photos." },
-    "habit_30": { "name": "Habit builder", "desc": "Complete a habit's daily target 30 times." },
-    "todo_50": { "name": "Fifty done", "desc": "Tick off 50 to-dos." }
+    "first_workout": {
+      "name": "First rep",
+      "desc": "Finish your first workout or cardio session."
+    },
+    "streak_7": {
+      "name": "Week on fire",
+      "desc": "Keep your streak going for 7 days."
+    },
+    "streak_30": {
+      "name": "Unbroken month",
+      "desc": "Keep your streak going for 30 days."
+    },
+    "sets_100": {
+      "name": "Hundred sets",
+      "desc": "Finish 100 working sets. Warm-ups don't count."
+    },
+    "photos_10": {
+      "name": "Progress archive",
+      "desc": "Save 10 progress photos."
+    },
+    "habit_30": {
+      "name": "Habit builder",
+      "desc": "Complete a habit's daily target 30 times."
+    },
+    "todo_50": {
+      "name": "Fifty done",
+      "desc": "Tick off 50 to-dos."
+    },
+    "workouts_10": {
+      "name": "Ten sessions",
+      "desc": "Finish 10 workouts or cardio sessions."
+    },
+    "workouts_50": {
+      "name": "Fifty sessions",
+      "desc": "Finish 50 workouts or cardio sessions."
+    },
+    "workouts_100": {
+      "name": "Century club",
+      "desc": "Finish 100 workouts or cardio sessions."
+    },
+    "workouts_250": {
+      "name": "Iron will",
+      "desc": "Finish 250 workouts or cardio sessions."
+    },
+    "streak_100": {
+      "name": "Hundred days",
+      "desc": "Keep your streak for 100 days."
+    },
+    "streak_365": {
+      "name": "One year",
+      "desc": "Keep your streak for 365 days."
+    },
+    "sets_500": {
+      "name": "Five hundred sets",
+      "desc": "Finish 500 working sets."
+    },
+    "sets_1000": {
+      "name": "Thousand sets",
+      "desc": "Finish 1,000 working sets."
+    },
+    "sets_5000": {
+      "name": "Set machine",
+      "desc": "Finish 5,000 working sets."
+    },
+    "volume_10t": {
+      "name": "10 tonnes",
+      "desc": "Lift 10 tonnes of total volume (weight × reps)."
+    },
+    "volume_100t": {
+      "name": "100 tonnes",
+      "desc": "Lift 100 tonnes of total volume."
+    },
+    "volume_1000t": {
+      "name": "Thousand tonnes",
+      "desc": "Lift 1,000 tonnes of total volume."
+    },
+    "pr_10": {
+      "name": "Record hunter",
+      "desc": "Set 10 personal records."
+    },
+    "pr_50": {
+      "name": "Record master",
+      "desc": "Set 50 personal records."
+    },
+    "cardio_600": {
+      "name": "Ten hours of cardio",
+      "desc": "Do 10 hours of cardio in total."
+    },
+    "cardio_3000": {
+      "name": "Fifty hours of cardio",
+      "desc": "Do 50 hours of cardio in total."
+    },
+    "early_bird_5": {
+      "name": "Early bird",
+      "desc": "Start 5 workouts before 07:00."
+    },
+    "weekend_10": {
+      "name": "Weekend warrior",
+      "desc": "Finish 10 workouts on weekends."
+    },
+    "habit_100": {
+      "name": "Hundred habit days",
+      "desc": "Meet a habit's daily target 100 times."
+    },
+    "habit_365": {
+      "name": "Habit year",
+      "desc": "Meet a habit's daily target 365 times."
+    },
+    "todo_200": {
+      "name": "Two hundred done",
+      "desc": "Complete 200 to-dos."
+    },
+    "water_30": {
+      "name": "Hydrated",
+      "desc": "Reach your daily water goal on 30 days."
+    },
+    "sleep_30": {
+      "name": "Sleep diary",
+      "desc": "Log your sleep for 30 nights."
+    },
+    "weigh_30": {
+      "name": "Regular weigh-ins",
+      "desc": "Weigh yourself on 30 days."
+    },
+    "photos_25": {
+      "name": "Long journey",
+      "desc": "Save 25 progress photos."
+    }
   },
   "progress": {
-    "workouts": "{{value}} of {{threshold}} workouts",
-    "streak": "Best streak {{value}} of {{threshold}} days",
-    "sets": "{{value}} of {{threshold}} sets",
-    "photos": "{{value}} of {{threshold}} photos",
-    "habitDays": "{{value}} of {{threshold}} habit days",
-    "todos": "{{value}} of {{threshold}} to-dos"
+    "workouts": "{{value}} / {{threshold}} workouts",
+    "sets": "{{value}} / {{threshold}} sets",
+    "volume_kg": "{{value}} / {{threshold}} kg volume",
+    "prs": "{{value}} / {{threshold}} records",
+    "cardio_minutes": "{{value}} / {{threshold}} min cardio",
+    "early_workouts": "{{value}} / {{threshold}} early workouts",
+    "weekend_workouts": "{{value}} / {{threshold}} weekend workouts",
+    "habit_days": "{{value}} / {{threshold}} habit days",
+    "todos": "{{value}} / {{threshold}} to-dos",
+    "water_goal_days": "{{value}} / {{threshold}} water goal days",
+    "sleep_logs": "{{value}} / {{threshold}} sleep logs",
+    "weigh_ins": "{{value}} / {{threshold}} weigh-ins",
+    "photos": "{{value}} / {{threshold}} photos",
+    "streak": "Best streak {{value}} / {{threshold}} days"
   },
   "celebrate": {
     "eyebrow": "New badge",
@@ -29,5 +158,21 @@
   },
   "public": {
     "none": "No badges yet."
+  },
+  "family": {
+    "workouts": "Workouts",
+    "streak": "Streak",
+    "sets": "Sets",
+    "volume_kg": "Volume",
+    "prs": "Records",
+    "cardio_minutes": "Cardio",
+    "early_workouts": "Mornings",
+    "weekend_workouts": "Weekends",
+    "habit_days": "Habits",
+    "todos": "To-dos",
+    "water_goal_days": "Water",
+    "sleep_logs": "Sleep",
+    "weigh_ins": "Weigh-ins",
+    "photos": "Photos"
   }
 }

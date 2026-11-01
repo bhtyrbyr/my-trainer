@@ -1,25 +1,44 @@
 import {
   CalendarCheck,
+  CalendarDays,
   Camera,
+  Droplets,
   Dumbbell,
   Flame,
   FlameKindling,
+  HeartPulse,
   Layers,
   ListChecks,
+  Moon,
+  Scale,
+  Sunrise,
+  Trophy,
+  Weight,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { BadgeCode } from '../logic'
+import { BADGES, type BadgeCode, type BadgeMetric } from '../logic'
 
-const BADGE_ICONS: Record<BadgeCode, LucideIcon> = {
-  first_workout: Dumbbell,
-  streak_7: Flame,
-  streak_30: FlameKindling,
-  sets_100: Layers,
-  photos_10: Camera,
-  habit_30: CalendarCheck,
-  todo_50: ListChecks,
+const FAMILY_ICONS: Record<BadgeMetric, LucideIcon> = {
+  workouts: Dumbbell,
+  streak: Flame,
+  sets: Layers,
+  volume_kg: Weight,
+  prs: Trophy,
+  cardio_minutes: HeartPulse,
+  early_workouts: Sunrise,
+  weekend_workouts: CalendarDays,
+  habit_days: CalendarCheck,
+  todos: ListChecks,
+  water_goal_days: Droplets,
+  sleep_logs: Moon,
+  weigh_ins: Scale,
+  photos: Camera,
 }
+const METRIC_OF = new Map<BadgeCode, BadgeMetric>(BADGES.map((b) => [b.code, b.metric]))
+/** One icon per family; the long streaks get the bigger fire. */
+const iconFor = (code: BadgeCode): LucideIcon =>
+  code === 'streak_30' || code === 'streak_100' || code === 'streak_365' ? FlameKindling : FAMILY_ICONS[METRIC_OF.get(code) ?? 'workouts']
 
 type Props = {
   code: BadgeCode
@@ -35,7 +54,7 @@ type Props = {
  * Locked: a quiet raised disc, faint icon, and a hairline ring that fills with progress.
  */
 export function BadgeMedal({ code, earned, ratio, size = 56, className }: Props) {
-  const Icon = BADGE_ICONS[code]
+  const Icon = iconFor(code)
   const stroke = Math.max(2, Math.round(size / 24))
   const r = size / 2 - stroke / 2
   const c = 2 * Math.PI * r

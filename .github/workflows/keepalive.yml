@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: '17 6 * * *'   # daily 06:17 UTC
   workflow_dispatch:
+# least privilege for the GITHUB_TOKEN; jobs that need more ask for it
+permissions:
+  contents: read
+
 jobs:
   ping:
     runs-on: ubuntu-latest
