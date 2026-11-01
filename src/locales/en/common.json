@@ -96,7 +96,10 @@
     "badName": "The name must be 3 to 60 characters.",
     "groupBanned": "You were removed from this group; an admin has to lift the ban before you can rejoin.",
     "userBanned": "This person was removed from the group; lift the ban first.",
-    "groupCodeNotFound": "This invite code is invalid or has been renewed. Ask a group admin for a new link."
+    "groupCodeNotFound": "This invite code is invalid or has been renewed. Ask a group admin for a new link.",
+    "mentionNotAllowed": "Someone you tagged cannot be tagged in this post. Change the tags or the audience and try again.",
+    "tooManyMentions": "You can tag at most 10 people in a post.",
+    "postRateLimited": "You reached today's limit for posts or tags (20 posts, 50 tags a day). Try again tomorrow."
   },
   "update": {
     "title": "New version released",

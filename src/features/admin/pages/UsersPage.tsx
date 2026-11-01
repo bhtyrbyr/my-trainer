@@ -5,6 +5,7 @@ import { enUS, tr } from 'date-fns/locale'
 import { ChevronRight, Loader2, Search, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { PLAIN_LIST } from '@/components/ui/GroupedList'
 import { Sheet } from '@/components/ui/Sheet'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { avatarUrl } from '@/features/profile/api'
@@ -79,13 +80,13 @@ export function UsersPage() {
           <p className="text-sm">{t('users.empty')}</p>
         </div>
       ) : (
-        <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
+        <ul className={PLAIN_LIST}>
           {rows.map((r) => (
             <li key={r.user_id}>
               <button
                 type="button"
                 onClick={() => setOpenId(r.user_id)}
-                className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-raised/50"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-raised/50"
               >
                 <Avatar user={r} size={44} />
                 <span className="min-w-0 flex-1">

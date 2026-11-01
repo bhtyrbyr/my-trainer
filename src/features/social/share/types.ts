@@ -1,4 +1,5 @@
 import type { Database } from '@/lib/database.types'
+import type { MentionRef } from '../mentions'
 
 /** One row of every social post list (social_feed, social_user_posts, social_post, ...). */
 export type PostItem = Database['public']['CompositeTypes']['social_post_item']
@@ -20,6 +21,8 @@ export type Post = {
   liked_by_me: boolean
   media: MediaRef[]
   created_at: string
+  /** people tagged in the post, as the server stored and filtered them for the viewer */
+  mentions: MentionRef[]
 }
 
 export type PostKind = 'text' | 'workout' | 'program' | 'meal' | 'photo' | 'progress' | 'compare'
@@ -58,3 +61,6 @@ export type ComposerInitial =
   | { kind: 'progress' | 'compare'; image: PreparedImage }
 
 export type AudienceChoice = { audience: Audience; groupId: string | null }
+
+/** A person the author may tag for the current audience (social_mention_candidates). */
+export type MentionCandidate = { user_id: string; username: string; display_name: string; avatar_path: string | null }

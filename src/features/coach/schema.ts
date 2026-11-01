@@ -13,6 +13,8 @@ export const messageSchema = z.object({
   role: z.enum(['user', 'assistant']),
   content: z.string(),
   created_at: z.string(),
+  /** Assistant program replies: the signed {program, unmatched} card (unvalidated until programFromPayload). */
+  payload: z.unknown().optional(),
 })
 export type CoachMessage = z.infer<typeof messageSchema>
 
@@ -38,6 +40,13 @@ export const programSchema = z.object({
 })
 export type CoachProgram = z.infer<typeof programSchema>
 export type CoachProgramDay = CoachProgram['days'][number]
+
+/** The program card: the in-memory answer, or the payload stored with the summary message. */
+export const programCardSchema = z.object({
+  program: programSchema,
+  unmatched: z.array(z.string()),
+})
+export type ProgramCardData = z.infer<typeof programCardSchema>
 
 /** ai-coach `coach-program` answer: the stored summary message plus the structured program. */
 export const programReplySchema = replySchema.extend({

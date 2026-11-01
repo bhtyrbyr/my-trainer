@@ -7,7 +7,8 @@ import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { GroupedList, ListRow, Segmented } from '@/components/ui/GroupedList'
+import { GroupedList, ListRow } from '@/components/ui/GroupedList'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import { Sheet } from '@/components/ui/Sheet'
 import { useAuth } from '@/features/auth/AuthProvider'
 import * as api from '../api'
@@ -39,7 +40,7 @@ export function GroupPage() {
   return (
     <PageShell
       title={g?.name ?? t('social:groups.title')}
-      leading={<BackLink fallback="/social?tab=groups" title={t('social:groups.title')} />}
+      leading={<BackLink fallback="/social/search?s=groups" title={t('social:groups.title')} />}
       actions={g ? <GroupMenu g={g} /> : undefined}
     >
       <div className="mx-auto max-w-xl pb-6">
@@ -56,6 +57,8 @@ export function GroupPage() {
     </PageShell>
   )
 }
+
+const GROUP_VIEWS = ['posts', 'members'] as const
 
 function GroupBody({ g }: { g: GroupInfo }) {
   const { t } = useTranslation(['social', 'common'])
@@ -131,14 +134,12 @@ function GroupBody({ g }: { g: GroupInfo }) {
 
       {g.can_view_posts ? (
         <>
-          <Segmented
+          <SectionTabs
             label={t('social:groups.sections')}
+            options={GROUP_VIEWS}
             value={view}
             onChange={(v) => setParams(v === 'posts' ? {} : { view: v }, { replace: true })}
-            options={[
-              { value: 'posts', label: t('social:posts') },
-              { value: 'members', label: t('social:groups.membersTab') },
-            ]}
+            labelOf={(v) => (v === 'posts' ? t('social:posts') : t('social:groups.membersTab'))}
           />
           {view === 'posts' ? (
             <div className={active ? 'pb-20' : undefined}>
@@ -344,7 +345,7 @@ function GroupMenu({ g }: { g: GroupInfo }) {
             onClose={() => setSheet(null)}
           >
             <div className="space-y-4 pb-5">
-              <GroupedList>
+              <GroupedList inset>
                 {active && manager && (
                   <ListRow
                     icon={UserPlus}

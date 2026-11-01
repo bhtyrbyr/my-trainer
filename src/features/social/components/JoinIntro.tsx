@@ -7,6 +7,7 @@ import { ErrorNote } from '@/components/ui/ErrorNote'
 import { GroupedList, ListRow } from '@/components/ui/GroupedList'
 import { useProfilePrivate } from '@/features/profile/hooks'
 import { APP_NAME } from '@/config/brand'
+import { cn } from '@/lib/utils'
 import * as api from '../api'
 import { socialEligibility } from '../logic'
 import { useSocialAction } from '../hooks'
@@ -49,9 +50,7 @@ export function JoinIntro({ paused }: { paused?: boolean }) {
             {t('social:intro.addBirthYear')}
           </Link>
         )}
-        <p className="mx-auto mt-6 max-w-[34ch] text-[13px] text-ink-faint">
-          {t('social:intro.rankingStill')}
-        </p>
+        <RankingStill className="mx-auto mt-6 max-w-[34ch]" />
       </section>
     )
   }
@@ -116,7 +115,23 @@ export function JoinIntro({ paused }: { paused?: boolean }) {
         {enable.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
         {t('social:intro.join')}
       </Button>
-      <p className="text-center text-[13px] text-ink-faint">{t('social:intro.rankingStill')}</p>
+      <RankingStill />
     </section>
+  )
+}
+
+/** The ranking does not need Community; say so and link it (44 pt tall link, inline with the sentence). */
+function RankingStill({ className }: { className?: string }) {
+  const { t } = useTranslation('social')
+  return (
+    <p className={cn('text-center text-[13px] text-ink-faint', className)}>
+      {t('intro.rankingStill')}{' '}
+      <Link
+        to="/social/ranking"
+        className="inline-flex min-h-11 items-center font-medium text-ink underline underline-offset-2"
+      >
+        {t('intro.openRanking')}
+      </Link>
+    </p>
   )
 }

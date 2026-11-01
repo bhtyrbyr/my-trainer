@@ -69,6 +69,7 @@
           "Posts you share to an open group can be seen by everyone in Community; if your account is private, your group posts are seen only by group members. Only group members can see a group's member list.",
           "Photos you share (including progress photos) are downscaled on your device and stored as an unencrypted copy visible to the chosen audience; your private album stays end-to-end encrypted.",
           "Likes and follows are visible to the people involved (the owner of the liked post, the person followed and the follower).",
+          "People you interact with (people you follow or who follow you, or members of your groups) can tag you in posts that you can see yourself; you are notified, and the tag is visible to everyone who can see the post. You can turn tagging off in settings and remove yourself from a tag at any time.",
           "You can block anyone and report posts, accounts or groups; only admins see reports.",
           "Leaving Community deletes your posts and their photos, likes, follows, group memberships and notifications; pausing keeps the data but shows it to nobody.",
           "Files of deleted posts, and of photos deleted when you leave, are removed from storage within 24 hours; access links to shared photos are valid for at most 5 minutes.",

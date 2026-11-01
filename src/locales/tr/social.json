@@ -2,9 +2,8 @@
   "title": "Topluluk",
   "sections": "Topluluk bölümleri",
   "tabs": {
-    "feed": "Akış",
-    "groups": "Gruplar",
-    "ranking": "Sıralama"
+    "home": "Ana sayfa",
+    "discover": "Keşfet"
   },
   "share": "Paylaş",
   "back": "Geri",
@@ -23,18 +22,43 @@
   "copy": "Bağlantıyı kopyala",
   "copied": "Kopyalandı",
   "feed": {
-    "label": "Akış",
-    "following": "Takip",
-    "discover": "Keşfet",
     "emptyTitle": "Akışın şimdilik sessiz",
     "emptyBody": "Birilerini takip et ya da bir gruba katıl; paylaşımları burada görünür. Seninkiler de.",
-    "goDiscover": "Kişileri keşfet",
+    "goDiscover": "Keşfet'e göz at",
     "discoverEmptyTitle": "Henüz keşfedilecek bir şey yok",
     "discoverEmptyBody": "Herkese açık hesapların herkese açık gönderileri burada görünür."
   },
   "search": {
+    "title": "Ara",
+    "segments": "Arama türü",
+    "kinds": {
+      "people": "Kişiler",
+      "groups": "Gruplar",
+      "tags": "Etiketler"
+    },
     "people": "Ad veya kullanıcı adıyla kişi ara",
-    "none": "Sonuç yok."
+    "groups": "Grup adıyla ara",
+    "tags": "Etiket ara, ör. #bacakgünü",
+    "none": "Sonuç yok.",
+    "peopleHint": "Takip etmek istediğin kişiyi adıyla ya da kullanıcı adıyla bul.",
+    "tagsHint": "Etiketler gönderilerdeki #kelimelerdir. Aramak için en az iki harf yaz.",
+    "clear": "Aramayı temizle"
+  },
+  "ranking": {
+    "title": "Sıralama"
+  },
+  "rail": {
+    "title": "Gruplarım",
+    "create": "Grup kur",
+    "joinByCode": "Kodla katıl",
+    "invited": "{{name}}, davet edildin",
+    "pending": "{{name}}, istek gönderildi"
+  },
+  "tags": {
+    "posts_one": "{{count}} gönderi",
+    "posts_other": "{{count}} gönderi",
+    "emptyTitle": "Bu etiketle gönderi yok",
+    "emptyBody": "Bir gönderide #{{tag}} kullan, burada görünsün. Yalnızca görebildiğin gönderiler listelenir."
   },
   "follow": {
     "follow": "Takip et",
@@ -124,7 +148,8 @@
     "birthYearTitle": "Önce doğum yılını ekle",
     "birthYearBody": "Topluluk 18+ olduğu için bunu doğum yılınla kontrol ediyoruz. Doğum yılın gizli kalır.",
     "addBirthYear": "Doğum yılı ekle",
-    "rankingStill": "Sıralama sekmesi katılmadan da çalışır."
+    "rankingStill": "Sıralama katılmadan da çalışır.",
+    "openRanking": "Sıralamayı aç"
   },
   "notifications": {
     "title": "Bildirimler",
@@ -144,13 +169,12 @@
       "like": "{{name}} gönderini beğendi",
       "group_invite": "{{name}} seni {{group}} grubuna davet etti",
       "group_request": "{{name}}, {{group}} grubuna katılmak istiyor",
-      "group_accepted": "Artık {{group}} grubunun üyesisin"
+      "group_accepted": "Artık {{group}} grubunun üyesisin",
+      "mention": "{{name}} seni bir gönderide etiketledi"
     }
   },
   "groups": {
     "title": "Grup",
-    "search": "Grup ara",
-    "results": "Sonuçlar",
     "create": "Yeni grup",
     "createAction": "Grubu oluştur",
     "members_one": "{{count}} üye",
@@ -170,7 +194,6 @@
     "invitations": "Davetler",
     "mine": "Gruplarım",
     "requested": "Gönderilen istekler",
-    "emptyTitle": "Henüz grup yok",
     "emptyBody": "Salon arkadaşların için bir grup kur ya da açık bir grup ara.",
     "form": {
       "name": "Ad",
@@ -214,6 +237,9 @@
     "joinBody": "Bu kodla davet edildin. Gönderileri ve üyeleri görmek için katıl.",
     "joinAction": "Gruba katıl",
     "joinNeedsSocial": "Önce Topluluğa katıl, sonra davet bağlantısını yeniden aç.",
+    "codeEntryTitle": "Kodla gruba katıl",
+    "codeEntryBody": "Grup yöneticisinden aldığın kodu yaz ya da davet bağlantısını yapıştır.",
+    "codeContinue": "Devam",
     "rotate": "Yeni davet kodu",
     "rotateTitle": "Yeni kod oluşturulsun mu?",
     "rotateHint": "Eski bağlantı ve kod çalışmaz hale gelir.",
@@ -261,11 +287,10 @@
     "leave": "Ayrıl ve verilerimi sil",
     "leaveConfirmTitle": "Topluluktan ayrılıp her şey silinsin mi?",
     "leaveConfirmBody": "Gönderilerin ve fotoğrafları, beğenilerin, iki yöndeki takipler, grup üyeliklerin (sahibi olduğun gruplar başka bir üyeye geçer) ve bildirimlerin silinir.",
-    "leaveIrreversible": "Bu geri alınamaz."
-  },
-  "me": {
-    "posts": "Gönderilerim",
-    "counts": "{{posts}} gönderi · {{followers}} takipçi · {{following}} takip"
+    "leaveIrreversible": "Bu geri alınamaz.",
+    "mentions": "Etiketleme",
+    "allowMentions": "Beni etiketleyebilsinler",
+    "allowMentionsHint": "Takip ettiğin ya da seni takip eden kişiler ve grup arkadaşların seni gönderilerde etiketleyebilir."
   },
   "admin": {
     "title": "Şikâyetler",

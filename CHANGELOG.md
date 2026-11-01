@@ -4,6 +4,18 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-01
+### Added
+- **Hashtags**: `#tags` in post text link to a tag page; search finds tags. Only posts the viewer may see are listed or counted.
+- **Mentions**: tag people with `@` in posts. Only people you interact with (accepted follow either way; for group posts only that group's members) who may see the post; at most 10 per post. Notifications, "remove my tag", an "Allow mentions" switch, and a Tagged tab on your profile (visible only to you).
+- Join a group by typing a code or pasting an invite link.
+### Changed
+- **Community**: header search, ranking (trophy) and bell; tabs Home | Discover with a groups rail; a full-screen search for people, groups and tags; ranking and tag pages.
+- **Profile**: identity with level, points and best streak, then Posts | Tagged | Badges; a settings gear holds everything else, including Admin.
+- **Flat lists** across the app (rows on the page, hairline dividers) and text section tabs instead of boxed switches.
+- AI coach: program cards survive a reload (stored signed with the message); exercise matching treats "pushup", "push up" and "Push-Up" alike.
+- Privacy notice: contact e-mail `kvkk@ironmorrow-test.com`, a Mentions item; everyone acknowledges it once more. The data export now includes AI coach chats.
+
 ## [0.9.0] - 2026-11-01
 ### Changed
 - **New name and logo: Ironmorrow.** A sun rising behind a barbell on the horizon; new favicon and home-screen icons. Technical identifiers (repository, photo encryption labels) keep the old name.

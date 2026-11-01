@@ -6,7 +6,7 @@ import { BackTitle } from '@/components/layout/BackTitle'
 import { PageShell } from '@/components/layout/PageShell'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
-import { Segmented } from '@/components/ui/GroupedList'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import * as api from '../api'
 import { parseReport } from '../logic'
 import { useAdminReports, useSocialAction } from '../hooks'
@@ -24,6 +24,8 @@ type Target = {
   description?: string | null
   media?: string[]
 }
+
+const STATUSES = ['open', 'resolved'] as const
 
 /** Admin > Reports (/admin/social-reports): the queue, the reported content, resolve or remove the post. */
 export function AdminReportsPage() {
@@ -44,14 +46,12 @@ export function AdminReportsPage() {
       leading={<BackTitle to="/admin" label={t('admin:section')} title={t('social:admin.title')} />}
     >
       <div className="mx-auto max-w-xl space-y-5 pb-6">
-        <Segmented
+        <SectionTabs
           label={t('social:admin.status')}
+          options={STATUSES}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'open', label: t('social:admin.open') },
-            { value: 'resolved', label: t('social:admin.resolved') },
-          ]}
+          labelOf={(v) => t(`social:admin.${v}`)}
         />
         <ErrorNote error={list.error ?? resolve.error} />
         {list.isLoading ? (

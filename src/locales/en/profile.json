@@ -1,23 +1,24 @@
 {
   "title": "Profile",
   "edit": "Edit profile",
-  "pointsTotal": "{{n}} pts",
-  "streak_one": "{{count}}-day streak",
-  "streak_other": "{{count}}-day streak",
-  "stats": {
-    "open": "Open the leaderboard",
-    "rank": "Weekly rank",
-    "week": "Weekly points",
-    "best": "Best streak"
+  "settings": "Settings",
+  "tabs": {
+    "label": "Profile sections",
+    "posts": "Posts",
+    "badges": "Badges",
+    "tagged": "Tagged"
   },
-  "rows": {
-    "settings": "Settings",
-    "admin": "Admin",
-    "adminBadge_one": "Admin, {{count}} item waiting",
-    "adminBadge_other": "Admin, {{count}} items waiting"
+  "level": {
+    "points": "{{n}} pts",
+    "progress": "Progress to level {{level}}",
+    "toNext": "{{n}} pts to level {{level}}"
+  },
+  "posts": {
+    "offTitle": "Your posts show up here",
+    "offBody": "Join Community first to share. Joining is optional.",
+    "join": "Go to Community"
   },
   "badges": {
-    "all": "All",
     "family": {
       "workouts": "Workouts",
       "streak": "Streaks",
@@ -53,5 +54,11 @@
     "errors": {
       "range": "Out of range"
     }
-  }
+  },
+  "tagged": {
+    "emptyTitle": "No tags yet",
+    "emptyBody": "Posts someone tags you in show up here."
+  },
+  "bestStreak_one": "Best streak {{n}} day",
+  "bestStreak_other": "Best streak {{n}} days"
 }

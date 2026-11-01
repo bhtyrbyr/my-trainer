@@ -164,6 +164,7 @@ export function InviteSheet({
           </div>
         )}
         <GroupedList
+          inset
           title={t('social:groups.inviteFollowers')}
           footer={followers.data?.length === 0 ? t('social:groups.noFollowers') : undefined}
         >
@@ -236,7 +237,7 @@ export function MemberSheet({
     >
       <div className="space-y-5 pb-5">
         <h2 className="display truncate text-[24px]">{member?.display_name}</h2>
-        <GroupedList>
+        <GroupedList inset>
           {isOwner && member?.role === 'member' && (
             <ListRow
               label={t('social:groups.makeAdmin')}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Compass, Lock, LogOut, Newspaper, PauseCircle, Trash2, Users } from 'lucide-react'
+import { AtSign, Bell, Compass, Lock, LogOut, Newspaper, PauseCircle, Trash2, Users } from 'lucide-react'
 import { BackTitle } from '@/components/layout/BackTitle'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
@@ -56,7 +56,7 @@ function Enabled({ me }: { me: MySocial }) {
   const [bio, setBio] = useState(me.bio ?? '')
   const [leave, setLeave] = useState<null | 'pause' | 'delete'>(null)
 
-  const update = useSocialAction((p: { isPrivate?: boolean; discoverable?: boolean; bio?: string }) =>
+  const update = useSocialAction((p: { isPrivate?: boolean; discoverable?: boolean; bio?: string; allowMentions?: boolean }) =>
     api.updateSocialSettings(p),
   )
   const respond = useSocialAction((a: { user: string; accept: boolean }) =>
@@ -77,7 +77,7 @@ function Enabled({ me }: { me: MySocial }) {
         <ListRow
           icon={Lock}
           label={t('social:settings.private')}
-          className="py-1.5 pr-2"
+          className="py-1.5"
           trailing={
             <Switch
               checked={me.is_private}
@@ -91,7 +91,7 @@ function Enabled({ me }: { me: MySocial }) {
           icon={Compass}
           label={t('social:settings.discoverable')}
           hint={t('social:settings.discoverableHint')}
-          className="py-1.5 pr-2"
+          className="py-1.5"
           trailing={
             <Switch
               checked={me.discoverable}
@@ -103,8 +103,25 @@ function Enabled({ me }: { me: MySocial }) {
         />
       </GroupedList>
 
+      <GroupedList title={t('social:settings.mentions')}>
+        <ListRow
+          icon={AtSign}
+          label={t('social:settings.allowMentions')}
+          hint={t('social:settings.allowMentionsHint')}
+          className="py-1.5"
+          trailing={
+            <Switch
+              checked={me.allow_mentions}
+              disabled={update.isPending}
+              label={t('social:settings.allowMentions')}
+              onChange={(v) => update.mutate({ allowMentions: v })}
+            />
+          }
+        />
+      </GroupedList>
+
       <section className="space-y-2">
-        <label htmlFor="social-bio" className="section-title block px-4">
+        <label htmlFor="social-bio" className="section-title block">
           {t('social:settings.bio')}
         </label>
         <div className="hairline rounded-[var(--radius-card)] bg-surface p-3">
@@ -138,7 +155,7 @@ function Enabled({ me }: { me: MySocial }) {
           icon={Bell}
           label={t('social:settings.push')}
           hint={t('social:settings.pushHint')}
-          className="py-1.5 pr-2"
+          className="py-1.5"
           trailing={
             <Switch
               checked={settings?.social_push ?? true}

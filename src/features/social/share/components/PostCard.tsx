@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
-import { Check, Flag, Heart, MoreHorizontal, Trash2, UsersRound } from 'lucide-react'
+import { AtSign, Check, Flag, Heart, MoreHorizontal, Trash2, UsersRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { ErrorNote } from '@/components/ui/ErrorNote'
@@ -11,8 +11,9 @@ import { Sheet } from '@/components/ui/Sheet'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
 import { Avatar } from '../../components/Avatar'
+import { splitPostText, type MentionRef } from '../../mentions'
 import { AUDIENCE_ICON, audienceReady } from '../audience'
-import { useDateFnsLocale, useDeletePost, useLike, useReportPost, useSetAudience } from '../hooks'
+import { useDateFnsLocale, useDeletePost, useLike, useRemoveMention, useReportPost, useSetAudience } from '../hooks'
 import { REASON_MAX, readMeal, readProgram, readWorkout, relativeTime, toPost } from '../payload'
 import { useSharePreview } from '../previewContext'
 import type { AudienceChoice, Post, PostItem } from '../types'
@@ -28,15 +29,17 @@ export function PostCard({ post: item }: { post: PostItem }) {
   const post = toPost(item)
   const { user } = useAuth()
   const preview = useSharePreview()
-  const mine = post.author_id === (preview?.meId ?? user?.id)
+  const meId = preview?.meId ?? user?.id
+  const mine = post.author_id === meId
+  const taggedMe = !mine && post.mentions.some((m) => m.user_id === meId)
   const [menu, setMenu] = useState(false)
-  const [sheet, setSheet] = useState<'audience' | 'delete' | 'report' | null>(null)
+  const [sheet, setSheet] = useState<'audience' | 'delete' | 'report' | 'untag' | null>(null)
   const [deleted, setDeleted] = useState(false)
   const workout = post.kind === 'workout' ? readWorkout(post.payload) : null
   const program = post.kind === 'program' ? readProgram(post.payload) : null
   const meal = post.kind === 'meal' ? readMeal(post.payload) : null
   const name = post.author_display_name || post.author_username
-  const open = (s: 'audience' | 'delete' | 'report') => {
+  const open = (s: 'audience' | 'delete' | 'report' | 'untag') => {
     setMenu(false)
     setSheet(s)
   }
@@ -57,7 +60,7 @@ export function PostCard({ post: item }: { post: PostItem }) {
         <Avatar path={preview ? null : post.author_avatar_path} userId={post.author_id} size={40} label={name} />
         <div className="min-w-0 flex-1">
           <Header post={post} name={name} onMenu={() => setMenu(true)} />
-          {post.body && <p className="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45] text-ink">{post.body}</p>}
+          {post.body && <PostBody text={post.body} mentions={post.mentions} />}
           {post.media.length > 0 && (
             <div className="mt-2.5">
               <MediaGrid media={post.media} />
@@ -75,14 +78,17 @@ export function PostCard({ post: item }: { post: PostItem }) {
       </div>
 
       <Sheet open={menu} label={t('card.menu')} closeLabel={t('composer.close')} onClose={() => setMenu(false)}>
-        <GroupedList className="pb-5">
+        <GroupedList inset className="pb-5">
           {mine ? (
             <>
               <ListRow icon={AUDIENCE_ICON[post.audience]} label={t('menu.audience')} onClick={() => open('audience')} />
               <ListRow icon={Trash2} destructive chevron={false} label={t('menu.delete')} onClick={() => open('delete')} />
             </>
           ) : (
-            <ListRow icon={Flag} label={t('menu.report')} onClick={() => open('report')} />
+            <>
+              {taggedMe && <ListRow icon={AtSign} chevron={false} label={t('menu.untag')} onClick={() => open('untag')} />}
+              <ListRow icon={Flag} label={t('menu.report')} onClick={() => open('report')} />
+            </>
           )}
         </GroupedList>
       </Sheet>
@@ -92,7 +98,33 @@ export function PostCard({ post: item }: { post: PostItem }) {
         <AudienceSheet postId={post.id} initial={{ audience: post.audience, groupId: post.group_id }} onClose={() => setSheet(null)} />
       )}
       {!mine && sheet === 'report' && <ReportSheet postId={post.id} onClose={() => setSheet(null)} />}
+      {taggedMe && <UntagSheet open={sheet === 'untag'} postId={post.id} onClose={() => setSheet(null)} />}
     </article>
+  )
+}
+
+/**
+ * Post text, one tokenizer for both kinds of link (volt, no underline): hashtags (the rule the database
+ * indexes) open their tag page, `@username` tokens of people in the post's `mentions` open their profile.
+ * Any other `@text` stays plain.
+ */
+function PostBody({ text, mentions }: { text: string; mentions: MentionRef[] }) {
+  return (
+    <p className="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-[1.45] text-ink">
+      {splitPostText(text, mentions).map((s, i) =>
+        s.type === 'tag' ? (
+          <Link key={i} to={`/social/tag/${encodeURIComponent(s.tag)}`} className="font-medium text-volt hover:text-volt-hover">
+            {s.text}
+          </Link>
+        ) : s.type === 'mention' ? (
+          <Link key={i} to={`/social/u/${s.userId}`} className="font-medium text-volt hover:text-volt-hover">
+            {s.text}
+          </Link>
+        ) : (
+          s.text
+        ),
+      )}
+    </p>
   )
 }
 
@@ -196,6 +228,24 @@ function DeleteSheet({ open, postId, onClose, onDeleted }: { open: boolean; post
           },
         })
       }
+    />
+  )
+}
+
+/** The viewer is tagged: remove the tag (the post stays; the author is not told). */
+function UntagSheet({ open, postId, onClose }: { open: boolean; postId: string; onClose: () => void }) {
+  const { t } = useTranslation('share')
+  const untag = useRemoveMention()
+  return (
+    <ConfirmSheet
+      open={open}
+      title={t('untag.title')}
+      body={t('untag.body')}
+      confirmLabel={t('untag.confirm')}
+      pending={untag.isPending}
+      error={untag.error}
+      onCancel={onClose}
+      onConfirm={() => untag.mutate(postId, { onSuccess: onClose })}
     />
   )
 }

@@ -1,139 +1,219 @@
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { ChevronRight, Newspaper, Pencil, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { AtSign, Flame, Newspaper, Pencil, Settings } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
-import { GroupedList, ListRow } from '@/components/ui/GroupedList'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { useErrorReports, usePendingCount } from '@/features/admin/hooks'
-import { BadgeShelf } from '@/features/badges'
+import { BadgeCollection } from '@/features/badges'
 import { StreakAvatar } from '@/features/gamification/StreakAvatar'
-import { StreakFlame } from '@/features/gamification/StreakFlame'
+import { levelProgress } from '@/features/gamification/level'
 import { effectiveStreak } from '@/features/gamification/streak'
-import { useLeaderboard } from '@/features/leaderboard/hooks'
-import { useSocialEnabled, useSocialProfile } from '@/features/social/hooks'
+import { EmptyState, LayoutToggle, PostList, TimelineSkeleton } from '@/features/social/components/parts'
+import { useMentionedPosts, usePostLayout, useSocialMe, useUserPosts } from '@/features/social/hooks'
+import type { Profile } from '@/lib/database.types'
+import { cn } from '@/lib/utils'
 import { avatarUrl } from '../api'
 
-/**
- * Profile hub (tab root). Point of view: an identity card, not a settings dump. The person first
- * (96 px avatar, name, level, streak), one action (edit), the numbers that link to the ranking, the
- * badge shelf, and only then the doors to Settings and, for admins, the admin hub.
- */
-export function ProfilePage() {
-  const { t, i18n } = useTranslation(['profile', 'common', 'social'])
-  const { profile } = useAuth()
-  const isAdmin = profile?.role === 'admin'
-  const pending = usePendingCount()
-  const openReports = useErrorReports('open')
-  const week = useLeaderboard('week')
-  const nf = new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr')
+const SECTIONS = ['posts', 'tagged', 'badges'] as const
+/** Secondary button look for links (Button is a <button>). */
+const SECONDARY_LINK =
+  'hairline inline-flex h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-raised px-4 text-[15px] font-semibold text-ink transition-colors hover:bg-raised/70'
+type Section = (typeof SECTIONS)[number]
 
-  const streak = effectiveStreak(profile?.current_streak, profile?.last_active_on)
-  const me = (week.data ?? []).find((r) => r.user_id === profile?.user_id)
-  const adminCount = (pending.data ?? 0) + (openReports.data?.length ?? 0)
-  const socialOn = useSocialEnabled()
-  const social = useSocialProfile(profile?.user_id ?? '', socialOn).data
+/**
+ * Profile tab (/me). Point of view: a person and their work, nothing else. The header carries only the
+ * title and the door to Settings; the identity (streak-framed avatar, names, level meter, best streak,
+ * edit) sits on the page, then Posts | Tagged | Badges (`?tab=tagged|badges`; Posts when the tab is
+ * opened). Every setting, the admin hub and sign-out live in Settings.
+ */
+export function ProfilePage({ previewProfile }: { previewProfile?: Profile }) {
+  const { t } = useTranslation(['profile', 'common'])
+  const auth = useAuth()
+  const profile = previewProfile ?? auth.profile
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab')
+  const section: Section = SECTIONS.find((s) => s === tab) ?? 'posts'
+  const setSection = (s: Section) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (s === 'posts') next.delete('tab')
+        else next.set('tab', s)
+        next.delete('view') // the list/grid choice belongs to each post section
+        return next
+      },
+      { replace: true },
+    )
 
   return (
-    <PageShell title={t('profile:title')} bare className="pt-6">
-      <div className="mx-auto max-w-md space-y-7 pb-6 lg:grid lg:max-w-4xl lg:grid-cols-2 lg:items-start lg:gap-8 lg:space-y-0">
-        <div className="space-y-5">
-          {profile ? (
-            <header className="rise-in flex flex-col items-center text-center lg:items-start lg:text-left">
-              <StreakAvatar src={avatarUrl(profile.avatar_path, profile.updated_at)} streak={streak} size={96} />
-              <h2 className="display mt-4 max-w-full truncate text-[30px]">{profile.display_name}</h2>
-              <p className="mt-1 max-w-full truncate text-[15px] text-ink-muted">@{profile.username}</p>
-              <p className="tabular mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[13px] text-ink-muted lg:justify-start">
-                <span className="font-medium text-ink">{t('common:level', { n: profile.level })}</span>
-                <span className="text-ink-faint" aria-hidden>·</span>
-                <span>{t('profile:pointsTotal', { n: nf.format(profile.total_points) })}</span>
-                <span className="text-ink-faint" aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1">
-                  <StreakFlame days={streak} size={16} />
-                  {t('profile:streak', { count: streak })}
-                </span>
-              </p>
-            </header>
+    <PageShell
+      title={t('profile:title')}
+      actions={
+        <Link
+          to={previewProfile ? 'settings' : '/settings'}
+          aria-label={t('profile:settings')}
+          className="-mr-2 flex size-11 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-raised hover:text-ink"
+        >
+          <Settings className="size-[22px]" aria-hidden />
+        </Link>
+      }
+    >
+      <div className="mx-auto max-w-xl pb-6">
+        {profile ? <Identity profile={profile} editTo={previewProfile ? 'edit' : '/me/edit'} /> : <IdentitySkeleton />}
+
+        <SectionTabs
+          className="mt-7"
+          label={t('profile:tabs.label')}
+          options={SECTIONS}
+          value={section}
+          onChange={setSection}
+          labelOf={(v) => t(`profile:tabs.${v}`)}
+          fit
+        />
+        <div role="tabpanel" aria-label={t(`profile:tabs.${section}`)}>
+          {section === 'posts' ? (
+            <MyPosts userId={profile?.user_id ?? ''} />
+          ) : section === 'tagged' ? (
+            <TaggedPosts />
           ) : (
-            <HeroSkeleton />
+            <BadgeCollection />
           )}
-
-          <Link
-            to="/me/edit"
-            className="hairline flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-button)] bg-raised text-[15px] font-semibold text-ink transition-colors hover:bg-raised/70"
-          >
-            <Pencil className="size-4" aria-hidden />
-            {t('profile:edit')}
-          </Link>
-
-          <Link
-            to="/social?tab=ranking"
-            aria-label={t('profile:stats.open')}
-            className="hairline group grid grid-cols-[1fr_1fr_1fr_auto] items-stretch overflow-hidden rounded-[var(--radius-card)] bg-surface transition-colors hover:bg-raised/40"
-          >
-            <Stat label={t('profile:stats.rank')} value={me ? `#${me.rank}` : '–'} loading={week.isLoading} />
-            <Stat label={t('profile:stats.week')} value={me ? nf.format(me.points) : '0'} loading={week.isLoading} divider />
-            <Stat label={t('profile:stats.best')} value={profile ? nf.format(Math.max(profile.longest_streak, streak)) : '–'} loading={!profile} divider />
-            <span className="flex items-center pr-3 text-ink-faint group-hover:text-ink" aria-hidden>
-              <ChevronRight className="size-4" />
-            </span>
-          </Link>
-        </div>
-
-        <div className="space-y-7">
-          <BadgeShelf />
-
-          <GroupedList>
-            {socialOn && profile && (
-              <ListRow
-                icon={Newspaper}
-                label={t('social:me.posts')}
-                hint={
-                  social ? (
-                    <span className="tabular">
-                      {t('social:me.counts', { posts: social.posts_count ?? 0, followers: social.followers_count ?? 0, following: social.following_count ?? 0 })}
-                    </span>
-                  ) : undefined
-                }
-                to={`/social/u/${profile.user_id}`}
-              />
-            )}
-            <ListRow icon={SlidersHorizontal} label={t('profile:rows.settings')} to="/settings" />
-            {isAdmin && (
-              <ListRow
-                icon={ShieldCheck}
-                label={t('profile:rows.admin')}
-                to="/admin"
-                badge={adminCount}
-                aria-label={adminCount > 0 ? t('profile:rows.adminBadge', { count: adminCount }) : undefined}
-              />
-            )}
-          </GroupedList>
         </div>
       </div>
     </PageShell>
   )
 }
 
-function Stat({ label, value, loading, divider }: { label: string; value: string; loading?: boolean; divider?: boolean }) {
+function Identity({ profile, editTo }: { profile: Profile; editTo: string }) {
+  const { t, i18n } = useTranslation(['profile', 'common'])
+  const nf = new Intl.NumberFormat(i18n.resolvedLanguage === 'en' ? 'en' : 'tr')
+  const streak = effectiveStreak(profile.current_streak, profile.last_active_on)
+  const { level, into, toNext, ratio } = levelProgress(profile.total_points)
+  const best = Math.max(profile.longest_streak, streak)
+
   return (
-    <div className={divider ? 'min-w-0 border-l border-line px-3 py-4' : 'min-w-0 py-4 pl-4 pr-3'}>
-      {loading ? (
-        <span className="block h-7 w-12 animate-pulse rounded bg-raised motion-reduce:animate-none" />
-      ) : (
-        <p className="display tabular text-[26px] leading-none">{value}</p>
-      )}
-      <p className="mt-2 text-[12px] leading-tight text-ink-muted">{label}</p>
-    </div>
+    <header className="rise-in">
+      <div className="flex items-center gap-4">
+        <StreakAvatar src={avatarUrl(profile.avatar_path, profile.updated_at)} streak={streak} size={88} />
+        <div className="min-w-0 flex-1">
+          <h2 className="display truncate text-[28px]">{profile.display_name}</h2>
+          <p className="mt-0.5 truncate text-[14px] text-ink-muted">@{profile.username}</p>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="display text-[20px] leading-none">{t('common:level', { n: level })}</span>
+          <span className="tabular text-[13px] text-ink-muted">
+            {t('profile:level.points', { n: nf.format(profile.total_points) })}
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-label={t('profile:level.progress', { level: level + 1 })}
+          aria-valuemin={0}
+          aria-valuemax={1000}
+          aria-valuenow={into}
+          className="mt-2.5 h-1 overflow-hidden rounded-full bg-raised"
+        >
+          <div className="h-full rounded-full bg-volt" style={{ width: `${ratio * 100}%` }} />
+        </div>
+        <div className="mt-2 flex items-baseline justify-between gap-3 text-[12px]">
+          <p className="tabular text-ink-faint">{t('profile:level.toNext', { n: nf.format(toNext), level: level + 1 })}</p>
+          {best > 0 && (
+            <p className="tabular flex shrink-0 items-center gap-1 self-center text-ink-muted">
+              <Flame className="size-3.5" aria-hidden />
+              {t('profile:bestStreak', { count: best, n: nf.format(best) })}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Link to={editTo} className={cn(SECONDARY_LINK, 'mt-5 w-full text-[14px]')}>
+        <Pencil className="size-4" aria-hidden />
+        {t('profile:edit')}
+      </Link>
+    </header>
   )
 }
 
-function HeroSkeleton() {
+/** The way into Community, shown by both post sections while the caller has not joined. */
+function NotJoined() {
+  const { t } = useTranslation('profile')
   return (
-    <div className="flex flex-col items-center lg:items-start" aria-busy="true">
-      <span className="size-24 animate-pulse rounded-full bg-raised motion-reduce:animate-none" />
-      <span className="mt-4 h-8 w-44 animate-pulse rounded-lg bg-raised motion-reduce:animate-none" />
-      <span className="mt-2 h-4 w-28 animate-pulse rounded bg-raised motion-reduce:animate-none" />
-      <span className="mt-3 h-4 w-52 animate-pulse rounded bg-raised motion-reduce:animate-none" />
+    <EmptyState
+      icon={Newspaper}
+      title={t('profile:posts.offTitle')}
+      body={t('profile:posts.offBody')}
+      action={
+        <Link to="/social" className={SECONDARY_LINK}>
+          {t('profile:posts.join')}
+        </Link>
+      }
+    />
+  )
+}
+
+/** Own posts (social_user_posts with the caller's id), or the way into Community when not joined. */
+function MyPosts({ userId }: { userId: string }) {
+  const { t } = useTranslation(['profile', 'social'])
+  const me = useSocialMe()
+  const joined = me.data?.enabled === true
+  const posts = useUserPosts(userId, joined && userId !== '')
+  const layout = usePostLayout()
+
+  if (me.isLoading) return <TimelineSkeleton rows={2} />
+  if (!joined) return <NotJoined />
+  return (
+    <>
+      <div className="-mt-3 mb-1 flex justify-end">
+        <LayoutToggle />
+      </div>
+      <PostList
+        layout={layout}
+        query={posts}
+        empty={<EmptyState icon={Newspaper} title={t('social:profile.noPostsSelf')} />}
+      />
+    </>
+  )
+}
+
+/** Posts the caller is tagged in (social_mentioned_posts), same list/grid as Posts. */
+function TaggedPosts() {
+  const { t } = useTranslation('profile')
+  const me = useSocialMe()
+  const joined = me.data?.enabled === true
+  const posts = useMentionedPosts(joined)
+  const layout = usePostLayout()
+
+  if (me.isLoading) return <TimelineSkeleton rows={2} />
+  if (!joined) return <NotJoined />
+  return (
+    <>
+      <div className="-mt-3 mb-1 flex justify-end">
+        <LayoutToggle />
+      </div>
+      <PostList
+        layout={layout}
+        query={posts}
+        empty={<EmptyState icon={AtSign} title={t('profile:tagged.emptyTitle')} body={t('profile:tagged.emptyBody')} />}
+      />
+    </>
+  )
+}
+
+function IdentitySkeleton() {
+  return (
+    <div aria-busy="true">
+      <div className="flex items-center gap-4">
+        <span className="size-[88px] shrink-0 animate-pulse rounded-full bg-raised motion-reduce:animate-none" />
+        <div className="flex-1 space-y-2">
+          <span className="block h-7 w-40 animate-pulse rounded-lg bg-raised motion-reduce:animate-none" />
+          <span className="block h-4 w-24 animate-pulse rounded bg-raised motion-reduce:animate-none" />
+        </div>
+      </div>
+      <span className="mt-6 block h-1 w-full rounded-full bg-raised" />
+      <span className="mt-5 block h-11 w-full animate-pulse rounded-[var(--radius-button)] bg-raised motion-reduce:animate-none" />
     </div>
   )
 }

@@ -7,10 +7,13 @@ import { ArrowLeft, Check, ChevronDown, Copy, RotateCcw } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { PLAIN_LIST } from '@/components/ui/GroupedList'
+import { SectionTabs } from '@/components/ui/SectionTabs'
 import { cn } from '@/lib/utils'
 import { useErrorReports, useSetErrorReportStatus } from '../hooks'
 
 type Status = 'open' | 'resolved' | 'all'
+const STATUSES: readonly Status[] = ['open', 'resolved', 'all']
 type Report = Awaited<ReturnType<typeof import('../api').listErrorReports>>[number]
 
 /** Admin inbox of user-sent error reports: who, where, which request, what the server said. */
@@ -32,27 +35,20 @@ export function ErrorReportsPage() {
       }
     >
       <div className="mx-auto max-w-3xl space-y-4 pb-6">
-        <div role="tablist" className="hairline grid grid-cols-3 rounded-full bg-surface p-1">
-          {(['open', 'resolved', 'all'] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={status === s}
-              onClick={() => setStatus(s)}
-              className={cn('h-10 rounded-full text-[13px] font-medium transition-colors', status === s ? 'bg-raised text-ink' : 'text-ink-muted hover:text-ink')}
-            >
-              {t(`reports.tabs.${s}`)}
-            </button>
-          ))}
-        </div>
+        <SectionTabs
+          label={t('reports.title')}
+          options={STATUSES}
+          value={status}
+          onChange={setStatus}
+          labelOf={(s) => t(`reports.tabs.${s}`)}
+        />
         <ErrorNote error={reports.error} />
         {reports.isLoading ? (
           <div className="h-40 animate-pulse rounded-[var(--radius-card)] bg-surface" aria-busy="true" />
         ) : (reports.data ?? []).length === 0 ? (
           <p className="hairline rounded-[var(--radius-card)] bg-surface px-4 py-6 text-[14px] text-ink-muted">{t('reports.empty')}</p>
         ) : (
-          <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
+          <ul className={PLAIN_LIST}>
             {(reports.data ?? []).map((r) => (
               <ReportRow key={r.id} r={r} />
             ))}

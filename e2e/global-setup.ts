@@ -1,10 +1,11 @@
-// Creates two throwaway, onboarded, approved adult users on the LOCAL stack and saves a signed-in
-// storageState for each (A is the default for every spec; B is the second person in the social spec).
+// Creates three throwaway, onboarded, approved adult users on the LOCAL stack and saves a signed-in
+// storageState for each (A is the default for every spec; B is the second person in the social spec;
+// C is a stranger used through the API only).
 // Google OAuth is not usable in tests, so the users get an email/password identity through the local
 // admin API; the app only ever sees a normal Supabase session in localStorage.
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { AUTH_DIR, E2E_EXERCISE, META_FILE, META_FILE_B, ORIGIN, STATE_FILE, STATE_FILE_B, localStack, type TestUser } from './support/env'
+import { AUTH_DIR, E2E_EXERCISE, META_FILE, META_FILE_B, META_FILE_C, ORIGIN, STATE_FILE, STATE_FILE_B, localStack, type TestUser } from './support/env'
 
 const brand = JSON.parse(readFileSync(new URL('../src/config/brand.json', import.meta.url), 'utf8')) as {
   legal: { noticeVersion: string; healthConsentVersion: string }
@@ -76,7 +77,7 @@ commit;`)
       ],
     }),
   )
-  const meta: TestUser = { id: uid, email, accessToken: session.access_token }
+  const meta: TestUser = { id: uid, email, accessToken: session.access_token, username: `e2e${stamp}` }
   writeFileSync(metaFile, JSON.stringify(meta))
 }
 
@@ -91,4 +92,5 @@ export default async function globalSetup(): Promise<void> {
   values ('custom', true, '$UID', '${E2E_EXERCISE}', '${E2E_EXERCISE}', '{chest}', '{pectorals}', '{barbell}');`,
   )
   await createUser('b', STATE_FILE_B, META_FILE_B)
+  await createUser('c', `${AUTH_DIR}user-c.json`, META_FILE_C)
 }

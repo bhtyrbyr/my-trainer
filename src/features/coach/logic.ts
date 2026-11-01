@@ -1,3 +1,5 @@
+import { programCardSchema, type ProgramCardData } from './schema'
+
 /** Longest message the composer accepts (the database allows 4000; the model sees 1500 per message). */
 export const MAX_INPUT = 1000
 /** Conversation titles come from the first question. */
@@ -126,4 +128,14 @@ export function programRequestOf(text: string, templates: readonly { ask: string
     }
   }
   return null
+}
+
+/**
+ * The program card stored with an assistant message (ai_messages.payload), validated before it is
+ * rendered; null for any other message, a malformed payload or a program without days.
+ */
+export function programFromPayload(payload: unknown): ProgramCardData | null {
+  if (payload == null) return null
+  const parsed = programCardSchema.safeParse(payload)
+  return parsed.success && parsed.data.program.days.length > 0 ? parsed.data : null
 }

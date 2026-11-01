@@ -163,11 +163,29 @@ async function hmacHex(key: string, data: string): Promise<string> {
 }
 
 /**
- * Signature ai_add_assistant_message() requires (migration 20261108000000): HMAC-SHA256 over
- * "<conversation id>:<content>" with a key derived from the server secret under the label 'coach-reply-v1'.
+ * Signature ai_add_assistant_message() requires (migrations 20261108000000 and 20261190000000).
+ * Without a payload: HMAC-SHA256 over "<conversation id>:<content>" with a key derived from the server
+ * secret under the label 'coach-reply-v1'. With a payload (the exact JSON text that is sent; jsonb
+ * would reorder keys): label 'coach-reply-v2' over "<conversation id>:<UTF-8 bytes of content>:<content>:<payload>",
+ * the byte length matching Postgres octet_length(), so the content/payload split is unambiguous.
  */
-export async function signCoachReply(secret: string, conversationId: string, content: string): Promise<string> {
-  return hmacHex(await hmacHex(secret, 'coach-reply-v1'), `${conversationId}:${content}`)
+export async function signCoachReply(secret: string, conversationId: string, content: string, payload?: string | null): Promise<string> {
+  if (payload == null) return hmacHex(await hmacHex(secret, 'coach-reply-v1'), `${conversationId}:${content}`)
+  const bytes = new TextEncoder().encode(content).length
+  return hmacHex(await hmacHex(secret, 'coach-reply-v2'), `${conversationId}:${bytes}:${content}:${payload}`)
+}
+
+/** Largest payload ai_messages stores (bytes of JSON text; the SQL check is the same). */
+export const COACH_PAYLOAD_BYTES = 32_768
+
+/**
+ * The program card stored with the summary message, so it survives a reload: JSON text of
+ * {program, unmatched}, or null when there is nothing to show or it would exceed the stored size.
+ */
+export function programPayload(program: { days: readonly unknown[] }, unmatched: readonly string[]): string | null {
+  if (!program.days.length) return null
+  const text = JSON.stringify({ program, unmatched })
+  return new TextEncoder().encode(text).length <= COACH_PAYLOAD_BYTES ? text : null
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -340,12 +358,64 @@ export function searchTokens(name: string): string[] {
 }
 
 /**
+ * Case-insensitive POSIX regex (PostgREST `imatch`) for one search token that also finds its separated
+ * spellings: "pushup" -> /p[^a-z0-9]*u[^a-z0-9]*s.../ matches "Pushup", "Push-Up" and "Push Ups".
+ * Tokens are [a-z0-9] only (nameTokens), so nothing needs escaping. Used as the last prefilter pass.
+ */
+export function looseNamePattern(token: string): string {
+  return [...token].join('[^a-z0-9]*')
+}
+
+/** Most words a compound may be split into ("chin-up" 2, "t-bar-row" 3). */
+const MAX_COMPOUND_PARTS = 4
+
+/**
+ * Joins runs of consecutive words in `tokens` whose concatenation is a word of the other name, so
+ * "push up" lines up with "pushup". Only whole words are joined, never split, and only into a word that
+ * the other name really has, so "bench press" can never turn into "leg press".
+ */
+function joinCompounds(tokens: readonly string[], other: ReadonlySet<string>): string[] {
+  const out: string[] = []
+  let i = 0
+  while (i < tokens.length) {
+    let joined = 0
+    if (!other.has(tokens[i])) {
+      let acc = tokens[i]
+      for (let j = i + 1; j < tokens.length && j - i < MAX_COMPOUND_PARTS; j++) {
+        acc += tokens[j]
+        if (other.has(acc)) {
+          joined = j - i + 1
+          break
+        }
+      }
+    }
+    if (joined) {
+      out.push(tokens.slice(i, i + joined).join(''))
+      i += joined
+    } else {
+      out.push(tokens[i])
+      i++
+    }
+  }
+  return out
+}
+
+/** Both names as comparable word lists, compounds aligned in either direction ("Pushup" vs "Push-Up"). */
+function alignedTokens(query: string, candidate: string): [string[], string[]] {
+  const q0 = nameTokens(query)
+  const c0 = nameTokens(candidate)
+  const q = joinCompounds(q0, new Set(c0))
+  const c = joinCompounds(c0, new Set(q))
+  return [q, c]
+}
+
+/**
  * Similarity of a model name and a catalog name, 0..1: 1 for the same words (order, case, punctuation
- * and plural "s" ignored, "Push-Up" = "pushup"), else the Dice overlap of the word sets.
+ * and plural "s" ignored, "Push-Up" = "pushup", "Wide Grip Pushup" = "Push-Up, Wide Grip"), else the
+ * Dice overlap of the word sets.
  */
 export function nameScore(query: string, candidate: string): number {
-  const q = nameTokens(query)
-  const c = nameTokens(candidate)
+  const [q, c] = alignedTokens(query, candidate)
   if (!q.length || !c.length) return 0
   if (q.join('') === c.join('')) return 1
   const qs = new Set(q)
@@ -364,13 +434,13 @@ export const MATCH_THRESHOLD = 0.6
  * all of the query's, then to the shorter name (the plain variant), then to the caller's custom row.
  */
 export function pickBestMatch(query: string, candidates: readonly CatalogCandidate[], threshold = MATCH_THRESHOLD): CatalogCandidate | null {
-  const qs = new Set(nameTokens(query))
   let best: { c: CatalogCandidate; score: number; covers: boolean; len: number } | null = null
   for (const c of candidates) {
     const score = nameScore(query, c.name_en)
     if (score < threshold) continue
-    const cs = new Set(nameTokens(c.name_en))
-    const covers = [...qs].every((w) => cs.has(w))
+    const [q, cand] = alignedTokens(query, c.name_en)
+    const cs = new Set(cand)
+    const covers = q.every((w) => cs.has(w))
     const len = c.name_en.length
     const better =
       !best ||

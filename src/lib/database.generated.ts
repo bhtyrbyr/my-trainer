@@ -54,6 +54,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          payload: Json | null
           role: string
           user_id: string
         }
@@ -63,6 +64,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          payload?: Json | null
           role: string
           user_id: string
         }
@@ -71,6 +73,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          payload?: Json | null
           role?: string
           user_id?: string
         }
@@ -1150,6 +1153,60 @@ export type Database = {
           },
         ]
       }
+      post_mentions: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'post_mentions_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      post_tags: {
+        Row: {
+          created_at: string
+          post_id: string
+          tag: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at: string
+          post_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'post_tags_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       posts: {
         Row: {
           audience: string
@@ -1623,6 +1680,7 @@ export type Database = {
       }
       social_profiles: {
         Row: {
+          allow_mentions: boolean
           bio: string | null
           created_at: string
           discoverable: boolean
@@ -1634,6 +1692,7 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          allow_mentions?: boolean
           bio?: string | null
           created_at?: string
           discoverable?: boolean
@@ -1644,6 +1703,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allow_mentions?: boolean
           bio?: string | null
           created_at?: string
           discoverable?: boolean
@@ -2163,7 +2223,7 @@ export type Database = {
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
       admin_usage_summary: { Args: Record<PropertyKey, never>; Returns: Json }
       ai_add_assistant_message: {
-        Args: { p_content: string; p_conversation: string; p_signature: string }
+        Args: { p_content: string; p_conversation: string; p_payload?: string; p_signature: string }
         Returns: string
       }
       ai_availability: { Args: Record<PropertyKey, never>; Returns: Json }
@@ -2396,7 +2456,14 @@ export type Database = {
         }[]
       }
       social_create_post: {
-        Args: { p_audience?: string; p_body?: string; p_group?: string; p_kind: string; p_payload?: Json }
+        Args: {
+          p_audience?: string
+          p_body?: string
+          p_group?: string
+          p_kind: string
+          p_mentions?: string[]
+          p_payload?: Json
+        }
         Returns: string
       }
       social_delete_post: { Args: { p_post: string }; Returns: undefined }
@@ -2496,6 +2563,25 @@ export type Database = {
       social_media_attach_ok: { Args: { p_path: string; p_post: string }; Returns: boolean }
       social_media_readable: { Args: { p_name: string }; Returns: boolean }
       social_media_upload_ok: { Args: { p_name: string }; Returns: boolean }
+      social_mention_candidates: {
+        Args: { p_audience: string; p_group?: string; p_query: string }
+        Returns: {
+          avatar_path: string
+          display_name: string
+          user_id: string
+          username: string
+        }[]
+      }
+      social_mentioned_posts: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       social_my_groups: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2558,6 +2644,7 @@ export type Database = {
         }[]
       }
       social_remove_follower: { Args: { p_user: string }; Returns: undefined }
+      social_remove_mention: { Args: { p_post: string }; Returns: boolean }
       social_report: { Args: { p_kind: string; p_reason?: string; p_target: string }; Returns: undefined }
       social_respond_follow: { Args: { p_accept: boolean; p_follower: string }; Returns: undefined }
       social_search_groups: {
@@ -2569,6 +2656,13 @@ export type Database = {
           my_status: string
           name: string
           visibility: string
+        }[]
+      }
+      social_search_tags: {
+        Args: { p_query: string }
+        Returns: {
+          post_count: number
+          tag: string
         }[]
       }
       social_search_users: {
@@ -2586,12 +2680,22 @@ export type Database = {
         Args: { p_audience: string; p_group?: string; p_post: string }
         Returns: undefined
       }
+      social_tag_posts: {
+        Args: { p_before?: string; p_limit?: number; p_tag: string }
+        Returns: Database['public']['CompositeTypes']['social_post_item'][]
+        SetofOptions: {
+          from: '*'
+          to: 'social_post_item'
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       social_unblock: { Args: { p_user: string }; Returns: undefined }
       social_unfollow: { Args: { p_user: string }; Returns: undefined }
       social_unlike: { Args: { p_post: string }; Returns: number }
       social_unread_count: { Args: Record<PropertyKey, never>; Returns: number }
       social_update_settings: {
-        Args: { p_bio?: string; p_discoverable?: boolean; p_is_private?: boolean }
+        Args: { p_allow_mentions?: boolean; p_bio?: string; p_discoverable?: boolean; p_is_private?: boolean }
         Returns: undefined
       }
       social_user_posts: {
@@ -2652,6 +2756,7 @@ export type Database = {
         liked_by_me: boolean | null
         media: Json | null
         created_at: string | null
+        mentions: Json | null
       }
     }
   }

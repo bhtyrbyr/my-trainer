@@ -1,5 +1,6 @@
 // Pure builders for post payloads. They mirror private.social_payload_valid on the server (keys, limits)
 // so a share never fails on validation, and they only copy what the user chose to share (no notes).
+import { readMentions } from '../mentions'
 import { AUDIENCES, type Audience, type BestSet, type MealPayload, type MediaRef, type Post, type PostItem, type PostKind, type ProgramExercise, type ProgramPayload, type WorkoutPayload } from './types'
 
 export const BODY_MAX = 1000
@@ -225,5 +226,6 @@ export function toPost(item: PostItem): Post {
     liked_by_me: item.liked_by_me === true,
     media: media.sort((a, b) => a.position - b.position),
     created_at: item.created_at ?? new Date(0).toISOString(),
+    mentions: readMentions(item.mentions),
   }
 }

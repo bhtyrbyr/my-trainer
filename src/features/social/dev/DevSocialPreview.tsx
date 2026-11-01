@@ -56,6 +56,7 @@ function post(
     liked_by_me: i % 2 === 0,
     media: [],
     created_at: ago(minutes),
+    mentions: [],
     ...extra,
   }
 }
@@ -82,6 +83,7 @@ function seed(
     discoverable: true,
     bio: enabled ? 'Push/pull/legs, 4x a week.' : null,
     enabled_at: enabled ? ago(9000) : null,
+    allow_mentions: true,
   })
   qc.setQueryData(profileKeys.private, {
     birth_year: state === 'nobirth' ? null : state === 'underage' ? new Date().getFullYear() - 16 : 1992,
@@ -98,14 +100,17 @@ function seed(
     (typeof PEOPLE)[number],
   ]
   const feed = [
-    post(1, deniz, 'Yeni deadlift rekoru: 140 kg x 3. Altı aydır bu ana çalışıyordum.', 25),
-    post(2, elif, 'Sabah 10 km, tempo 5:20. Yağmur başlamadan bitirdim.', 140, { audience: 'public' }),
+    post(1, deniz, 'Yeni deadlift rekoru: 140 kg x 3. Altı aydır bu ana çalışıyordum. #Deadlift #PR', 25),
+    post(2, elif, 'Sabah 10 km, tempo 5:20. Yağmur başlamadan bitirdim, @mert_lifts yarın sen de gel.', 140, {
+      audience: 'public',
+      mentions: [{ user_id: mert.id, username: mert.username, display_name: mert.name }],
+    }),
     post(3, can, 'Salı akşamı grup antrenmanı 19:00, herkes gelsin.', 400, {
       audience: 'group',
       group_id: 'g1',
       group_name: 'Kadıköy Barbell',
     }),
-    post(4, mert, 'İki haftadır uyku düzenim oturdu, farkı squatta hissediyorum.', 1500),
+    post(4, mert, 'İki haftadır uyku düzenim oturdu, farkı squatta hissediyorum. #BacakGünü', 1500),
   ]
   qc.setQueryData(socialKeys.feed('following'), pages(feed))
   qc.setQueryData(
@@ -116,6 +121,12 @@ function seed(
     ]),
   )
   qc.setQueryData(socialKeys.unread, 3)
+  qc.setQueryData(socialKeys.tagPosts('bacakgünü'), pages([feed[3]!, post(8, elif, 'Squat 5x5 bitti. #bacakgünü', 4000)]))
+  qc.setQueryData(socialKeys.searchTags('bacak'), [
+    { tag: 'bacakgünü', post_count: 128 },
+    { tag: 'bacak', post_count: 41 },
+    { tag: 'bacakantrenmanı', post_count: 9 },
+  ])
 
   const profile = (p: (typeof PEOPLE)[number], o: Partial<SocialProfile>): SocialProfile =>
     rowOf<SocialProfile>({
@@ -222,6 +233,7 @@ function seed(
     socialKeys.notifications,
     pages([
       notif(1, 'follow_request', mert, 12, false),
+      notif(6, 'mention', elif, 30, false, { post_id: 'post-2' }),
       notif(2, 'like', deniz, 50, false, { post_id: 'post-7' }),
       notif(3, 'group_invite', can, 180, false, { group_id: 'g2', group_name: 'Sabah Koşucuları' }),
       notif(4, 'follow_accepted', elif, 1440, true),

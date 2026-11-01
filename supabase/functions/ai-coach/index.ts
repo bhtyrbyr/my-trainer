@@ -12,7 +12,8 @@
 //                  The client has already inserted the user's request as a message. The model returns JSON;
 //                  exercise names are matched to the catalog (plus the caller's custom rows) with the
 //                  caller's token, unmatched ones are dropped and reported. A readable summary is stored
-//                  (signed) as the assistant message; the structured program is only returned.
+//                  (signed) as the assistant message, with {program, unmatched} as its payload (signed
+//                  as JSON text) so the card can be shown again after a reload.
 //
 // Security (docs/SECURITY.md): the user comes from the caller's JWT; every database call uses the
 // caller's token (RLS applies), never service_role. ai_reserve() enforces the per-user and global
@@ -32,7 +33,9 @@ import {
   buildProgramPrompt,
   normalizeProgram,
   parseModelJson,
+  looseNamePattern,
   pickBestMatch,
+  programPayload,
   programSummary,
   searchTokens,
   type CatalogCandidate,
@@ -388,11 +391,14 @@ async function coachProgram(supabase: SupabaseClient, userId: string, body: Reco
   if (!matches) return json({ error: 'AI_UNAVAILABLE' }, 502)
   const { program, unmatched } = applyMatches(draft, matches)
   const content = programSummary(program, unmatched, locale)
+  // the card is stored (signed) with the summary so it survives a reload; the device keeps nothing
+  const payload = programPayload(program, unmatched)
 
   const { data: id, error: storeError } = await supabase.rpc('ai_add_assistant_message', {
     p_conversation: conversationId,
     p_content: content,
-    p_signature: await signCoachReply(secret, conversationId, content),
+    p_signature: await signCoachReply(secret, conversationId, content, payload),
+    ...(payload ? { p_payload: payload } : {}),
   })
   if (storeError || typeof id !== 'string') {
     console.error('ai_add_assistant_message failed', storeError?.message)
@@ -401,7 +407,7 @@ async function coachProgram(supabase: SupabaseClient, userId: string, body: Reco
   return json({
     program,
     unmatched,
-    message: { id, role: 'assistant', content, created_at: new Date().toISOString() },
+    message: { id, role: 'assistant', content, created_at: new Date().toISOString(), payload: payload ? { program, unmatched } : null },
     remaining: gate.remaining,
   })
 }
@@ -409,17 +415,18 @@ async function coachProgram(supabase: SupabaseClient, userId: string, body: Reco
 /**
  * Model name -> catalog row, with the caller's token. Candidates: listed sources only (no retired
  * legacy rows), catalog rows (user_id null) or the caller's own custom rows (RLS enforces the same),
- * name_en containing every search word (ilike); if none, the longest word alone. The pure
+ * name_en containing every search word (ilike); if none, the longest word alone; if none, every word
+ * with separators allowed between its letters (imatch, so "pushup" finds "Push-Up"). The pure
  * pickBestMatch() then decides. Null when the catalog could not be read.
  */
 async function matchExercises(supabase: SupabaseClient, userId: string, names: string[]): Promise<Map<string, CatalogCandidate | null> | null> {
-  const candidates = async (tokens: string[], limit: number) => {
+  const candidates = async (tokens: string[], limit: number, loose = false) => {
     let q = supabase
       .from('exercises')
       .select('id, name_en, name_tr, source')
       .in('source', ['wger', 'workout-guide', 'custom'])
       .or(`user_id.is.null,user_id.eq.${userId}`)
-    for (const t of tokens) q = q.ilike('name_en', `%${t}%`)
+    for (const t of tokens) q = loose ? q.filter('name_en', 'imatch', looseNamePattern(t)) : q.ilike('name_en', `%${t}%`)
     const { data, error } = await q.limit(limit)
     if (error) throw error
     return (data ?? []) as CatalogCandidate[]
@@ -433,6 +440,11 @@ async function matchExercises(supabase: SupabaseClient, userId: string, names: s
         let hit = pickBestMatch(name, rows)
         if (!hit && tokens.length > 1) {
           rows = await candidates(tokens.slice(0, 1), 60)
+          hit = pickBestMatch(name, rows)
+        }
+        // "Pushup" vs a catalog "Push-Up": every word again, separators allowed between its letters
+        if (!hit) {
+          rows = await candidates(tokens, 60, true)
           hit = pickBestMatch(name, rows)
         }
         return [name, hit]

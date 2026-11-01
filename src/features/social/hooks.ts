@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import * as api from './api'
 import { nextCursor } from './logic'
@@ -13,6 +14,9 @@ export const socialKeys = {
   feed: (mode: 'following' | 'discover') => ['social', 'feed', mode] as const,
   userPosts: (id: string) => ['social', 'posts', 'user', id] as const,
   groupPosts: (id: string) => ['social', 'posts', 'group', id] as const,
+  tagPosts: (tag: string) => ['social', 'posts', 'tag', tag] as const,
+  /** posts the caller is tagged in (Profile > Tagged) */
+  mentioned: ['social', 'posts', 'mentioned'] as const,
   post: (id: string) => ['social', 'post', id] as const,
   profile: (id: string) => ['social', 'profile', id] as const,
   followers: (id: string) => ['social', 'followers', id] as const,
@@ -20,6 +24,7 @@ export const socialKeys = {
   requests: ['social', 'requests'] as const,
   blocked: ['social', 'blocked'] as const,
   searchUsers: (q: string) => ['social', 'search-users', q] as const,
+  searchTags: (q: string) => ['social', 'search-tags', q] as const,
   notifications: ['social', 'notifications'] as const,
   unread: ['social', 'unread'] as const,
   myGroups: ['social', 'groups', 'mine'] as const,
@@ -58,6 +63,11 @@ export const useUserPosts = (id: string, enabled: boolean) =>
 export const useGroupPosts = (id: string, enabled: boolean) =>
   usePosts(socialKeys.groupPosts(id), (b) => api.fetchGroupPosts(id, b), enabled)
 
+export const useTagPosts = (tag: string, enabled: boolean) =>
+  usePosts(socialKeys.tagPosts(tag), (b) => api.fetchTagPosts(tag, b), enabled && tag.length > 0)
+
+export const useMentionedPosts = (enabled: boolean) => usePosts(socialKeys.mentioned, api.fetchMentionedPosts, enabled)
+
 export const usePost = (id: string) =>
   useQuery({ queryKey: socialKeys.post(id), queryFn: () => api.fetchPost(id) })
 export const useSocialProfile = (id: string, enabled = true) =>
@@ -78,6 +88,14 @@ export const useSearchUsers = (q: string) =>
   useQuery({
     queryKey: socialKeys.searchUsers(q),
     queryFn: () => api.searchUsers(q),
+    enabled: q.length >= 2,
+    staleTime: 30_000,
+  })
+/** `q` is the normalised tag prefix (no `#`). */
+export const useSearchTags = (q: string) =>
+  useQuery({
+    queryKey: socialKeys.searchTags(q),
+    queryFn: () => api.searchTags(q),
     enabled: q.length >= 2,
     staleTime: 30_000,
   })
@@ -150,4 +168,9 @@ export function useSocialAction<A, R = unknown>(
       onDone?.(r, args)
     },
   })
+}
+
+/** A person's posts as a list or a photo grid, from `?view=grid` (list by default). */
+export function usePostLayout(): 'list' | 'grid' {
+  return useSearchParams()[0].get('view') === 'grid' ? 'grid' : 'list'
 }

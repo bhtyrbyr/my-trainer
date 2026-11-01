@@ -41,7 +41,7 @@ export function NotificationsSection() {
               <Switch checked={s.enabled} disabled={blocked} label={t('notify.device')} onChange={(next) => toggle.mutate(next)} />
             )
           }
-          className="py-1.5 pr-2"
+          className="py-1.5"
         />
       </GroupedList>
       <ErrorNote error={toggle.error} />

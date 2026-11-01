@@ -8,6 +8,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { PLAIN_LIST } from '@/components/ui/GroupedList'
 import { cn } from '@/lib/utils'
 import { QUOTA_TZ, dailySeries, nextMidnight, type ModelLimits, type UsageRow } from '../aiUsageLogic'
 import { useAiAppToday, useAiLive, useAiModelLimits, useAiUsage, useSetAdminConfig, useSetAiModelLimits } from '../hooks'
@@ -68,7 +69,7 @@ export function AiUsagePage() {
             </Button>
           </div>
           <ResetLine lang={lang} />
-          <ul className="hairline mt-3 divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
+          <ul className={cn(PLAIN_LIST, 'mt-3')}>
             {models.map((m) => {
               const lim = limits.data?.[m]
               const l = live.data?.find((x) => x.model === m)
@@ -268,11 +269,11 @@ function Ledger({ rows, lang }: { rows: UsageRow[]; lang: 'tr' | 'en' }) {
     return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0]))
   }, [rows])
   return (
-    <div className="hairline overflow-hidden rounded-[var(--radius-card)] bg-surface">
-      {byDay.map(([day, list], i) => {
+    <div className={PLAIN_LIST}>
+      {byDay.map(([day, list]) => {
         const tokens = list.reduce((s, r) => s + r.total_tokens, 0)
         return (
-          <section key={day} className={i > 0 ? 'border-t border-line' : undefined} aria-label={day}>
+          <section key={day} aria-label={day}>
             <div className="flex items-baseline justify-between gap-3 bg-raised/40 px-4 py-2.5">
               <h3 className="text-[13px] font-semibold capitalize">{format(parseISO(day), 'd MMMM, EEEE', { locale })}</h3>
               <span className="tabular text-[12px] text-ink-muted">

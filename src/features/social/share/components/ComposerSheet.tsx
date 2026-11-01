@@ -6,12 +6,13 @@ import { ErrorNote } from '@/components/ui/ErrorNote'
 import { Sheet } from '@/components/ui/Sheet'
 import { cn } from '@/lib/utils'
 import { audienceReady } from '../audience'
-import { usePublishPost } from '../hooks'
+import { keepWritten } from '../../mentions'
+import { useMentionCheck, usePublishPost } from '../hooks'
 import { prepareImage } from '../image'
 import { MAX_IMAGES, remainingSlots } from '../imageSize'
-import { BODY_MAX } from '../payload'
-import type { AudienceChoice, ComposerInitial, PostKind, PreparedImage } from '../types'
+import type { AudienceChoice, ComposerInitial, MentionCandidate, PostKind, PreparedImage } from '../types'
 import { AudiencePicker } from './AudiencePicker'
+import { MentionField } from './MentionField'
 import { MealBlock, ProgramBlock, WorkoutBlock } from './PayloadBlocks'
 
 type Props = {
@@ -37,6 +38,11 @@ function Composer({ onClose, initial, groupId, onPublished }: Omit<Props, 'open'
   const [body, setBody] = useState('')
   const [target, setTarget] = useState<AudienceChoice>(groupId ? { audience: 'group', groupId } : { audience: 'followers', groupId: null })
   const [slots, setSlots] = useState<Slot[]>([])
+  const [picked, setPicked] = useState<MentionCandidate[]>([])
+  // the chips are the picked people still written in the text; the audience decides who may stay tagged
+  const tagged = useMemo(() => keepWritten(picked, body), [picked, body])
+  const check = useMentionCheck(tagged, target)
+  const blocked = useMemo(() => new Set(check.data ?? []), [check.data])
   const [hint, setHint] = useState<string | null>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -92,7 +98,7 @@ function Composer({ onClose, initial, groupId, onPublished }: Omit<Props, 'open'
     setHint(null)
     const payload = initial && 'payload' in initial ? initial.payload : {}
     publish.mutate(
-      { kind, body, payload, target, images },
+      { kind, body, payload, target, images, mentions: tagged.filter((p) => !blocked.has(p.user_id)).map((p) => p.user_id) },
       {
         onSuccess: (id) => {
           onPublished?.(id)
@@ -123,20 +129,16 @@ function Composer({ onClose, initial, groupId, onPublished }: Omit<Props, 'open'
       </div>
 
       <div className="mt-4 space-y-5">
-        <label className="block">
-          <span className="sr-only">{t('composer.body')}</span>
-          <textarea
-            value={body}
-            maxLength={BODY_MAX}
-            rows={initial && initial.kind !== 'photo' ? 2 : 4}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder={t('composer.placeholder')}
-            className="hairline block w-full resize-none rounded-[var(--radius-input)] bg-bg px-3.5 py-3 text-[16px] leading-relaxed text-ink outline-none placeholder:text-ink-faint focus-visible:ring-2 focus-visible:ring-volt"
-          />
-          <span className={cn('tabular mt-1 block text-right text-[11px]', body.length > BODY_MAX - 50 ? 'text-ink' : 'text-ink-faint')}>
-            {t('composer.count', { count: body.length, max: BODY_MAX })}
-          </span>
-        </label>
+        <MentionField
+          body={body}
+          onBody={setBody}
+          picked={picked}
+          onPicked={setPicked}
+          tagged={tagged}
+          blocked={blocked}
+          target={target}
+          rows={initial && initial.kind !== 'photo' ? 2 : 4}
+        />
 
         {initial && 'payload' in initial && (
           <div>
@@ -197,7 +199,7 @@ function Composer({ onClose, initial, groupId, onPublished }: Omit<Props, 'open'
       {hint && <p className="mt-4 text-[13px] text-ink">{hint}</p>}
       <ErrorNote error={publish.error} className="mt-4" />
       <div className="sticky bottom-0 -mx-5 mt-5 bg-surface px-5 pb-5 pt-2">
-        <Button size="lg" className="w-full" disabled={publish.isPending || busy || !audienceReady(target)} onClick={submit}>
+        <Button size="lg" className="w-full" disabled={publish.isPending || busy || !audienceReady(target) || check.isLoading} onClick={submit}>
           {publish.isPending && <Loader2 className="size-5 animate-spin" aria-hidden />}
           {publish.isPending ? t('composer.publishing') : t('composer.publish')}
         </Button>

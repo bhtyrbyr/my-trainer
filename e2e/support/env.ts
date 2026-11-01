@@ -10,6 +10,8 @@ export const META_FILE = `${AUTH_DIR}meta.json`
 /** Second adult user (social spec: two people who follow, post and block). */
 export const STATE_FILE_B = `${AUTH_DIR}user-b.json`
 export const META_FILE_B = `${AUTH_DIR}meta-b.json`
+/** Third adult user, API only (a stranger in the mentions spec). */
+export const META_FILE_C = `${AUTH_DIR}meta-c.json`
 /** Custom exercise created for the test user in global setup (the local stack has no synced catalog). */
 export const E2E_EXERCISE = 'E2E Bench Press'
 
@@ -37,7 +39,7 @@ export function localStack(): LocalStack {
   return { url, anonKey: e.E2E_ANON_KEY!, serviceKey: e.E2E_SERVICE_KEY! }
 }
 
-export type TestUser = { id: string; email: string; accessToken: string }
+export type TestUser = { id: string; email: string; accessToken: string; username: string }
 
 export function testUser(): TestUser {
   return JSON.parse(readFileSync(META_FILE, 'utf8')) as TestUser
@@ -45,6 +47,10 @@ export function testUser(): TestUser {
 
 export function testUserB(): TestUser {
   return JSON.parse(readFileSync(META_FILE_B, 'utf8')) as TestUser
+}
+
+export function testUserC(): TestUser {
+  return JSON.parse(readFileSync(META_FILE_C, 'utf8')) as TestUser
 }
 
 /** PostgREST RPC as a given test user (RLS and grants apply, exactly like the app). */

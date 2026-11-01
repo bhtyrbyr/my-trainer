@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useMutation, useMutationState, useQuery, useQueryClient, type Mutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -6,16 +7,16 @@ import { saveTemplate, workoutKeys, type TemplateInput } from '@/features/workou
 import { useUserSettings } from '@/features/settings/hooks'
 import { asWeightUnit } from '@/lib/units'
 import * as api from './api'
-import { COACH_ANSWERED, programTemplateName, titleFrom } from './logic'
+import { COACH_ANSWERED, programFromPayload, programTemplateName, titleFrom } from './logic'
 import { useCoachPreview } from './previewContext'
-import type { CoachMessage, CoachProgram, CoachProgramDay, CoachProgramReply, CoachReply, Conversation } from './schema'
+import type { CoachMessage, CoachProgram, CoachProgramDay, CoachProgramReply, CoachReply, Conversation, ProgramCardData } from './schema'
 
 export const coachKeys = {
   all: ['coach'] as const,
   conversations: ['coach', 'conversations'] as const,
   messages: (id: string) => ['coach', 'messages', id] as const,
   reply: ['coach', 'reply'] as const,
-  /** Program cards by assistant message id: memory only (the stored message is the summary text). */
+  /** Program cards by assistant message id, from this session's answers (after a reload: the message payload). */
   program: (messageId: string) => ['coach', 'program', messageId] as const,
 }
 
@@ -190,17 +191,22 @@ export function useProgram() {
   })
 }
 
-export type ProgramCardData = { program: CoachProgram; unmatched: string[] }
+export type { ProgramCardData }
 
-/** The program card for an assistant message, if this session received one. */
-export function useProgramFor(messageId: string) {
-  return useQuery<ProgramCardData | null>({
-    queryKey: coachKeys.program(messageId),
+/**
+ * The program card for an assistant message: the answer this session received, else the payload
+ * stored with the message (after a reload; validated by programFromPayload).
+ */
+export function useProgramFor(message: Pick<CoachMessage, 'id' | 'role' | 'payload'>): ProgramCardData | null {
+  const session = useQuery<ProgramCardData | null>({
+    queryKey: coachKeys.program(message.id),
     queryFn: () => Promise.resolve(null),
     enabled: false,
     staleTime: Infinity,
     gcTime: Infinity,
   }).data
+  const stored = useMemo(() => (message.role === 'assistant' ? programFromPayload(message.payload) : null), [message.role, message.payload])
+  return session ?? stored
 }
 
 /** Program day -> template input: no weekdays, one fixed rep target, the suggested rest. */

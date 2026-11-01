@@ -28,6 +28,12 @@ describe('classifyError', () => {
     expect(classifyError({ code: '22023', message: 'BAD_CONFIG_KEY' }).key).toBe('errors.badConfigKey')
     expect(classifyError({ code: '22023', message: 'BAD_KEY' }).key).toBe('errors.pushUnsupported')
   })
+  it('maps mention errors and the daily post limit', () => {
+    expect(classifyError({ code: 'P0001', message: 'MENTION_NOT_ALLOWED' }).key).toBe('errors.mentionNotAllowed')
+    expect(classifyError({ code: '22023', message: 'TOO_MANY_MENTIONS' }).key).toBe('errors.tooManyMentions')
+    expect(classifyError(new Error('POST_RATE_LIMITED')).key).toBe('errors.postRateLimited')
+    expect(classifyError({ code: 'P0001', message: 'RATE_LIMITED' }).key).toBe('errors.rateLimited')
+  })
   it('maps HTTP statuses', () => {
     expect(classifyError({ status: 429, message: 'Too many requests' }).key).toBe('errors.rateLimited')
     expect(classifyError({ status: 503, message: 'Service unavailable' }).key).toBe('errors.server')

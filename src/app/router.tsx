@@ -52,6 +52,9 @@ const social = {
   groupSettings: page(() => import('@/features/social/pages/GroupSettingsPage'), 'GroupSettingsPage'),
   join: page(() => import('@/features/social/pages/JoinByCodePage'), 'JoinByCodePage'),
   settings: page(() => import('@/features/social/pages/SocialSettingsPage'), 'SocialSettingsPage'),
+  search: page(() => import('@/features/social/pages/SearchPage'), 'SearchPage'),
+  ranking: page(() => import('@/features/social/pages/RankingPage'), 'RankingPage'),
+  tag: page(() => import('@/features/social/pages/TagPage'), 'TagPage'),
 }
 const devSocial = (name: 'DevSocialLayout') => page(() => import('@/features/social/dev/DevSocialPreview'), name)
 
@@ -131,12 +134,17 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
         ],
       },
       {
-        // Community with sample data: ?state=off|underage|nobirth (not joined), /__dev/social?tab=groups|ranking,
-        // notifications, u/sample-2 (profile), u/sample-3 (private), g/g1 (group), settings, reports
+        // Community with sample data: ?state=off|underage|nobirth (not joined), ?tab=discover, search?s=groups,
+        // ranking, tag/bacakgünü, join, notifications, u/sample-2 (profile), u/sample-3 (private), g/g1 (group),
+        // settings, reports
         path: '/__dev/social',
         lazy: devSocial('DevSocialLayout'),
         children: [
           { index: true, lazy: social.home },
+          { path: 'search', lazy: social.search },
+          { path: 'ranking', lazy: social.ranking },
+          { path: 'tag/:tag', lazy: social.tag },
+          { path: 'join', lazy: social.join },
           { path: 'notifications', lazy: social.notifications },
           { path: 'u/:id', lazy: social.user },
           { path: 'u/:id/:list', lazy: social.list },
@@ -244,15 +252,19 @@ export const router = createBrowserRouter([
       { path: 'track/habits', lazy: page(() => import('@/features/today/pages/HabitsPage'), 'HabitsPage') },
       { path: 'track/todos', lazy: page(() => import('@/features/today/pages/TodosPage'), 'TodosPage') },
       { path: 'today', element: <Navigate to="/track" replace /> },
-      // the Ranking tab lives in Community now
-      { path: 'leaderboard', element: <Navigate to="/social?tab=ranking" replace /> },
+      // the ranking is a pushed Community screen now
+      { path: 'leaderboard', element: <Navigate to="/social/ranking" replace /> },
       { path: 'social', lazy: social.home },
+      { path: 'social/search', lazy: social.search },
+      { path: 'social/ranking', lazy: social.ranking },
+      { path: 'social/tag/:tag', lazy: social.tag },
       { path: 'social/notifications', lazy: social.notifications },
       { path: 'social/u/:id', lazy: social.user },
       { path: 'social/u/:id/:list', lazy: social.list },
       { path: 'social/p/:id', lazy: social.post },
       { path: 'social/g/:id', lazy: social.group },
       { path: 'social/g/:id/settings', lazy: social.groupSettings },
+      { path: 'social/join', lazy: social.join },
       { path: 'social/join/:code', lazy: social.join },
       { path: 'settings/social', lazy: social.settings },
       { path: 'coach', lazy: coach.list },

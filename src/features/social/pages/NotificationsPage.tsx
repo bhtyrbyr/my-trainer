@@ -8,6 +8,7 @@ import { BellOff, Loader2 } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { PLAIN_LIST } from '@/components/ui/GroupedList'
 import { cn } from '@/lib/utils'
 import * as api from '../api'
 import { notificationTarget } from '../logic'
@@ -51,7 +52,7 @@ export function NotificationsPage() {
             body={t('notifications.emptyBody')}
           />
         ) : (
-          <ul className="hairline divide-y divide-line overflow-hidden rounded-[var(--radius-card)] bg-surface">
+          <ul className={PLAIN_LIST}>
             {items.map((n) => (
               <NotificationRow key={n.id} n={n} unread={seenUnread.has(n.id!) || !n.read_at} />
             ))}
