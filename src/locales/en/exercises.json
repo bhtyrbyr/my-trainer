@@ -59,7 +59,9 @@
       "translation": "Turkish: machine translation",
       "gif": "Animation: ExerciseDB"
     },
-    "gifLabel": "{{name}}, animated movement"
+    "gifLabel": "{{name}}, animated movement",
+    "changeAnimation": "Change animation",
+    "chooseAnimation": "Choose animation"
   },
   "progress": {
     "title": "Progress",

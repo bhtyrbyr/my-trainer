@@ -99,7 +99,9 @@
     "groupCodeNotFound": "This invite code is invalid or has been renewed. Ask a group admin for a new link.",
     "mentionNotAllowed": "Someone you tagged cannot be tagged in this post. Change the tags or the audience and try again.",
     "tooManyMentions": "You can tag at most 10 people in a post.",
-    "postRateLimited": "You reached today's limit for posts or tags (20 posts, 50 tags a day). Try again tomorrow."
+    "postRateLimited": "You reached today's limit for posts or tags (20 posts, 50 tags a day). Try again tomorrow.",
+    "exercisedbUnavailable": "ExerciseDB is unreachable right now. Try again shortly.",
+    "notCatalog": "Only catalog exercises can get an animation."
   },
   "update": {
     "title": "New version released",

@@ -9,14 +9,14 @@ import { useBodySex } from '../bodymap/useBodySex'
 import { useVocab } from '../vocab'
 
 /**
- * Colours of the flat figure, all derived from theme tokens so the light theme works too: every muscle a
- * neutral a step above the raised surface, non-muscle parts (head, hands, feet, knees, neck) a darker
- * skin tone, target muscles volt, assisting muscles volt mixed into the muscle tone. The gaps between
- * shapes are a stroke in the colour of whatever the figure sits on (`gap`).
+ * Colours of the flat figure, from theme tokens (index.css: --color-body-muscle / --color-body-skin, set
+ * per theme): every muscle a neutral step off the page, non-muscle parts (head, hands, feet, knees, neck)
+ * a quieter skin tone between page and muscle, target muscles volt, assisting muscles volt mixed into the
+ * muscle tone. The gaps between shapes are a stroke in the colour of whatever the figure sits on (`gap`).
  */
 const BODY_COLORS = {
-  '--bm-muscle': 'color-mix(in oklch, var(--color-raised), var(--color-ink) 7%)',
-  '--bm-skin': 'color-mix(in oklch, var(--color-raised) 85%, var(--color-bg))',
+  '--bm-muscle': 'var(--color-body-muscle)',
+  '--bm-skin': 'var(--color-body-skin)',
   '--bm-target': 'var(--color-volt)',
   '--bm-secondary': 'color-mix(in oklch, var(--color-volt) 42%, var(--bm-muscle))',
 } as CSSProperties

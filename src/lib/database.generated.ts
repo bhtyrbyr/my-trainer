@@ -2226,6 +2226,7 @@ export type Database = {
       admin_set_ai_limit: { Args: { p_limit: number; p_user: string }; Returns: undefined }
       admin_set_blocked: { Args: { p_blocked: boolean; p_user: string }; Returns: undefined }
       admin_set_config: { Args: { p_key: string; p_value: Json }; Returns: undefined }
+      admin_set_exercise_media: { Args: { p_exercise_id: string; p_exercisedb_id: string }; Returns: undefined }
       admin_set_registration_status: { Args: { p_status: string; p_user: string }; Returns: undefined }
       admin_usage_summary: { Args: Record<PropertyKey, never>; Returns: Json }
       ai_add_assistant_message: {

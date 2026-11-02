@@ -4,6 +4,15 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-02
+### Added
+- Admin: pick or change an exercise's ExerciseDB animation by hand (search ExerciseDB from the "ExerciseDB animations" page or from an exercise's detail page), remove a wrong one, and review AI matches in their own tab. Hand-picked matches are never changed by the catalog sync.
+### Fixed
+- ExerciseDB animations did not load: the service worker no longer handles them (its CSP blocked the request).
+- After an update the app no longer shows exercise data cached by the previous version; unsynced offline entries are kept.
+- Catalog sync: crashed before the AI steps; Turkish steps that split or merge long English paragraphs are now accepted.
+- Muscle map head, hands and feet are visible in the light theme.
+
 ## [1.1.0] - 2026-11-02
 ### Added
 - **ExerciseDB animations**: exercise GIFs load directly from ExerciseDB's servers (never copied to our storage or cached by the app); our illustrations or the muscle map remain the fallback.

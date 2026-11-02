@@ -1,7 +1,8 @@
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { parseAdminConfig, type AdminConfig, type AdminConfigKey } from './adminLogic'
 import { parseUsageSummary, type UsageSummary } from './usageLogic'
-import { MATCH_KINDS, type MatchCounts, type MatchKind } from './exercisedbLogic'
+import { MATCH_KINDS, parseSearchResults, type ExerciseDbHit, type MatchCounts, type MatchKind } from './exercisedbLogic'
 import { sanitizeSearch } from '@/features/exercises'
 import type { Database, RegistrationRow, RegistrationStatus } from '@/lib/database.types'
 
@@ -169,25 +170,67 @@ export async function usageSummary(): Promise<UsageSummary> {
 export const MATCHED_SOURCES = ['wger', 'workout-guide'] as const
 export const UNMATCHED_PAGE = 40
 
-export type UnmatchedExercise = { id: string; name_en: string; body_parts: string[]; equipment: string[]; source: string }
+/** The two worklists of the ExerciseDB page: rows without an animation, and rows the AI matched (to review). */
+export type MatchList = 'unmatched' | 'ai'
+
+export type MatchRow = {
+  id: string
+  name_en: string
+  body_parts: string[]
+  equipment: string[]
+  source: string
+  exercisedb_id: string | null
+  exercisedb_match: string | null
+  media_frames: string[]
+  target_muscles: string[]
+  secondary_muscles: string[]
+}
+const MATCH_ROW_COLUMNS = 'id, name_en, body_parts, equipment, source, exercisedb_id, exercisedb_match, media_frames, target_muscles, secondary_muscles'
 
 /**
- * One page of catalog exercises without an ExerciseDB animation, by name. Plain select: catalog rows are
- * readable by every signed-in user (RLS "exercises_read"); the route itself is admin-only.
+ * One page of a worklist by name: catalog exercises without an ExerciseDB animation (A-Z), or the ones
+ * the AI matched, most recently changed first. Plain select: catalog rows are readable by every signed-in
+ * user (RLS "exercises_read"); the route itself is admin-only.
  */
-export async function listUnmatchedExercises(q: string, page: number): Promise<{ rows: UnmatchedExercise[]; total: number }> {
-  let query = supabase
-    .from('exercises')
-    .select('id, name_en, body_parts, equipment, source', { count: 'exact' })
-    .in('source', [...MATCHED_SOURCES])
-    .is('exercisedb_id', null)
-    .order('name_en', { ascending: true })
+export async function listMatchRows(list: MatchList, q: string, page: number): Promise<{ rows: MatchRow[]; total: number }> {
+  let query = supabase.from('exercises').select(MATCH_ROW_COLUMNS, { count: 'exact' }).in('source', [...MATCHED_SOURCES])
+  query =
+    list === 'unmatched'
+      ? query.is('exercisedb_id', null).order('name_en', { ascending: true })
+      : query.eq('exercisedb_match', 'ai').order('updated_at', { ascending: false }).order('name_en', { ascending: true })
   const term = sanitizeSearch(q)
   if (term) query = query.ilike('name_en', `%${term}%`)
   const from = page * UNMATCHED_PAGE
   const { data, error, count } = await query.range(from, from + UNMATCHED_PAGE - 1)
   if (error) throw error
-  return { rows: data ?? [], total: count ?? 0 }
+  return { rows: (data ?? []) as unknown as MatchRow[], total: count ?? 0 }
+}
+
+/**
+ * ExerciseDB search through the exercisedb-search Edge Function (third-party call, never from the
+ * browser). Admin only: 403 FORBIDDEN; ExerciseDB down: 502 EXERCISEDB_UNAVAILABLE.
+ */
+export async function searchExerciseDb(q: string): Promise<ExerciseDbHit[]> {
+  const { data, error } = await supabase.functions.invoke('exercisedb-search', { body: { q } })
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const res = error.context as Response
+      const body = await res.json().catch(() => null)
+      if (res.status === 403) throw new Error('FORBIDDEN')
+      if (res.status !== 502 && typeof body?.error === 'string') throw new Error(body.error)
+      throw new Error('EXERCISEDB_UNAVAILABLE')
+    }
+    throw error
+  }
+  return parseSearchResults(data)
+}
+
+/** Pin a catalog exercise to an ExerciseDB id (match 'manual', kept by the sync) or clear it (null). Admin only. */
+export async function setExerciseMedia(exerciseId: string, exercisedbId: string | null): Promise<void> {
+  // the generated Args type says string; null is the documented "remove the animation" value
+  const args = { p_exercise_id: exerciseId, p_exercisedb_id: exercisedbId } as { p_exercise_id: string; p_exercisedb_id: string }
+  const { error } = await supabase.rpc('admin_set_exercise_media', args)
+  if (error) throw error
 }
 
 /** Catalog rows per ExerciseDB match kind (head-only counts, no rows transferred). */

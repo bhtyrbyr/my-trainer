@@ -3,7 +3,6 @@ import {
   BODY_PARTS,
   MACHINE_TRANSLATION,
   TRANSLATE_BATCH,
-  TRANSLATE_SCHEMA,
   WGER_CATEGORY,
   WGER_EQUIPMENT,
   WGER_MUSCLE,
@@ -27,7 +26,7 @@ import {
   nameKey,
   resolveEquipment,
   selectWger,
-  validateTranslations,
+  validateInstructionTranslations,
   withMachineTranslation,
   // @ts-expect-error -- plain ESM helper shared with the Node sync script (no type declarations)
 } from '../../scripts/catalog-lib.mjs'
@@ -274,22 +273,20 @@ describe('translation', () => {
     expect(isFlashLite('gemini-3.8-flash')).toBe(false)
     expect(isFlashLite('gemini-2.5-pro')).toBe(false)
     expect(TRANSLATE_BATCH).toBe(20)
-    expect(TRANSLATE_SCHEMA.items.required).toEqual(['id', 'name_tr', 'instructions_tr'])
   })
-  it('validates ids, lengths and step counts', () => {
-    const { accepted, rejected } = validateTranslations(items, [
-      { id: 'wger:1', name_tr: 'Halter Bench Press', instructions_tr: ['Sehpaya uzan.', 'Barı it.'] },
-      { id: 'wg:x', name_tr: 'Kablo Fly', instructions_tr: [] },
-      { id: 'wger:2', name_tr: 'Plank', instructions_tr: ['Tut.', 'Fazladan adım.'] },
-      { id: 'unknown', name_tr: 'x', instructions_tr: [] },
-      { id: 'wger:3', name_tr: 'x'.repeat(121), instructions_tr: ['Otur.'] },
+  it('validates Turkish steps: known ids, 1..12 steps, sane length, split paragraphs allowed', () => {
+    const { accepted, rejected } = validateInstructionTranslations(items, [
+      { id: 'wger:1', instructions_tr: ['Sehpaya uzan.', 'Barı it.'] },
+      { id: 'wger:2', instructions_tr: ['Tut.', 'Bırak.'] },
+      { id: 'unknown', instructions_tr: ['x'] },
+      { id: 'wger:3', instructions_tr: ['Otur ve kalk; dizlerini ayak uçlarının üzerinde tutarak yavaşça otur, sonra kalk.'] },
     ])
-    expect(accepted.map((a: { id: string }) => a.id)).toEqual(['wger:1', 'wg:x'])
+    expect(accepted.map((a: { id: string }) => a.id)).toEqual(['wger:1', 'wger:2'])
     expect(Object.fromEntries(rejected.map((r: { id: string; reason: string }) => [r.id, r.reason]))).toEqual({
-      'wger:2': 'instructions_tr has 2 steps, expected 1',
-      'wger:3': 'name_tr length 121',
+      'wger:3': 'instructions_tr length ratio 9.00',
+      'wg:x': 'missing from response',
     })
-    expect(validateTranslations(items, { not: 'an array' }).rejected).toHaveLength(4)
+    expect(validateInstructionTranslations(items, { not: 'an array' }).rejected).toHaveLength(4)
   })
   it('records machine translation in attribution.changes once, and keeps it on re-sync', () => {
     const a = { text: { author: 'a', license: 'CC0 1.0', url: 'u' }, media: null, changes: ['x'] }

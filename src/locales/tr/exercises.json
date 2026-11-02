@@ -59,7 +59,9 @@
       "translation": "Türkçe: makine çevirisi",
       "gif": "Animasyon: ExerciseDB"
     },
-    "gifLabel": "{{name}}, hareketin animasyonu"
+    "gifLabel": "{{name}}, hareketin animasyonu",
+    "changeAnimation": "Animasyonu değiştir",
+    "chooseAnimation": "Animasyon seç"
   },
   "progress": {
     "title": "Gelişim",

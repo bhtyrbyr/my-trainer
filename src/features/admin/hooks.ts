@@ -13,21 +13,27 @@ import {
   listAllowedEmails,
   listErrorReports,
   listRegistrations,
-  listUnmatchedExercises,
+  listMatchRows,
   listUsers,
   pendingCount,
   removeAllowedEmail,
+  searchExerciseDb,
   setAdminConfig,
   setAiModelLimits,
   setErrorReportStatus,
+  setExerciseMedia,
   setRegistrationStatus,
   setUserAiLimit,
   setUserBlocked,
   usageSummary,
   type AdminUser,
+  type MatchList,
+  type MatchRow,
 } from './api'
 import type { AdminConfig, AdminConfigKey } from './adminLogic'
 import { parseLimits, type ModelLimits } from './aiUsageLogic'
+import { applyMatchChange, isSearchable, matchKindOf, withoutRow, type ExerciseDbHit, type InfiniteList, type MatchCounts } from './exercisedbLogic'
+import { exerciseKeys, type Exercise } from '@/features/exercises'
 import { useIsAdminPreview } from './previewContext'
 
 export function useDeleteRejectedUser() {
@@ -52,8 +58,12 @@ export const adminKeys = {
   allowed: ['admin', 'allowed'] as const,
   users: (query: string) => ['admin', 'users', query] as const,
   usage: ['admin', 'usage'] as const,
-  exercisedbUnmatched: (query: string) => ['admin', 'exercisedb', 'unmatched', query] as const,
+  exercisedbList: (list: MatchList, query: string) => ['admin', 'exercisedb', 'list', list, query] as const,
+  exercisedbUnmatched: (query: string) => ['admin', 'exercisedb', 'list', 'unmatched', query] as const,
   exercisedbCounts: ['admin', 'exercisedb', 'counts'] as const,
+  exercisedbSearch: (q: string) => ['admin', 'exercisedb', 'search', q] as const,
+  /** dev preview only: the sample hits every search returns there */
+  exercisedbSearchSample: ['admin', 'exercisedb', 'search-sample'] as const,
 }
 
 export function useIsAdmin() {
@@ -261,17 +271,77 @@ export function useUsageSummary() {
   return useQuery({ queryKey: adminKeys.usage, queryFn: usageSummary, enabled: isAdmin, staleTime: 5 * 60_000 })
 }
 
-/** Catalog exercises without an ExerciseDB animation, by name, a page at a time ("load more"). */
-export function useUnmatchedExercises(query: string) {
+/** A worklist of the ExerciseDB page (unmatched A-Z, or AI matches newest first), a page at a time ("load more"). */
+export function useMatchRows(list: MatchList, query: string) {
   const isAdmin = useIsAdmin()
   return useInfiniteQuery({
-    queryKey: adminKeys.exercisedbUnmatched(query),
-    queryFn: ({ pageParam }) => listUnmatchedExercises(query, pageParam),
+    queryKey: adminKeys.exercisedbList(list, query),
+    queryFn: ({ pageParam }) => listMatchRows(list, query, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last, all) => (all.reduce((n, p) => n + p.rows.length, 0) < last.total && last.rows.length > 0 ? all.length : undefined),
     enabled: isAdmin,
     placeholderData: (prev) => prev,
     staleTime: 5 * 60_000,
+  })
+}
+
+/** Admin (or the admin dev preview): may pick an exercise's ExerciseDB animation by hand. */
+export function useCanEditExerciseMedia() {
+  const isAdmin = useIsAdmin()
+  const preview = useIsAdminPreview()
+  return isAdmin || preview
+}
+
+/**
+ * ExerciseDB hits for a search term (2..60 chars) via the Edge Function. Never persisted (admin root).
+ * In the dev preview every term answers with the seeded sample hits, without a request.
+ */
+export function useExerciseDbSearch(q: string) {
+  const isAdmin = useIsAdmin()
+  const preview = useIsAdminPreview()
+  const qc = useQueryClient()
+  const term = q.trim()
+  return useQuery({
+    queryKey: adminKeys.exercisedbSearch(term.toLocaleLowerCase('en')),
+    queryFn: async (): Promise<ExerciseDbHit[]> =>
+      preview ? (qc.getQueryData<ExerciseDbHit[]>(adminKeys.exercisedbSearchSample) ?? []) : searchExerciseDb(term),
+    enabled: (isAdmin || preview) && isSearchable(term),
+    placeholderData: (prev) => prev,
+    staleTime: 10 * 60_000,
+    retry: 1,
+  })
+}
+
+type MediaTarget = Pick<Exercise, 'id' | 'exercisedb_id'> & { exercisedb_match?: string | null }
+
+/**
+ * Set (id) or remove (null) the ExerciseDB animation of a catalog exercise. On success the cached exercise,
+ * the match counts and the worklists change at once (the row leaves the lists it no longer belongs to);
+ * then exercise lists and the admin page refetch. In the dev preview only the cache changes.
+ */
+export function useSetExerciseMedia() {
+  const qc = useQueryClient()
+  const preview = useIsAdminPreview()
+  return useMutation({
+    mutationFn: async ({ exercise, exercisedbId }: { exercise: MediaTarget; exercisedbId: string | null }) => {
+      if (!preview) await setExerciseMedia(exercise.id, exercisedbId)
+    },
+    onSuccess: (_d, { exercise, exercisedbId }) => {
+      const from = matchKindOf(exercise)
+      const to = exercisedbId ? 'manual' : 'unmatched'
+      const match = exercisedbId ? ('manual' as const) : null
+      qc.setQueryData<Exercise | null>(exerciseKeys.one(exercise.id), (ex) => (ex ? { ...ex, exercisedb_id: exercisedbId, exercisedb_match: match } : ex))
+      qc.setQueryData<MatchCounts>(adminKeys.exercisedbCounts, (c) => (c ? applyMatchChange(c, from, to) : c))
+      type ListData = InfiniteList<MatchRow>
+      if (to !== 'unmatched') qc.setQueriesData<ListData>({ queryKey: ['admin', 'exercisedb', 'list', 'unmatched'] }, (d) => withoutRow(d, exercise.id))
+      qc.setQueriesData<ListData>({ queryKey: ['admin', 'exercisedb', 'list', 'ai'] }, (d) => withoutRow(d, exercise.id))
+    },
+    onSettled: () => {
+      if (preview) return
+      // every cached exercise row (search lists, by id, by ids), not the user's progress
+      void qc.invalidateQueries({ queryKey: exerciseKeys.all, predicate: (q) => q.queryKey[1] !== 'progress' })
+      void qc.invalidateQueries({ queryKey: ['admin', 'exercisedb'] })
+    },
   })
 }
 

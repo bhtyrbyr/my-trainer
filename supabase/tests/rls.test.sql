@@ -5,7 +5,7 @@ begin;
 -- suite does not depend on the hour it runs (UTC and Istanbul dates differ 21:00-24:00 UTC).
 set local timezone = 'Europe/Istanbul';
 create extension if not exists pgtap with schema extensions;
-select plan(759);
+select plan(774);
 
 -- Deterministic config regardless of seed.sql (the seed sets a real admin email)
 -- Alice is the configured admin (independent of whatever profiles already exist in the database)
@@ -59,7 +59,9 @@ select is(
         -- hashtags (20261170000000)
         'social_tag_posts', 'social_search_tags',
         -- mentions (20261180000000)
-        'social_remove_mention', 'social_mention_candidates', 'social_mentioned_posts')),
+        'social_remove_mention', 'social_mention_candidates', 'social_mentioned_posts',
+        -- manual ExerciseDB pick (20261210000000)
+        'admin_set_exercise_media')),
   '{}'::text[],
   'authenticated can execute only the allow-listed security-definer RPCs'
 );
@@ -1271,6 +1273,73 @@ update public.exercises set exercisedb_id = 'abcd1234', exercisedb_match = 'manu
 select is(
   (select coalesce(exercisedb_id, 'null') || ':' || coalesce(exercisedb_match, 'null') from public.exercises where id = :'cv_cus'),
   'null:null', 'exercisedb: a custom exercise cannot be pointed at ExerciseDB media'
+);
+
+-- Manual ExerciseDB pick (20261210000000): admin_set_exercise_media, admin only, catalog rows only
+select ok(
+  not has_function_privilege('anon', 'public.admin_set_exercise_media(uuid, text)', 'execute')
+  and has_function_privilege('authenticated', 'public.admin_set_exercise_media(uuid, text)', 'execute'),
+  'exercise media: admin_set_exercise_media is granted to authenticated only (never anon)'
+);
+select throws_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_new', 'AbCd1234'),
+  '42501', 'FORBIDDEN', 'exercise media: a non-admin cannot pick a GIF'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a","email":"alice@example.com","role":"authenticated"}';
+select lives_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_new', '  AbCd1234 '),
+  'exercise media: the admin pins an id (trimmed)'
+);
+select is(
+  (select exercisedb_id || ':' || exercisedb_match || ':' || is_custom || ':' || source || ':' || coalesce(user_id::text, 'null')
+     from public.exercises where id = :'cv_new'),
+  'AbCd1234:manual:false:wger:null', 'exercise media: stored as manual; the row stays a catalog row'
+);
+select lives_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_wg', 'XyZ98765'),
+  'exercise media: the admin overrides an automatic match'
+);
+select is(
+  (select exercisedb_id || ':' || exercisedb_match || ':' || is_custom || ':' || source from public.exercises where id = :'cv_wg'),
+  'XyZ98765:manual:false:workout-guide', 'exercise media: an exact match becomes manual'
+);
+select lives_ok(
+  format('select public.admin_set_exercise_media(%L, null)', :'cv_new'),
+  'exercise media: the admin clears a pick'
+);
+select is(
+  (select coalesce(exercisedb_id, 'null') || ':' || coalesce(exercisedb_match, 'null') from public.exercises where id = :'cv_new'),
+  'null:null', 'exercise media: clearing empties both columns'
+);
+select throws_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_new', 'bad-id!'),
+  '22023', 'BAD_VALUE', 'exercise media: an id with non-alphanumeric characters is rejected'
+);
+select throws_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_new', 'abc'),
+  '22023', 'BAD_VALUE', 'exercise media: an id shorter than 4 characters is rejected'
+);
+select throws_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_new', '   '),
+  '22023', 'BAD_VALUE', 'exercise media: a blank id is rejected (null clears, blank does not)'
+);
+select throws_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_cus', 'AbCd1234'),
+  '22023', 'NOT_CATALOG', 'exercise media: a custom exercise is rejected'
+);
+select throws_ok(
+  format('select public.admin_set_exercise_media(%L, %L)', :'cv_del', 'AbCd1234'),
+  '22023', 'NOT_CATALOG', 'exercise media: a legacy row is rejected'
+);
+select throws_ok(
+  $$ select public.admin_set_exercise_media('00000000-0000-0000-0000-0000000000ff', 'AbCd1234') $$,
+  'P0002', 'NOT_FOUND', 'exercise media: an unknown exercise is rejected'
+);
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b","email":"bob@example.com","role":"authenticated"}';
+update public.exercises set exercisedb_id = 'HACKED99', exercisedb_match = 'manual' where id = :'cv_wg';
+select is(
+  (select exercisedb_id from public.exercises where id = :'cv_wg'), 'XyZ98765',
+  'exercise media: direct client writes to catalog rows are still ignored'
 );
 
 -- Both RPCs are service_role only

@@ -225,6 +225,38 @@
     "empty": "Katalogdaki her egzersizin animasyonu var.",
     "emptySearch": "Bu aramaya uyan eşleşmemiş egzersiz yok.",
     "more": "Daha fazla göster ({{count}} kaldı)",
-    "note": "Eşleştirme scripts/sync-catalog.mjs ile yapılır. Eşleşmeyen egzersizlerde çizim ya da vücut haritası gösterilir."
+    "note": "Eşleştirme scripts/sync-catalog.mjs ile yapılır. Eşleşmeyen egzersizlerde çizim ya da vücut haritası gösterilir.",
+    "tabs": {
+      "label": "Listeler",
+      "unmatched": "Eşleşmeyen",
+      "ai": "AI eşleşmeleri"
+    },
+    "aiCount_one": "{{count}} egzersiz yapay zekâ ile eşleşti, en yeni önce",
+    "aiCount_other": "{{count}} egzersiz yapay zekâ ile eşleşti, en yeni önce",
+    "aiEmpty": "İncelenecek AI eşleşmesi yok.",
+    "aiEmptySearch": "Bu aramaya uyan AI eşleşmesi yok.",
+    "picker": {
+      "label": "{{name}} için animasyon seç",
+      "eyebrow": "Animasyon seç",
+      "close": "Kapat",
+      "open": "Egzersizi aç",
+      "search": "ExerciseDB’de ara",
+      "hint": "En az 2 harf yaz. ExerciseDB kimliği de olur.",
+      "results_one": "ExerciseDB’de {{count}} sonuç",
+      "results_other": "ExerciseDB’de {{count}} sonuç",
+      "empty": "ExerciseDB’de “{{q}}” için sonuç yok. Daha kısa ya da farklı bir ad dene.",
+      "resultsLabel": "ExerciseDB animasyonları",
+      "current": "Mevcut animasyon · {{kind}}",
+      "currentTag": "Mevcut",
+      "remove": "Kaldır",
+      "removeLabel": "{{name}} animasyonunu kaldır",
+      "removeTitle": "Animasyon kaldırılsın mı?",
+      "removeBody": "Egzersiz yine çizimini ya da vücut haritasını gösterir. Bir sonraki katalog eşitlemesi onu yeniden eşleştirebilir.",
+      "removeConfirm": "Animasyonu kaldır",
+      "select": "Bu animasyonu kullan",
+      "selectHint": "Seçmek için bir animasyona dokun",
+      "gifAlt": "ExerciseDB’de {{name}}",
+      "clear": "Aramayı temizle"
+    }
   }
 }
