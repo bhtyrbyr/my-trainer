@@ -25,6 +25,11 @@
      olive-tinted paper so a white-background animation sits in the dark theme without glare */
   --color-plate: oklch(91% 0.008 120);
 
+  /* body map (exercise detail, thumbnails): muscles a neutral step above raised; non-muscle parts (head,
+     hands, feet, knees, neck) sit between the page and the muscles, clearly visible but quieter */
+  --color-body-muscle: color-mix(in oklch, var(--color-raised), var(--color-ink) 7%);
+  --color-body-skin: color-mix(in oklch, var(--color-raised) 85%, var(--color-bg));
+
   /* the one accent */
   --color-volt: oklch(91% 0.21 125);
   --color-volt-hover: oklch(94% 0.2 125);
@@ -62,6 +67,9 @@
   --color-ink-muted: oklch(40% 0.012 120);
   --color-ink-faint: oklch(52% 0.01 120);
   --color-plate: oklch(99.6% 0.003 120);
+  /* on paper the dark-theme recipe lands the skin on the page colour: step both down toward ink */
+  --color-body-muscle: color-mix(in oklch, var(--color-raised), var(--color-ink) 15%);
+  --color-body-skin: color-mix(in oklch, var(--color-raised), var(--color-ink) 7%);
   --color-volt: oklch(56% 0.165 132);
   --color-volt-hover: oklch(51% 0.16 132);
   --color-volt-ink: oklch(99% 0.01 125);

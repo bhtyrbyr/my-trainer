@@ -32,7 +32,8 @@ export function OfflinePersistence({ children }: { children: ReactNode }) {
     const current = `${owner}:${generation}`
     let cancelled = false
     let unsubscribe: (() => void) | undefined
-    const persister = createIdbPersister(owner, __APP_VERSION__)
+    // Version + commit: every deploy drops cached reads (stale catalog rows) but keeps queued writes.
+    const persister = createIdbPersister(owner, `${__APP_VERSION__}+${__APP_COMMIT__}`)
     const options = { queryClient: qc, persister, maxAge: MAX_AGE_MS, buster: '', dehydrateOptions }
 
     void persistQueryClientRestore(options)

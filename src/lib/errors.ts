@@ -88,6 +88,8 @@ export function classifyError(err: unknown): AppError {
   if (/IMAGE_LOAD_FAILED|ENCODE_FAILED|CANVAS_UNSUPPORTED/.test(message)) return { key: 'errors.imageUnreadable', code }
   if (/REPORT_LIMIT/.test(message)) return { key: 'errors.reportLimit', code }
   if (/SEARCH_BUSY/.test(message)) return { key: 'errors.searchBusy', code }
+  if (/EXERCISEDB_UNAVAILABLE/.test(message)) return { key: 'errors.exercisedbUnavailable', code }
+  if (/NOT_CATALOG/.test(message)) return { key: 'errors.notCatalog', code }
   if (/SEARCH_UNAVAILABLE/.test(message)) return { key: 'errors.searchUnavailable', code }
   if (/FORBIDDEN/.test(message)) return { key: 'errors.forbidden', code }
   if (/NOT_AUTHENTICATED|JWT|jwt expired/i.test(message)) return { key: 'errors.sessionExpired', code }

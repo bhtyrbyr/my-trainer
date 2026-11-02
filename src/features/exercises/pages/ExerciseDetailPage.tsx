@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { Dumbbell, SearchX } from 'lucide-react'
 import { ErrorNote } from '@/components/ui/ErrorNote'
+import { ExerciseMediaAdminAction } from '@/features/admin/components/ExerciseMediaAdminAction'
 import { cn } from '@/lib/utils'
 import { useExercise } from '../hooks'
 import { exerciseCredits, type Credit, type ExerciseMedia } from '../media'
@@ -83,12 +84,21 @@ function Hero({ ex, media, onGifError, className }: { ex: Exercise; media: Exerc
           <div className="isolate flex h-[268px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-plate">
             <ExerciseGif url={media.url} label={t('detail.gifLabel', { name })} onError={onGifError} className="h-[252px]" />
           </div>
-          <figcaption className="mt-2 text-[12px] text-ink-faint">{t('detail.credit.gif')}</figcaption>
+          <figcaption className="mt-2 flex items-center justify-between gap-3 text-[12px] text-ink-faint">
+            {t('detail.credit.gif')}
+            {/* admins only: fix a wrong match (renders nothing for everyone else) */}
+            <ExerciseMediaAdminAction exercise={ex} className="-my-3 -mr-2" />
+          </figcaption>
         </figure>
       )}
       {media.kind === 'frames' && (
-        <div className="hairline mb-6 flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-surface">
-          <Flipbook paths={media.paths} label={t('detail.mediaLabel', { name })} className="aspect-square h-[88%]" />
+        <div className="mb-6">
+          <div className="hairline flex h-[280px] items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-surface">
+            <Flipbook paths={media.paths} label={t('detail.mediaLabel', { name })} className="aspect-square h-[88%]" />
+          </div>
+          <div className="mt-2 flex justify-end empty:hidden">
+            <ExerciseMediaAdminAction exercise={ex} className="-my-3 -mr-2" />
+          </div>
         </div>
       )}
 
@@ -112,6 +122,11 @@ function Hero({ ex, media, onGifError, className }: { ex: Exercise; media: Exerc
           </Tag>
         ))}
       </ul>
+      {media.kind === 'none' && (
+        <div className="mt-3 empty:hidden">
+          <ExerciseMediaAdminAction exercise={ex} className="-ml-2" />
+        </div>
+      )}
     </header>
   )
 }

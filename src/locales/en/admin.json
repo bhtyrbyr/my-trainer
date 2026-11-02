@@ -225,6 +225,38 @@
     "empty": "Every catalog exercise has an animation.",
     "emptySearch": "No unmatched exercise matches this search.",
     "more": "Show more ({{count}} left)",
-    "note": "Matched by scripts/sync-catalog.mjs. Unmatched exercises show their illustration or the body map."
+    "note": "Matched by scripts/sync-catalog.mjs. Unmatched exercises show their illustration or the body map.",
+    "tabs": {
+      "label": "Lists",
+      "unmatched": "Unmatched",
+      "ai": "AI matches"
+    },
+    "aiCount_one": "{{count}} exercise matched by AI, newest first",
+    "aiCount_other": "{{count}} exercises matched by AI, newest first",
+    "aiEmpty": "No AI matches to review.",
+    "aiEmptySearch": "No AI match fits this search.",
+    "picker": {
+      "label": "Choose the animation for {{name}}",
+      "eyebrow": "Choose animation",
+      "close": "Close",
+      "open": "Open exercise",
+      "search": "Search ExerciseDB",
+      "hint": "Type at least 2 letters. An ExerciseDB id works too.",
+      "results_one": "{{count}} result on ExerciseDB",
+      "results_other": "{{count}} results on ExerciseDB",
+      "empty": "Nothing on ExerciseDB for “{{q}}”. Try a shorter or different name.",
+      "resultsLabel": "ExerciseDB animations",
+      "current": "Current animation · {{kind}}",
+      "currentTag": "Current",
+      "remove": "Remove",
+      "removeLabel": "Remove the animation of {{name}}",
+      "removeTitle": "Remove the animation?",
+      "removeBody": "The exercise shows its illustration or the body map again. The next catalog sync may match it again.",
+      "removeConfirm": "Remove animation",
+      "select": "Use this animation",
+      "selectHint": "Tap an animation to choose it",
+      "gifAlt": "{{name}} on ExerciseDB",
+      "clear": "Clear search"
+    }
   }
 }

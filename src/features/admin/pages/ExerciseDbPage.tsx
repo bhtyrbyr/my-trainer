@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { ChevronRight, Film, Loader2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorNote } from '@/components/ui/ErrorNote'
 import { PLAIN_LIST } from '@/components/ui/GroupedList'
-import { exerciseName, useVocab } from '@/features/exercises'
+import { SectionTabs } from '@/components/ui/SectionTabs'
+import { exerciseName, ExerciseThumb, useVocab } from '@/features/exercises'
 import { cn } from '@/lib/utils'
 import { AdminFrame } from '../components/AdminFrame'
+import { ExerciseMediaPicker } from '../components/ExerciseMediaPicker'
 import { LIMITS } from '../adminLogic'
-import type { UnmatchedExercise } from '../api'
+import type { MatchList, MatchRow } from '../api'
 import { matchSummary, type MatchKind } from '../exercisedbLogic'
-import { useExerciseDbMatchCounts, useUnmatchedExercises } from '../hooks'
+import { useExerciseDbMatchCounts, useMatchRows } from '../hooks'
+
+const LISTS = ['unmatched', 'ai'] as const satisfies readonly MatchList[]
 
 /** Segment colours: matched kinds in steps of the one accent, the empty track is "unmatched". */
 const SEGMENT: Record<Exclude<MatchKind, 'unmatched'>, string> = {
@@ -24,14 +27,17 @@ const SEGMENT: Record<Exclude<MatchKind, 'unmatched'>, string> = {
 /**
  * Catalog exercises the sync could not match to an ExerciseDB animation (they show their illustration
  * frames or the body map instead). Point of view: a coverage gauge, then the worklist. The big number is
- * what is left to fix; one segmented bar shows how the rest was matched; flat rows open the exercise.
+ * what is left to fix; one segmented bar shows how the rest was matched; flat rows open the picker
+ * (ExerciseMediaPicker), where the admin chooses the animation by hand. A second list reviews AI matches.
  */
 export function ExerciseDbPage() {
   const { t, i18n } = useTranslation('admin')
   const [input, setInput] = useState('')
   const [query, setQuery] = useState('')
+  const [tab, setTab] = useState<MatchList>('unmatched')
+  const [picking, setPicking] = useState<MatchRow | null>(null)
   const counts = useExerciseDbMatchCounts()
-  const list = useUnmatchedExercises(query)
+  const list = useMatchRows(tab, query)
   const summary = useMemo(() => matchSummary(counts.data), [counts.data])
 
   useEffect(() => {
@@ -84,6 +90,15 @@ export function ExerciseDbPage() {
         </header>
       )}
 
+      <SectionTabs
+        label={t('exercisedb.tabs.label')}
+        options={LISTS}
+        value={tab}
+        onChange={setTab}
+        labelOf={(v) => t(`exercisedb.tabs.${v}`)}
+        className="mb-3"
+      />
+
       <form role="search" onSubmit={(e: FormEvent) => e.preventDefault()} className="relative mb-2">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
         <input
@@ -104,7 +119,11 @@ export function ExerciseDbPage() {
         )}
       </form>
       <p className="tabular mb-4 px-1 text-[12px] text-ink-faint" aria-live="polite">
-        {list.data && total > 0 ? (query ? t('exercisedb.found', { count: total }) : t('exercisedb.count', { count: total })) : ' '}
+        {list.data && total > 0
+          ? query
+            ? t('exercisedb.found', { count: total })
+            : t(tab === 'ai' ? 'exercisedb.aiCount' : 'exercisedb.count', { count: total })
+          : ' '}
       </p>
 
       <ErrorNote error={list.error} className="mb-4" />
@@ -114,12 +133,14 @@ export function ExerciseDbPage() {
       ) : list.data && rows.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center text-ink-faint">
           <Film className="size-8" aria-hidden />
-          <p className="max-w-[32ch] text-sm">{query ? t('exercisedb.emptySearch') : t('exercisedb.empty')}</p>
+          <p className="max-w-[32ch] text-sm">
+            {query ? t(tab === 'ai' ? 'exercisedb.aiEmptySearch' : 'exercisedb.emptySearch') : t(tab === 'ai' ? 'exercisedb.aiEmpty' : 'exercisedb.empty')}
+          </p>
         </div>
       ) : (
         <ul className={PLAIN_LIST}>
           {rows.map((r) => (
-            <Row key={r.id} row={r} />
+            <Row key={r.id} row={r} withThumb={tab === 'ai'} onOpen={() => setPicking(r)} />
           ))}
         </ul>
       )}
@@ -132,23 +153,32 @@ export function ExerciseDbPage() {
       )}
 
       <p className="mt-6 px-1 text-[12px] leading-relaxed text-ink-faint">{t('exercisedb.note')}</p>
+
+      <ExerciseMediaPicker exercise={picking} onClose={() => setPicking(null)} />
     </AdminFrame>
   )
 }
 
-function Row({ row }: { row: UnmatchedExercise }) {
+/** One worklist row; the button opens the picker. AI matches lead with their GIF to judge at a glance. */
+function Row({ row, withThumb, onOpen }: { row: MatchRow; withThumb: boolean; onOpen: () => void }) {
   const vocab = useVocab()
   const meta = [...row.body_parts.map(vocab.bodyPart), ...row.equipment.map(vocab.equipment)].join(' · ')
   return (
     <li>
-      <Link to={`/exercises/${row.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-raised/50 lg:px-0">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-haspopup="dialog"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-raised/50 lg:px-0"
+      >
+        {withThumb && <ExerciseThumb exercise={row} size={48} />}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-medium leading-snug">{exerciseName(row)}</span>
           {meta && <span className="mt-0.5 block truncate text-[12px] text-ink-faint">{meta}</span>}
         </span>
         <span className="shrink-0 text-[12px] text-ink-muted">{row.source}</span>
         <ChevronRight className="size-4 shrink-0 text-ink-faint" aria-hidden />
-      </Link>
+      </button>
     </li>
   )
 }

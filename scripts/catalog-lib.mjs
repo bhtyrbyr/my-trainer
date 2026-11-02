@@ -860,45 +860,6 @@ export function validateInstructionTranslations(items, output) {
   return { accepted, rejected }
 }
 
-// Legacy name + instructions translation (until 2026-11-02). Not used by the sync any more; kept only
-// because src/lib/catalogLib.test.ts still imports it. Remove together with that test block.
-export const NAME_TR_MAX = 120
-export const TRANSLATE_SCHEMA = {
-  type: 'ARRAY',
-  items: {
-    type: 'OBJECT',
-    properties: { id: { type: 'STRING' }, name_tr: { type: 'STRING' }, instructions_tr: { type: 'ARRAY', items: { type: 'STRING' } } },
-    required: ['id', 'name_tr', 'instructions_tr'],
-    propertyOrdering: ['id', 'name_tr', 'instructions_tr'],
-  },
-}
-export function validateTranslations(items, output) {
-  const byId = new Map(items.map((r) => [r.id, r]))
-  const accepted = []
-  const rejected = []
-  const seen = new Set()
-  if (!Array.isArray(output)) return { accepted, rejected: items.map((r) => ({ id: r.id, reason: 'response is not an array' })) }
-  for (const o of output) {
-    const src = byId.get(o?.id)
-    if (!src || seen.has(o.id)) continue
-    seen.add(o.id)
-    const name = cleanText(o.name_tr)
-    const steps = Array.isArray(o.instructions_tr) ? o.instructions_tr.map(cleanText) : null
-    let reason = null
-    if (!name || name.length > NAME_TR_MAX) reason = `name_tr length ${name.length}`
-    else if (name.length > src.name_en.length * 3 + 20) reason = 'name_tr much longer than the English name'
-    else if (/[<>{}`*#]/.test(name)) reason = 'name_tr contains markup'
-    else if (!steps) reason = 'instructions_tr missing'
-    else if (steps.length !== src.instructions_en.length) reason = `instructions_tr has ${steps.length} steps, expected ${src.instructions_en.length}`
-    else if (steps.some((s) => !s || s.length > STEP_TR_MAX)) reason = 'instructions_tr step empty or too long'
-    else if (steps.some((s) => /<[a-z/][^>]*>|```/i.test(s))) reason = 'instructions_tr contains markup'
-    if (reason) rejected.push({ id: o.id, reason })
-    else accepted.push({ id: o.id, name_tr: name, instructions_tr: steps })
-  }
-  for (const r of items) if (!seen.has(r.id)) rejected.push({ id: r.id, reason: 'missing from response' })
-  return { accepted, rejected }
-}
-
 // ---------------------------------------------------------------------------------------------
 // Generated instructions for rows whose source has none (owner decision 2026-11-02)
 

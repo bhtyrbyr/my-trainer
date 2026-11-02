@@ -7,6 +7,8 @@ import type { LoggedSet, ProgressPoint } from '@/features/exercises/progress'
 import type { Exercise } from '@/features/exercises/types'
 import { ExerciseLibraryPage } from '@/features/exercises/pages/ExerciseLibraryPage'
 import { ExerciseDetailPage } from '@/features/exercises/pages/ExerciseDetailPage'
+import { AdminPreviewContext } from '@/features/admin/previewContext'
+import { seedExerciseDbSearch } from '@/features/admin/dev/exercisedbSamples'
 
 /**
  * Dev-only previews of the exercise library and detail screens without a session: the TanStack Query
@@ -17,6 +19,8 @@ import { ExerciseDetailPage } from '@/features/exercises/pages/ExerciseDetailPag
  *   /__dev/exercises             library
  *   /__dev/exercises/sample-bench detail with GIF and progress   (?empty=1 for the "no sessions yet" state)
  *   /__dev/exercises/sample-pushup detail without media (body map)   ?sex=female for the female figure
+ *   ?admin=1 on a detail page: viewed as admin ("Change animation" opens the picker with sample hits; saving
+ *   only edits the cache)
  */
 const MEDIA_BASE = '/dev-media.local/'
 
@@ -122,6 +126,7 @@ function Seed({ children }: { children: ReactNode }) {
   const [params] = useSearchParams()
   const empty = params.get('empty') === '1'
   const sex = params.get('sex') === 'female' ? 'female' : 'male'
+  const admin = params.get('admin') === '1'
   // seed synchronously on first render so the real pages never fetch
   useState(() => {
     const now = new Date()
@@ -135,6 +140,7 @@ function Seed({ children }: { children: ReactNode }) {
       qc.setQueryData(exerciseKeys.one(e.id), e)
       for (const p of e.media_frames) qc.setQueryData(exerciseKeys.media(p), MEDIA_BASE + p)
     }
+    if (admin) seedExerciseDbSearch(qc)
     qc.setQueryData(profileKeys.private, { birth_year: 1994, height_cm: 172, sex, goal: 'build_muscle', target_weight_kg: null })
     for (const e of EXERCISES) {
       qc.setQueryData(exerciseKeys.progress(e.id), empty || e.id !== 'sample-bench' ? [] : sampleProgress(now))
@@ -142,7 +148,7 @@ function Seed({ children }: { children: ReactNode }) {
     }
     return true
   })
-  return <>{children}</>
+  return <AdminPreviewContext.Provider value={admin}>{children}</AdminPreviewContext.Provider>
 }
 
 export function DevExerciseLibraryPreview() {
